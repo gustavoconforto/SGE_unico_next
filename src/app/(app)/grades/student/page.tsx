@@ -1,5 +1,6 @@
 import { Table, TableBody, TableHead, TableHeadCell, TableRow } from "flowbite-react";
 import type { Metadata } from "next";
+import { LinkButton } from "@/components/link-button";
 import { param } from "@/lib/list";
 import { activeEnrollmentOptions } from "../../enrollments/data";
 import { loadReportCard, situation } from "../report";
@@ -22,21 +23,26 @@ export default async function StudentGradesPage({ searchParams }: PageProps<"/gr
         <p className="text-gray-500">Selecione o aluno.</p>
       ) : (
         <>
-          <dl className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
-            {(
-              [
-                ["Aluno", active.enrollment.studentName],
-                ["Matrícula", active.enrollment.registration],
-                ["Curso", active.enrollment.program],
-                ["Turma", active.enrollment.className ?? "Sem turma"],
-              ] as const
-            ).map(([label, value]) => (
-              <div key={label}>
-                <dt className="text-xs text-gray-500">{label}</dt>
-                <dd className="font-medium text-gray-900">{value}</dd>
-              </div>
-            ))}
-          </dl>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <dl className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
+              {(
+                [
+                  ["Aluno", active.enrollment.studentName],
+                  ["Matrícula", active.enrollment.registration],
+                  ["Curso", active.enrollment.program],
+                  ["Turma", active.enrollment.className ?? "Sem turma"],
+                ] as const
+              ).map(([label, value]) => (
+                <div key={label}>
+                  <dt className="text-xs text-gray-500">{label}</dt>
+                  <dd className="font-medium text-gray-900">{value}</dd>
+                </div>
+              ))}
+            </dl>
+            <LinkButton href={`/grades/report-card/${active.enrollment.id}/print`} color="alternative" size="sm">
+              Imprimir boletim
+            </LinkButton>
+          </div>
           <p className="text-sm text-gray-500">Clique em Editar para alterar as notas de uma matéria. Use vírgula nos decimais (ex.: 2,5) e apague o valor para remover uma nota.</p>
           <div className="overflow-x-auto">
             <Table hoverable>
