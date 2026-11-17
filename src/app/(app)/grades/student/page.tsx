@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { param } from "@/lib/list";
 import { activeEnrollmentOptions } from "../../enrollments/data";
 import { loadReportCard, situation } from "../report";
+import { GROUP, RESULT, STICKY } from "./cells";
 import { EnrollmentPicker } from "./enrollment-picker";
 import { SubjectRow } from "./student-grades";
 
@@ -21,41 +22,64 @@ export default async function StudentGradesPage({ searchParams }: PageProps<"/gr
         <p className="text-gray-500">Selecione o aluno.</p>
       ) : (
         <>
-          <p className="text-sm">
-            Aluno: <strong>{active.enrollment.studentName}</strong> · Matrícula: <strong>{active.enrollment.registration}</strong> · Curso: <strong>{active.enrollment.program}</strong> · Turma:{" "}
-            <strong>{active.enrollment.className ?? "Sem turma"}</strong>
-          </p>
-          <p className="text-sm text-gray-500">Clique em Editar para alterar as notas de uma matéria. Use vírgula nos decimais (ex.: 2,5) e apague o valor para remover uma nota.</p>
-          <div className="overflow-x-auto">
-            <Table>
+          <dl className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
+            {(
+              [
+                ["Aluno", active.enrollment.studentName],
+                ["Matrícula", active.enrollment.registration],
+                ["Curso", active.enrollment.program],
+                ["Turma", active.enrollment.className ?? "Sem turma"],
+              ] as const
+            ).map(([label, value]) => (
+              <div key={label}>
+                <dt className="text-xs text-gray-500 dark:text-gray-400">{label}</dt>
+                <dd className="font-medium text-gray-900 dark:text-white">{value}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Clique em Editar para alterar as notas de uma matéria. Use vírgula nos decimais (ex.: 2,5) e apague o valor para remover uma nota.</p>
+          <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+            <Table hoverable>
               <TableHead>
                 <TableRow>
-                  <TableHeadCell rowSpan={2}>Matéria</TableHeadCell>
+                  <TableHeadCell rowSpan={2} className={STICKY}>
+                    Matéria
+                  </TableHeadCell>
                   {[1, 2, 3, 4].map((b) => (
-                    <TableHeadCell key={b} colSpan={active.examTypes.length + 1} className="text-center">
+                    <TableHeadCell key={b} colSpan={active.examTypes.length + 1} className={`${GROUP} px-2 pb-1 text-center whitespace-nowrap`}>
                       {b}º bimestre
                     </TableHeadCell>
                   ))}
-                  <TableHeadCell rowSpan={2} className="text-right whitespace-nowrap">Média anual</TableHeadCell>
-                  <TableHeadCell rowSpan={2} className="text-right">Recuperação</TableHeadCell>
-                  <TableHeadCell rowSpan={2} className="text-right whitespace-nowrap">Média final</TableHeadCell>
-                  <TableHeadCell rowSpan={2}>Situação</TableHeadCell>
-                  <TableHeadCell rowSpan={2}>Ações</TableHeadCell>
+                  <TableHeadCell rowSpan={2} className={`${GROUP} px-3 text-right`}>
+                    Média anual
+                  </TableHeadCell>
+                  <TableHeadCell rowSpan={2} className="px-3 text-right">
+                    Recuperação
+                  </TableHeadCell>
+                  <TableHeadCell rowSpan={2} className={`${RESULT} px-3 text-right`}>
+                    Média final
+                  </TableHeadCell>
+                  <TableHeadCell rowSpan={2} className="px-3">
+                    Situação
+                  </TableHeadCell>
+                  <TableHeadCell rowSpan={2} className="px-3">
+                    Ações
+                  </TableHeadCell>
                 </TableRow>
                 <TableRow>
                   {[1, 2, 3, 4].flatMap((b) => [
-                    ...active.examTypes.map((t) => (
-                      <TableHeadCell key={`${b}-${t.id}`} className="px-1 text-right" title={t.name}>
+                    ...active.examTypes.map((t, i) => (
+                      <TableHeadCell key={`${b}-${t.id}`} className={`${i === 0 ? GROUP : ""} px-2 pt-0 text-right font-medium text-gray-500 dark:text-gray-400`} title={t.name}>
                         {t.code}
                       </TableHeadCell>
                     )),
-                    <TableHeadCell key={`${b}-n`} className="px-1 text-right">
+                    <TableHeadCell key={`${b}-n`} className={`${RESULT} px-2 pt-0 text-right`}>
                       Nota
                     </TableHeadCell>,
                   ])}
                 </TableRow>
               </TableHead>
-              <TableBody>
+              <TableBody className="divide-y divide-gray-100 tabular-nums dark:divide-gray-700">
                 {active.rows.map((r) => (
                   <SubjectRow
                     key={r.subject.id}
