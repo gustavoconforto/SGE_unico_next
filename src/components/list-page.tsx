@@ -10,7 +10,7 @@ import { PAGE_SIZE } from "@/lib/list";
  * Below sm each row becomes a card: no header row, the naming cell (PRIMARY_CELL) on its own line, the others labelled
  * (CellLabel) side by side, the actions at the end. A 9-column table can't fit a phone without hiding the amounts.
  */
-const PHONE_CARDS =
+export const PHONE_CARDS =
   "max-sm:block max-sm:[&_thead]:hidden max-sm:[&_tbody]:block max-sm:[&_tbody>tr]:flex max-sm:[&_tbody>tr]:flex-wrap max-sm:[&_tbody>tr]:items-end max-sm:[&_tbody>tr]:gap-x-5 max-sm:[&_tbody>tr]:gap-y-2 max-sm:[&_tbody>tr]:p-3 max-sm:[&_tbody>tr]:border-b max-sm:[&_tbody>tr]:border-gray-200 max-sm:[&_td]:p-0";
 /** The cell that names the row leads its phone card, on a line of its own. */
 export const PRIMARY_CELL = "font-medium text-gray-900 dark:text-white max-sm:order-first max-sm:basis-full";

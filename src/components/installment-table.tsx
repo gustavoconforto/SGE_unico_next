@@ -34,8 +34,11 @@ export function InstallmentTable({ rows, shifted }: { rows: { number: number; du
   );
 }
 
-/** An account's installment row actions: the receipt once something was paid, a payment while something is owed. */
-export function InstallmentActions({ receiptHref, installment }: { receiptHref: string; installment: { id: number; number: number; status: string } }) {
+/**
+ * An account's installment row actions: the receipt once something was paid, a payment while something is owed.
+ * `due`: the installment to collect now (overdue or next), whose payment button is spelled out instead of an icon.
+ */
+export function InstallmentActions({ receiptHref, installment, due }: { receiptHref: string; installment: { id: number; number: number; status: string }; due?: boolean }) {
   return (
     <div className="flex gap-2 whitespace-nowrap">
       {(installment.status === InstallmentStatus.PAID || installment.status === InstallmentStatus.PARTIAL) && (
@@ -45,13 +48,21 @@ export function InstallmentActions({ receiptHref, installment }: { receiptHref: 
           </span>
         </LinkButton>
       )}
-      {PENDING_STATUSES.includes(installment.status) && (
-        <LinkButton href={`/accounts/payments/new?installment=${installment.id}`} size="xs" color="alternative" className="px-2" aria-label={`Registrar baixa da parcela ${installment.number}`} data-tip="Registrar baixa">
-          <span className="material-symbols-outlined" aria-hidden="true">
-            price_check
-          </span>
-        </LinkButton>
-      )}
+      {PENDING_STATUSES.includes(installment.status) &&
+        (due ? (
+          <LinkButton href={`/accounts/payments/new?installment=${installment.id}`} size="xs" color="alternative" className="gap-1 px-2" aria-label={`Registrar baixa da parcela ${installment.number}`}>
+            <span className="material-symbols-outlined" aria-hidden="true">
+              price_check
+            </span>
+            Registrar baixa
+          </LinkButton>
+        ) : (
+          <LinkButton href={`/accounts/payments/new?installment=${installment.id}`} size="xs" color="alternative" className="px-2" aria-label={`Registrar baixa da parcela ${installment.number}`} data-tip="Registrar baixa">
+            <span className="material-symbols-outlined" aria-hidden="true">
+              price_check
+            </span>
+          </LinkButton>
+        ))}
     </div>
   );
 }

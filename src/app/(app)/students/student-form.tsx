@@ -1,6 +1,7 @@
 "use client";
 
-import { FileInput } from "flowbite-react";
+import { FileInput, Select } from "flowbite-react";
+import { useRouter } from "next/navigation";
 import { startTransition, useActionState } from "react";
 import {
   CheckboxField,
@@ -26,6 +27,7 @@ type Props = {
   photoUrl?: string;
   guardianRows?: GuardianRow[];
   guardianOptions: GuardianOption[];
+  enrollments?: { id: number; label: string }[];
 };
 
 export function StudentForm({
@@ -34,7 +36,9 @@ export function StudentForm({
   photoUrl,
   guardianRows = [],
   guardianOptions,
+  enrollments = [],
 }: Props) {
+  const router = useRouter();
   const [state, action, pending] = useActionState(
     saveStudent.bind(null, id),
     {},
@@ -92,6 +96,26 @@ export function StudentForm({
             <p className="text-sm sm:col-span-2">
               Matrícula: <strong>{defaults.registration}</strong>
             </p>
+          )}
+          {enrollments.length > 0 && (
+            <div className="sm:col-span-2">
+              <FieldLabel htmlFor="enrollment-nav" label="Matrículas" />
+              {/* No name: navigation only, never sent with the student form */}
+              <Select
+                id="enrollment-nav"
+                defaultValue=""
+                onChange={(e) => e.target.value && router.push(`/enrollments/${e.target.value}/edit`)}
+              >
+                <option value="" disabled>
+                  Abrir matrícula…
+                </option>
+                {enrollments.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
           )}
         </Fieldset>
         <PersonFields

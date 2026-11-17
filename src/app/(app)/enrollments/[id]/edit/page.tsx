@@ -1,10 +1,11 @@
-import { asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow } from "flowbite-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { InstallmentActions } from "@/components/installment-table";
 import { LinkButton } from "@/components/link-button";
+import { ACTIONS_CELL, PHONE_CARDS, PRIMARY_CELL } from "@/components/list-page";
 import { db } from "@/db";
 import {
   accountsAccount as account,
@@ -15,28 +16,39 @@ import {
   enrollmentsEnrollmentneededdocument as enrollmentDocument,
   enrollmentsNeededdocumenttype as documentType,
   studentsGuardian as guardian,
+  studentsGuardianassociation as guardianLink,
 } from "@/db/schema/app";
-import { ENROLLMENT_STATUSES, INSTALLMENT_STATUSES, accountSituation, formatDate, formatMoney, isOverdue, label, money, today } from "@/lib/finance";
-import { accountSummary, outstandingSql, syncDocuments } from "@/lib/finance-db";
+import { ENROLLMENT_STATUSES, INSTALLMENT_STATUSES, PENDING_STATUSES, accountSituation, formatDate, formatMoney, isOverdue, label, money, today } from "@/lib/finance";
+import { accountSummary, financialGuardians, outstandingSql, syncDocuments } from "@/lib/finance-db";
 import { idParam } from "@/lib/list";
 import { classOptions, classesFor, enrollmentTypeLabel, enrollmentTypeOptions, getEnrollment } from "../../data";
 import { EnrollmentEditForm } from "../../enrollment-edit-form";
+import { PrintMenu } from "../../print-menu";
 
 export const metadata: Metadata = { title: "Matrícula" };
 
-function Section({ title, help, action, children }: { title: string; help?: string; action?: React.ReactNode; children: React.ReactNode }) {
+/** A titled block on the page floor; its table brings its own white panel. */
+function Section({ id, title, help, action, children }: { id?: string; title: string; help?: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-2 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <section id={id} className="flex scroll-mt-20 flex-col gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h2 className="font-semibold">{title}</h2>
-          {help && <p className="text-sm text-gray-500">{help}</p>}
+          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+          {help && <p className="text-sm text-gray-600">{help}</p>}
         </div>
         {action}
       </div>
-      <div className="overflow-x-auto">{children}</div>
+      {children}
     </section>
   );
+}
+
+/** The list pages' cell padding: ~44px rows instead of Flowbite's 56px. */
+const DENSE = "[&_td]:px-2.5 [&_td]:py-2.5 [&_th]:px-2.5";
+
+/** Names the column on a phone card, where the header row is hidden. */
+function PhoneLabel({ children }: { children: React.ReactNode }) {
+  return <span className="block text-xs font-normal text-gray-500 sm:hidden">{children}</span>;
 }
 
 export default async function EditEnrollmentPage({ params }: PageProps<"/enrollments/[id]/edit">) {
@@ -47,7 +59,7 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
   await syncDocuments(db, id);
 
   const on = today();
-  const [types, classes, discounts, documents, [contract], receivables] = await Promise.all([
+  const [types, classes, discounts, documents, [contract], receivables, [payer], parents] = await Promise.all([
     enrollmentTypeOptions(),
     classOptions(),
     db
@@ -79,6 +91,11 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
       .leftJoin(guardian, eq(account.guardianId, guardian.id))
       .where(eq(account.studentId, row.e.studentId))
       .orderBy(desc(account.issueDate), asc(account.description)),
+    financialGuardians(db, row.e.studentId).limit(1),
+    db
+      .select({ relationship: guardianLink.relationship })
+      .from(guardianLink)
+      .where(and(eq(guardianLink.studentId, row.e.studentId), inArray(guardianLink.relationship, ["PAI", "MAE"]))),
   ]);
   const installments = contract
     ? await db
@@ -94,10 +111,16 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
   const overdue = installments?.filter((i) => isOverdue(i.status, i.dueDate, on)) ?? [];
   const overdueTotal = overdue.reduce((sum, i) => sum.plus(money(i.outstanding)), money(0));
   const owed = installments?.reduce((sum, i) => sum.plus(money(i.outstanding)), money(0)) ?? money(0);
+  // The installment to collect now: labelled action on it and on the overdue ones, icons on the rest
+  const nextDue = installments?.find((i) => PENDING_STATUSES.includes(i.status) && !isOverdue(i.status, i.dueDate, on));
+  const delivered = documents.filter((d) => d.isDelivered).length;
   const classChoices = classesFor(classes, type).map((c) => [c.id, c.label] as [number, string]);
+  // Django's print guards (financial payer; father and mother for the ficha), shown before the click
+  const hasPayer = row.studentSelfFinancial || !!payer;
+  const hasParents = ["PAI", "MAE"].every((code) => parents.some((p) => p.relationship === code));
 
   return (
-    <div className="flex max-w-4xl flex-col gap-4">
+    <div className="flex max-w-4xl flex-col gap-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Matrícula de {row.studentName}</h1>
@@ -115,90 +138,132 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
               {!owed.isZero() && <span className="font-normal text-gray-600"> · R$ {formatMoney(owed)} ainda a receber no contrato</span>}
             </p>
           )}
+          {documents.length > 0 && (
+            <p className="mt-1 text-sm text-gray-700 tabular-nums">
+              <Link href="#matricula" className="underline-offset-2 hover:text-blue-700 hover:underline">
+                {delivered === documents.length ? "Todos os documentos entregues" : `${delivered} de ${documents.length} documentos entregues`}
+              </Link>
+            </p>
+          )}
         </div>
-        <LinkButton href={`/grades/report-card/${id}`} color="alternative">
-          Boletim
-        </LinkButton>
+        <div className="flex gap-2">
+          <PrintMenu
+            id={id}
+            blocked={{
+              contrato: hasPayer ? null : "Requer responsável financeiro",
+              requerimento: hasPayer ? null : "Requer responsável financeiro",
+              ficha: !hasPayer ? "Requer responsável financeiro" : hasParents ? null : "Requer pai e mãe cadastrados",
+            }}
+          />
+          <LinkButton href={`/grades/report-card/${id}`} color="alternative">
+            Boletim
+          </LinkButton>
+        </div>
       </div>
-      <EnrollmentEditForm
-        id={id}
-        locked={[
-          ["Contrato", typeLabel],
-          ["Data da matrícula", formatDate(row.e.enrolledAt)],
-          ["Dia de vencimento", String(row.e.dueDay)],
-        ]}
-        defaults={row.e}
-        classes={classChoices}
-        documents={documents}
-      />
-
-      <Section title="Descontos" help="Definidos na matrícula; a conta já foi gerada com a soma de cada grupo de parcelas.">
-        {discounts.length === 0 ? (
-          <p className="text-sm text-gray-500">Nenhum desconto nesta matrícula.</p>
-        ) : (
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableHeadCell>Desconto</TableHeadCell>
-                <TableHeadCell>Parcelas</TableHeadCell>
-                <TableHeadCell>Observação</TableHeadCell>
-                <TableHeadCell className="text-right">Percentual</TableHeadCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {discounts.map((d) => (
-                <TableRow key={d.id}>
-                  <TableCell>{d.type ?? "Desconto avulso"}</TableCell>
-                  <TableCell>{d.group === "F" ? "1ª parcela" : "Demais parcelas"}</TableCell>
-                  <TableCell>{d.observation || "—"}</TableCell>
-                  <TableCell className="text-right">{formatMoney(d.percentage)}%</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </Section>
 
       <Section title="Parcelas">
         {!installments ? (
-          <p className="text-sm text-gray-500">Nenhuma duplicata gerada para esta matrícula.</p>
+          <p className="text-sm text-gray-600">Nenhuma duplicata gerada para esta matrícula.</p>
         ) : (
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableHeadCell className="w-20">Parcela</TableHeadCell>
-                <TableHeadCell>Vencimento</TableHeadCell>
-                <TableHeadCell className="text-right">Valor</TableHeadCell>
-                <TableHeadCell>Situação</TableHeadCell>
-                <TableHeadCell className="text-right">Faltante</TableHeadCell>
-                <TableHeadCell>Ações</TableHeadCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {installments.map((i) => (
-                <TableRow key={i.id}>
-                  <TableCell>{i.number}</TableCell>
-                  <TableCell>{formatDate(i.dueDate)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatMoney(i.amount)}</TableCell>
-                  <TableCell>
-                    {isOverdue(i.status, i.dueDate, on) ? (
-                      <Badge color="failure" className="w-fit">
-                        Vencida
-                      </Badge>
-                    ) : (
-                      <Badge color={i.status === "Q" ? "success" : "gray"} className="w-fit">
-                        {label(INSTALLMENT_STATUSES, i.status)}
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{formatMoney(i.outstanding)}</TableCell>
-                  <TableCell>
-{contract && <InstallmentActions receiptHref={`/accounts/receivable/${contract.id}/receipt`} installment={i} />}
-</TableCell>
+          <div className="overflow-x-auto">
+            <Table className={`${DENSE} ${PHONE_CARDS}`}>
+              <TableHead>
+                <TableRow>
+                  <TableHeadCell className="w-20">Parcela</TableHeadCell>
+                  <TableHeadCell>Vencimento</TableHeadCell>
+                  <TableHeadCell className="text-right">Valor</TableHeadCell>
+                  <TableHeadCell>Situação</TableHeadCell>
+                  <TableHeadCell className="text-right">Faltante</TableHeadCell>
+                  <TableHeadCell className="w-px text-right">Ações</TableHeadCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {installments.map((i) => {
+                  const late = isOverdue(i.status, i.dueDate, on);
+                  return (
+                    <TableRow key={i.id}>
+                      <TableCell className={`${PRIMARY_CELL} tabular-nums`}>
+                        <span className="sm:hidden">Parcela </span>
+                        {i.number}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap tabular-nums">
+                        <PhoneLabel>Vencimento</PhoneLabel>
+                        {formatDate(i.dueDate)}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-right tabular-nums max-sm:text-left">
+                        <PhoneLabel>Valor</PhoneLabel>
+                        {formatMoney(i.amount)}
+                      </TableCell>
+                      <TableCell>
+                        <PhoneLabel>Situação</PhoneLabel>
+                        {late ? (
+                          <Badge color="failure" className="w-fit whitespace-nowrap">
+                            Vencida
+                          </Badge>
+                        ) : (
+                          <Badge color={i.status === "Q" ? "success" : "gray"} className="w-fit whitespace-nowrap">
+                            {label(INSTALLMENT_STATUSES, i.status)}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-right tabular-nums max-sm:text-left">
+                        <PhoneLabel>Faltante</PhoneLabel>
+                        {formatMoney(i.outstanding)}
+                      </TableCell>
+                      <TableCell className={ACTIONS_CELL}>
+                        {contract && (
+                          <InstallmentActions receiptHref={`/accounts/receivable/${contract.id}/receipt`} installment={i} due={late || i.id === nextDue?.id} />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </Section>
+
+      <section id="matricula" className="scroll-mt-20">
+        <EnrollmentEditForm
+          id={id}
+          locked={[
+            ["Contrato", typeLabel],
+            ["Data da matrícula", formatDate(row.e.enrolledAt)],
+            ["Dia de vencimento", String(row.e.dueDay)],
+          ]}
+          defaults={row.e}
+          classes={classChoices}
+          documents={documents}
+        />
+      </section>
+
+      <Section title="Descontos" help="Definidos na matrícula; a conta já foi gerada com a soma de cada grupo de parcelas.">
+        {discounts.length === 0 ? (
+          <p className="text-sm text-gray-600">Nenhum desconto nesta matrícula.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table className={DENSE}>
+              <TableHead>
+                <TableRow>
+                  <TableHeadCell>Desconto</TableHeadCell>
+                  <TableHeadCell>Parcelas</TableHeadCell>
+                  <TableHeadCell>Observação</TableHeadCell>
+                  <TableHeadCell className="text-right">Percentual</TableHeadCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {discounts.map((d) => (
+                  <TableRow key={d.id}>
+                    <TableCell className="font-medium text-gray-900">{d.type ?? "Desconto avulso"}</TableCell>
+                    <TableCell>{d.group === "F" ? "1ª parcela" : "Demais parcelas"}</TableCell>
+                    <TableCell>{d.observation || "—"}</TableCell>
+                    <TableCell className="whitespace-nowrap text-right tabular-nums max-sm:text-left">{formatMoney(d.percentage)}%</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </Section>
 
@@ -212,42 +277,55 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
         }
       >
         {receivables.length === 0 ? (
-          <p className="text-sm text-gray-500">Nenhuma conta a receber para este aluno.</p>
+          <p className="text-sm text-gray-600">Nenhuma conta a receber para este aluno.</p>
         ) : (
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableHeadCell>Emissão</TableHeadCell>
-                <TableHeadCell>Descrição</TableHeadCell>
-                <TableHeadCell>Responsável</TableHeadCell>
-                <TableHeadCell className="text-right">Valor líquido</TableHeadCell>
-                <TableHeadCell>Situação</TableHeadCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {receivables.map((a) => {
-                const situation = accountSituation(a);
-                return (
-                  <TableRow key={a.id}>
-                    <TableCell>{formatDate(a.issueDate)}</TableCell>
-                    <TableCell>
-                      <Link className="text-blue-600 hover:underline dark:text-blue-400" href={`/accounts/receivable/${a.id}/edit`}>
-                        {a.description}
-                      </Link>
-                      <span className="block text-xs text-gray-500">{a.category}</span>
-                    </TableCell>
-                    <TableCell>{a.guardian ?? "—"}</TableCell>
-                    <TableCell className="text-right">{formatMoney(money(a.gross).minus(money(a.discount)))}</TableCell>
-                    <TableCell>
-                      <Badge color={situation === "Quitada" ? "success" : situation === "Vencida" ? "failure" : "gray"} className="w-fit">
-                        {situation}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+          <div className="overflow-x-auto">
+            <Table className={`${DENSE} ${PHONE_CARDS}`}>
+              <TableHead>
+                <TableRow>
+                  <TableHeadCell>Emissão</TableHeadCell>
+                  <TableHeadCell>Descrição</TableHeadCell>
+                  <TableHeadCell>Responsável</TableHeadCell>
+                  <TableHeadCell className="whitespace-nowrap text-right">Valor líquido</TableHeadCell>
+                  <TableHeadCell>Situação</TableHeadCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {receivables.map((a) => {
+                  const situation = accountSituation(a);
+                  return (
+                    <TableRow key={a.id}>
+                      <TableCell className="whitespace-nowrap tabular-nums">
+                        <PhoneLabel>Emissão</PhoneLabel>
+                        {formatDate(a.issueDate)}
+                      </TableCell>
+                      <TableCell className={PRIMARY_CELL}>
+                        <Link className="underline-offset-2 hover:text-blue-700 hover:underline" href={`/accounts/receivable/${a.id}/edit`}>
+                          {a.description}
+                        </Link>
+                        <span className="block text-xs font-normal text-gray-500">{a.category}</span>
+                      </TableCell>
+                      <TableCell>
+                        <PhoneLabel>Responsável</PhoneLabel>
+                        {/* No guardian on the account: the student pays for themself when marked so */}
+                        {a.guardian ?? (row.studentSelfFinancial ? "O próprio aluno" : "—")}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-right tabular-nums max-sm:text-left">
+                        <PhoneLabel>Valor líquido</PhoneLabel>
+                        {formatMoney(money(a.gross).minus(money(a.discount)))}
+                      </TableCell>
+                      <TableCell>
+                        <PhoneLabel>Situação</PhoneLabel>
+                        <Badge color={situation === "Quitada" ? "success" : situation === "Vencida" ? "failure" : "gray"} className="w-fit whitespace-nowrap">
+                          {situation}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </Section>
     </div>
