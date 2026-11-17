@@ -19,7 +19,7 @@ type Props = {
 export function EnrollmentEditForm({ id, locked, defaults, classes, documents }: Props) {
   const [state, action, pending] = useActionState(updateEnrollment.bind(null, id), {});
   return (
-    <form action={action} className="flex max-w-3xl flex-col gap-4">
+    <form action={action} className="flex flex-col gap-4">
       <FormFields state={state} defaults={defaults}>
         <Fieldset legend="Matrícula" description="Contrato, data e vencimento não mudam: a conta e as parcelas já foram geradas a partir deles.">
           {/* Plain text, not disabled inputs: full contrast, and nothing that looks editable but isn't */}
