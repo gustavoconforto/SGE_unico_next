@@ -1,0 +1,41 @@
+"use server";
+
+import { eq } from "drizzle-orm";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+import { db } from "@/db";
+import { gradesExamtype as examType } from "@/db/schema/app";
+import { deleteAndRedirect } from "@/lib/crud";
+import { UNIQUE_VIOLATION, pgConstraint, pgErrorCode } from "@/lib/db-error";
+import { REQUIRED, type FormState, decimalField, intField, parseForm, requiredText } from "@/lib/form";
+import { requireSession } from "@/lib/session";
+
+const examTypeSchema = z.object({
+  name: requiredText(50),
+  code: requiredText(5).transform((v) => v.toUpperCase()),
+  kind: z.enum(["R", "B", "C"], { error: REQUIRED }),
+  maxScore: decimalField({ maxDigits: 4, min: 0.01, minMessage: "Informe um valor maior que zero." }),
+  order: intField(0, 32767),
+});
+
+export async function saveExamType(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
+  await requireSession();
+  const { data, values, state } = parseForm(examTypeSchema, formData);
+  if (!data) return state;
+  try {
+    if (id === null) await db.insert(examType).values(data);
+    else await db.update(examType).set(data).where(eq(examType.id, id));
+  } catch (error) {
+    if (pgErrorCode(error) === UNIQUE_VIOLATION)
+      return pgConstraint(error).includes("code")
+        ? { errors: { code: ["Tipo de avaliação com esta Sigla já existe."] }, values }
+        : { errors: { name: ["Tipo de avaliação com este Nome já existe."] }, values };
+    throw error;
+  }
+  redirect(`/grades/exam-types?msg=${id === null ? "created" : "updated"}`);
+}
+
+export async function deleteExamType(id: number) {
+  await requireSession();
+  await deleteAndRedirect(() => db.delete(examType).where(eq(examType.id, id)), "/grades/exam-types");
+}

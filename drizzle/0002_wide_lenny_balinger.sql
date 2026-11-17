@@ -1,0 +1,1 @@
+ALTER TABLE "enrollments_enrollmentneededdocument" ADD CONSTRAINT "unique_document_per_enrollment" UNIQUE("enrollment_id","type_id");
