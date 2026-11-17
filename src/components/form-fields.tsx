@@ -187,13 +187,17 @@ export function TextField(
     help?: string;
     autoComplete?: string;
     autoFocus?: boolean;
+    /** Display format applied to the saved value and as the user types (e.g. `maskCpf`); the server still parses it. */
+    mask?: (value: string) => string;
   } & Partial<Controlled>,
 ) {
   const { error, value, a11y } = useField(props.name, props.help);
   useFixWhenSet(props.name, props.value);
   // Decimal fields are text so pt-BR keyboards can type a comma; the server parses "1234,56".
   const decimal = props.type === "number" && props.step?.includes(".");
-  const control = props.onChange ? { value: props.value ?? "", onChange: (e: React.ChangeEvent<HTMLInputElement>) => props.onChange!(e.target.value) } : { defaultValue: value };
+  const control = props.onChange
+    ? { value: props.value ?? "", onChange: (e: React.ChangeEvent<HTMLInputElement>) => props.onChange!(e.target.value) }
+    : { defaultValue: props.mask ? props.mask(value) : value, onInput: props.mask && applyMask(props.mask) };
   return (
     <Wrapper {...props} error={error}>
       <TextInput
@@ -210,13 +214,28 @@ export function TextField(
         required={!props.optional && !props.disabled}
         autoComplete={props.autoComplete}
         autoFocus={props.autoFocus}
-        className={decimal ? "tabular-nums" : undefined}
+        className={decimal || props.mask ? "tabular-nums" : undefined}
         color={error ? "failure" : undefined}
         {...control}
         {...a11y}
       />
     </Wrapper>
   );
+}
+
+/** Reformats an uncontrolled input on each keystroke, keeping the caret after the same number of digits. */
+function applyMask(mask: (value: string) => string) {
+  return (e: React.FormEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const caret = input.selectionStart ?? input.value.length;
+    const digitsBefore = input.value.slice(0, caret).replace(/\D/g, "").length;
+    const masked = mask(input.value);
+    if (masked === input.value) return;
+    input.value = masked;
+    let pos = 0;
+    for (let seen = 0; pos < masked.length && seen < digitsBefore; pos++) if (/\d/.test(masked[pos])) seen++;
+    input.setSelectionRange(pos, pos);
+  };
 }
 
 export function TextareaField(props: Base & { rows?: number; help?: string }) {

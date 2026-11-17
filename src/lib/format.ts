@@ -6,6 +6,13 @@ export function formatCpf(cpf: string): string {
   return `${cpf.slice(0, 3)}.${cpf.slice(3, 6)}.${cpf.slice(6, 9)}-${cpf.slice(9)}`;
 }
 
+/** Masks a CPF as it's typed or pasted: "12345678" → "123.456.78", any punctuation in → "000.000.000-00" out. */
+export function maskCpf(value: string): string {
+  const d = value.replace(/\D/g, "").slice(0, 11);
+  const head = [d.slice(0, 3), d.slice(3, 6), d.slice(6, 9)].filter(Boolean).join(".");
+  return d.length > 9 ? `${head}-${d.slice(9)}` : head;
+}
+
 export function formatZipCode(zipCode: string): string {
   return `${zipCode.slice(0, -3)}-${zipCode.slice(-3)}`;
 }

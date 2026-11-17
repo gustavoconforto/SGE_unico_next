@@ -1,5 +1,6 @@
 "use client";
 
+import { maskCpf } from "@/lib/format";
 import { SEX_CHOICES, UFS } from "@/lib/person";
 import { Fieldset, SelectField, TextField } from "./form-fields";
 
@@ -54,7 +55,7 @@ export function PersonFields({
         <TextField
           name="cpf"
           label="CPF"
-          maxLength={14}
+          mask={maskCpf}
           inputMode="numeric"
           placeholder="000.000.000-00"
           autoComplete="off"

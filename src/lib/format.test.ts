@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { adjustWeekend } from "./dates";
-import { amountInWords, formatCpf, formatZipCode } from "./format";
+import { amountInWords, formatCpf, formatZipCode, maskCpf } from "./format";
 
 describe("amountInWords (from accounts/tests.py AmountInWordsTests)", () => {
   it.each([
@@ -20,6 +20,12 @@ describe("formatters", () => {
   it("formats CPF and CEP", () => {
     expect(formatCpf("12345678901")).toBe("123.456.789-01");
     expect(() => formatCpf("123")).toThrow(TypeError);
+    for (const typed of ["00000000030", "000000000-30", "000.000.000-30", " 000.000.000/30 9"]) expect(maskCpf(typed)).toBe("000.000.000-30");
+    expect(maskCpf("")).toBe("");
+    expect(maskCpf("123")).toBe("123");
+    expect(maskCpf("1234")).toBe("123.4");
+    expect(maskCpf("1234567")).toBe("123.456.7");
+    expect(maskCpf("1234567890")).toBe("123.456.789-0");
     expect(formatZipCode("70000123")).toBe("70000-123");
   });
 
