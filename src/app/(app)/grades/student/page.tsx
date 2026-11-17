@@ -32,13 +32,13 @@ export default async function StudentGradesPage({ searchParams }: PageProps<"/gr
               ] as const
             ).map(([label, value]) => (
               <div key={label}>
-                <dt className="text-xs text-gray-500 dark:text-gray-400">{label}</dt>
-                <dd className="font-medium text-gray-900 dark:text-white">{value}</dd>
+                <dt className="text-xs text-gray-500">{label}</dt>
+                <dd className="font-medium text-gray-900">{value}</dd>
               </div>
             ))}
           </dl>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Clique em Editar para alterar as notas de uma matéria. Use vírgula nos decimais (ex.: 2,5) e apague o valor para remover uma nota.</p>
-          <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-500">Clique em Editar para alterar as notas de uma matéria. Use vírgula nos decimais (ex.: 2,5) e apague o valor para remover uma nota.</p>
+          <div className="overflow-x-auto">
             <Table hoverable>
               <TableHead>
                 <TableRow>
@@ -69,7 +69,7 @@ export default async function StudentGradesPage({ searchParams }: PageProps<"/gr
                 <TableRow>
                   {[1, 2, 3, 4].flatMap((b) => [
                     ...active.examTypes.map((t, i) => (
-                      <TableHeadCell key={`${b}-${t.id}`} className={`${i === 0 ? GROUP : ""} px-2 pt-0 text-right font-medium text-gray-500 dark:text-gray-400`} title={t.name}>
+                      <TableHeadCell key={`${b}-${t.id}`} className={`${i === 0 ? GROUP : ""} px-2 pt-0 text-right font-medium text-gray-500`} title={t.name}>
                         {t.code}
                       </TableHeadCell>
                     )),
@@ -79,7 +79,7 @@ export default async function StudentGradesPage({ searchParams }: PageProps<"/gr
                   ])}
                 </TableRow>
               </TableHead>
-              <TableBody className="divide-y divide-gray-100 tabular-nums dark:divide-gray-700">
+              <TableBody className="divide-y divide-gray-100 tabular-nums">
                 {active.rows.map((r) => (
                   <SubjectRow
                     key={r.subject.id}

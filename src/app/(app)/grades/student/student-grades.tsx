@@ -23,7 +23,7 @@ type Row = {
 type Exam = { id: number; code: string };
 
 /** Text color for a computed grade: muted when missing, red below passing. */
-const tone = (g: string | null) => (g === null ? "text-gray-400 dark:text-gray-500" : new Decimal(g).lt(PASSING_GRADE) ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white");
+const tone = (g: string | null) => (g === null ? "text-gray-400" : new Decimal(g).lt(PASSING_GRADE) ? "text-red-600" : "text-gray-900");
 
 /** One subject's row: read-only, or score inputs after "Editar" (Django's htmx row swap). */
 export function SubjectRow({ enrollmentId, row, examTypes, recoveryTypes }: { enrollmentId: number; row: Row; examTypes: Exam[]; recoveryTypes: Exam[] }) {
@@ -65,17 +65,17 @@ export function SubjectRow({ enrollmentId, row, examTypes, recoveryTypes }: { en
   if (!editing)
     return (
       <TableRow className="[&>td]:py-2.5">
-        <TableCell className={`${STICKY_BODY} font-medium whitespace-nowrap text-gray-900 dark:text-white`}>{row.subject.name}</TableCell>
+        <TableCell className={`${STICKY_BODY} font-medium whitespace-nowrap text-gray-900`}>{row.subject.name}</TableCell>
         {row.examScores.flatMap((scores, b) => [
           ...scores.map((s, i) => (
-            <TableCell key={`${b}-${i}`} className={`${i === 0 ? GROUP : ""} ${SCORE} px-2 text-right text-gray-500 dark:text-gray-400`}>
+            <TableCell key={`${b}-${i}`} className={`${i === 0 ? GROUP : ""} ${SCORE} px-2 text-right text-gray-500`}>
               {s === null ? "" : formatGrade(s)}
             </TableCell>
           )),
           results(b),
         ])}
         {average}
-        <TableCell className={`px-3 text-right ${row.needsRecovery ? tone(row.recovery) : "text-gray-400 dark:text-gray-500"}`}>{row.needsRecovery ? formatGrade(row.recovery) : "—"}</TableCell>
+        <TableCell className={`px-3 text-right ${row.needsRecovery ? tone(row.recovery) : "text-gray-400"}`}>{row.needsRecovery ? formatGrade(row.recovery) : "—"}</TableCell>
         {final}
         <TableCell className="px-3">
           <Badge color={row.situation.color} className="w-fit whitespace-nowrap">
@@ -91,8 +91,8 @@ export function SubjectRow({ enrollmentId, row, examTypes, recoveryTypes }: { en
     );
 
   return (
-    <TableRow className="bg-blue-50 hover:bg-blue-50 dark:bg-gray-700 dark:hover:bg-gray-700 [&>td]:py-2">
-      <TableCell className={`${STICKY} bg-blue-50 font-medium whitespace-nowrap text-gray-900 dark:bg-gray-700 dark:text-white`}>
+    <TableRow className="bg-blue-50 hover:bg-blue-50 [&>td]:py-2">
+      <TableCell className={`${STICKY} bg-blue-50 font-medium whitespace-nowrap text-gray-900`}>
         {row.subject.name}
         <form id={formId} action={action} />
         {state.formError && (
