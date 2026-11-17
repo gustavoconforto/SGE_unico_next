@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { adjustWeekend } from "./dates";
-import { amountInWords, formatCpf, formatZipCode, maskCpf } from "./format";
+import { amountInWords, formatCpf, formatZipCode, maskCpf, suggestUsername } from "./format";
 
 describe("amountInWords (from accounts/tests.py AmountInWordsTests)", () => {
   it.each([
@@ -63,4 +63,14 @@ describe("decimalField (Django DecimalField)", () => {
 it("formats CPF and CNPJ", () => {
   expect(formatDocument("12345678901")).toBe("123.456.789-01");
   expect(formatDocument("12345678000199")).toBe("12.345.678/0001-99");
+});
+
+describe("suggestUsername", () => {
+  it.each([
+    ["Maria da Conceição Silva", "maria.silva"],
+    ["  João   Pedro  ", "joao.pedro"],
+    ["Ângela", "angela"],
+    ["José D'Ávila", "jose.davila"],
+    ["", ""],
+  ])("%s → %s", (name, expected) => expect(suggestUsername(name)).toBe(expected));
 });

@@ -241,6 +241,14 @@ export function AppSidebar() {
           </SidebarItems>
           <div className="border-t border-gray-200 pt-3 dark:border-gray-700">
             {isPending ? <div className="mx-2 h-5 w-32 animate-pulse rounded bg-gray-200" aria-hidden="true" /> : <p className="truncate px-2 text-sm font-semibold">{session?.user.name}</p>}
+            <Link
+              href="/account/password"
+              onClick={() => setOpen(false)}
+              className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <Icon name="key" />
+              Alterar senha
+            </Link>
             <button type="button" onClick={signOut} className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
               <Icon name="logout" />
               Sair

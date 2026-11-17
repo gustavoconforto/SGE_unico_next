@@ -10,6 +10,7 @@ const MESSAGES = {
   created: { text: "Registro cadastrado com sucesso", ok: true },
   updated: { text: "Registro atualizado com sucesso", ok: true },
   deleted: { text: "Registro excluído com sucesso", ok: true },
+  password_changed: { text: "Senha alterada com sucesso", ok: true },
   protected: { text: "Este registro está em uso e não pode ser excluído.", ok: false },
   department_protected: { text: "Este departamento possui matérias e não pode ser excluído.", ok: false },
   supplier_protected: { text: "Este fornecedor possui contas e não pode ser excluído.", ok: false },

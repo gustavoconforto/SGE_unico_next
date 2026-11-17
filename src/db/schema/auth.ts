@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import { pgTable, text, timestamp, boolean, index, integer, bigint } from "drizzle-orm/pg-core";
+import { employeesEmployee } from "./app";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -18,6 +19,12 @@ export const user = pgTable("user", {
   banned: boolean("banned").default(false),
   banReason: text("ban_reason"),
   banExpires: timestamp("ban_expires"),
+  // The employee this login belongs to (null for logins made by create-admin); deleting the employee deletes it
+  employeeId: bigint("employee_id", { mode: "number" })
+    .unique()
+    .references(() => employeesEmployee.id, { onDelete: "cascade" }),
+  // Set when an admin picks the password; the proxy holds the user on /account/password until they change it
+  mustChangePassword: boolean("must_change_password").default(false).notNull(),
 });
 
 export const session = pgTable(
