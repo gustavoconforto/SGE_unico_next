@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { inArray, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { gradesGrade as grade } from "@/db/schema/app";
@@ -31,16 +31,21 @@ export async function saveGradeSheet(selection: { query: string; classId: number
   if (Object.keys(errors).length) return { errors, values, formError: "Corrija as notas destacadas. Nenhuma nota foi salva." };
 
   try {
+    // Three statements for the whole sheet, not one per cell. A plain insert (no upsert) still reports SHEET_TAKEN.
+    const removed = writes.filter((w) => w.score === null && w.savedId).map((w) => w.savedId!);
+    const changed = writes.filter((w) => w.score !== null && w.savedId);
+    const added = writes.filter((w) => w.score !== null && !w.savedId);
     await db.transaction(async (tx) => {
-      for (const w of writes) {
-        if (w.score === null) {
-          if (w.savedId) await tx.delete(grade).where(eq(grade.id, w.savedId));
-        } else if (w.savedId) {
-          await tx.update(grade).set({ score: w.score }).where(and(eq(grade.id, w.savedId), eq(grade.enrollmentId, w.enrollmentId)));
-        } else {
-          await tx.insert(grade).values({ enrollmentId: w.enrollmentId, subjectId: selection.subjectId, examTypeId: w.examTypeId, bimester: selection.period, score: w.score });
-        }
-      }
+      if (removed.length) await tx.delete(grade).where(inArray(grade.id, removed));
+      if (changed.length)
+        await tx
+          .update(grade)
+          .set({ score: sql`(case ${grade.id} ${sql.join(changed.map((w) => sql`when ${w.savedId} then ${w.score}::numeric`), sql` `)} end)` })
+          .where(inArray(grade.id, changed.map((w) => w.savedId!)));
+      if (added.length)
+        await tx
+          .insert(grade)
+          .values(added.map((w) => ({ enrollmentId: w.enrollmentId, subjectId: selection.subjectId, examTypeId: w.examTypeId, bimester: selection.period, score: w.score! })));
     });
   } catch (error) {
     // Another save added the same grade a moment ago (unique_grade_per_exam)

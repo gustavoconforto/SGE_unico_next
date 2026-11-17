@@ -67,7 +67,10 @@ export async function saveEmployee(id: number | null, _prev: FormState, formData
 }
 
 export async function deleteEmployee(id: number) {
-  await requireSession();
+  const session = await requireSession();
+  // Deleting the employee deletes their login (FK cascade): only an admin may, and never their own
+  const login = await employeeLogin(id);
+  if (login && (session.user.role !== "admin" || login.id === session.user.id)) redirect("/employees?msg=employee_has_login");
   // Django drops the employee's M2M teacher links with it; any other reference (PROTECT) still blocks the delete
   await deleteAndRedirect(
     () =>
