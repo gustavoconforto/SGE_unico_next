@@ -62,6 +62,8 @@ never the reset or the seed; the migration goes in before the code that needs it
 - Uploads: `MEDIA_ROOT` (a local folder in dev), served only to signed-in users by
   `src/app/media/[...path]/route.ts`; validate images by magic bytes (`src/lib/media.ts`).
 - In Server Components use `<LinkButton>`, not `<Button as={Link}>` (functions can't cross to client).
+- Action color is navy: use `primary-*` classes (the `--primary-*` scale in `globals.css`), never `blue-*`.
+  Icons stay gray; secondary buttons darken on hover (DESIGN.md, "The One Navy Rule").
 - Client components that read the URL (`usePathname`, `useSearchParams`) must sit inside `<Suspense>`.
 - Add each migrated page to `NAV` in `src/components/app-sidebar.tsx`.
 

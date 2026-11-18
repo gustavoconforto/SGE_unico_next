@@ -550,7 +550,12 @@ is not persistent, so photos need object storage before going live) and served o
 
 Light only, gray neutrals on a `bg-gray-50` canvas, white cards, Flowbite
 React components themed through Tailwind. Font: Geist (`next/font`). Icons:
-**Material Symbols Outlined**, the same set the Django templates used.
+**Material Symbols Outlined**, the same set the Django templates used. The
+action color is navy: the `--primary-*` scale in `globals.css` replaces
+Flowbite's blue, so code uses `primary-*` classes, never `blue-*`. Icons are
+gray (`[data-tip]` icon buttons rest in gray-500), and the root layout's
+`ThemeProvider` keeps secondary buttons from turning blue on hover. The full
+palette and rules are in DESIGN.md.
 Shared CSS is in `src/app/globals.css`.
 
 - Layout: `src/app/(app)/layout.tsx` with `<AppSidebar>`
