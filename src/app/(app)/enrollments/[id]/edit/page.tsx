@@ -140,7 +140,7 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
           )}
           {documents.length > 0 && (
             <p className="mt-1 text-sm text-gray-700 tabular-nums">
-              <Link href="#matricula" className="underline-offset-2 hover:text-blue-700 hover:underline">
+              <Link href="#matricula" className="underline-offset-2 hover:text-primary-700 hover:underline">
                 {delivered === documents.length ? "Todos os documentos entregues" : `${delivered} de ${documents.length} documentos entregues`}
               </Link>
             </p>
@@ -300,7 +300,7 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
                         {formatDate(a.issueDate)}
                       </TableCell>
                       <TableCell className={PRIMARY_CELL}>
-                        <Link className="underline-offset-2 hover:text-blue-700 hover:underline" href={`/accounts/receivable/${a.id}/edit`}>
+                        <Link className="underline-offset-2 hover:text-primary-700 hover:underline" href={`/accounts/receivable/${a.id}/edit`}>
                           {a.description}
                         </Link>
                         <span className="block text-xs font-normal text-gray-500">{a.category}</span>

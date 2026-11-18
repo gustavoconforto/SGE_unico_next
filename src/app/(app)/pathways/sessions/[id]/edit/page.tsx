@@ -11,12 +11,12 @@ export const metadata: Metadata = { title: "Editar aula" };
 
 export default async function EditSessionPage({ params }: PageProps<"/pathways/sessions/[id]/edit">) {
   const id = await idParam(params);
-  const [row] = await db.select().from(session).where(eq(session.id, id));
+  const [[row], offerings] = await Promise.all([db.select().from(session).where(eq(session.id, id)), offeringOptions()]);
   if (!row) notFound();
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">Editar aula</h1>
-      <SessionForm id={id} back={`/pathways/sessions?offering=${row.offeringId}`} defaults={row} offerings={(await offeringOptions()).map((o) => [o.id, o.label])} />
+      <SessionForm id={id} back={`/pathways/sessions?offering=${row.offeringId}`} defaults={row} offerings={offerings.map((o) => [o.id, o.label])} />
     </div>
   );
 }

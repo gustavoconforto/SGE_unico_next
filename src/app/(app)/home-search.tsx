@@ -15,7 +15,7 @@ export function HomeSearchInput() {
       name="q"
       type="search"
       placeholder="Nome, matrícula ou CPF"
-      className="block w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-600 focus:ring-blue-600"
+      className="block w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-900 placeholder:text-gray-500 focus:border-primary-600 focus:ring-primary-600"
     />
   );
 }

@@ -2,11 +2,10 @@ import { and, asc, count, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { TableCell, TableRow } from "flowbite-react";
 import { CellLabel } from "@/components/list-labels";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { DeleteButton } from "@/components/delete-button";
 import { FilterDate, FilterSelect } from "@/components/list-controls";
 import { LinkButton } from "@/components/link-button";
-import { ListPage, PRIMARY_CELL } from "@/components/list-page";
+import { ACTIONS_CELL, ListPage, PRIMARY_CELL } from "@/components/list-page";
 import { db } from "@/db";
 import { enrollmentsSchoolyear as year, pathwaysPathway as pathway, pathwaysPathwayoffering as offering, pathwaysPathwaysession as session } from "@/db/schema/app";
 import { formatDate } from "@/lib/finance";
@@ -58,6 +57,7 @@ export default async function SessionListPage({ searchParams }: PageProps<"/path
         </>
       }
       headers={["Data", "Turma de itinerário", "Conteúdo", "Presentes", "Faltas"]}
+      numeric={["Presentes", "Faltas"]}
       page={page}
       total={total}
     >
@@ -91,12 +91,12 @@ export default async function SessionListPage({ searchParams }: PageProps<"/path
                 Sem chamada
               </TableCell>
             )}
-            <TableCell>
-              <div className="flex items-center gap-2">
-                <Link className="text-sm text-blue-600 hover:underline dark:text-blue-400" href={`/pathways/sessions/${r.id}/attendance`}>
-                  Chamada
-                </Link>
-                <LinkButton href={`/pathways/sessions/${r.id}/edit`} size="xs" color="alternative" aria-label={`Editar a aula de ${formatDate(r.date)}`}>
+            <TableCell className={ACTIONS_CELL}>
+              <div className="flex gap-2 whitespace-nowrap">
+                <LinkButton href={`/pathways/sessions/${r.id}/attendance`} size="xs" color="alternative" className="px-2" aria-label={`Chamada da aula de ${formatDate(r.date)}`} data-tip="Chamada">
+                  <span className="material-symbols-outlined" aria-hidden="true">checklist</span>
+                </LinkButton>
+                <LinkButton href={`/pathways/sessions/${r.id}/edit`} size="xs" color="alternative" className="px-2" aria-label={`Editar a aula de ${formatDate(r.date)}`} data-tip="Editar">
                   <span className="material-symbols-outlined" aria-hidden="true">edit</span>
                 </LinkButton>
                 <DeleteButton action={deleteSession.bind(null, r.id)} label={`a aula de ${formatDate(r.date)}`} note="A chamada desta aula também é excluída." />

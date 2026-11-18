@@ -36,6 +36,8 @@ export function ListPage(props: {
   /** Sortable headers and their `?sort=` key (see sortParam); `sort` is the current param. */
   sortable?: Record<string, string>;
   sort?: string;
+  /** Shown in place of the rows when there are none. */
+  empty?: string;
   page: number;
   total: number;
   children: React.ReactNode;
@@ -77,7 +79,7 @@ export function ListPage(props: {
             {props.total === 0 && (
               <TableRow>
                 <TableCell colSpan={props.headers.length + 1} className="text-center text-gray-500">
-                  Nenhum registro encontrado.
+                  {props.empty ?? "Nenhum registro encontrado."}
                 </TableCell>
               </TableRow>
             )}
@@ -122,8 +124,8 @@ export function MoneyCell({ children }: { children: React.ReactNode }) {
 /** The pinned actions cell; on phone cards it sits at the end of the card instead. */
 export const ACTIONS_CELL = "sticky right-0 border-l border-gray-200 bg-inherit max-sm:static max-sm:ml-auto max-sm:border-0";
 
-/** One row: the cells, then edit (and delete when `deleteAction` is given). `primary`: the cell that names the row (bold). */
-export function ListRow(props: { cells: React.ReactNode[]; primary?: number; label: string; editHref: string; deleteAction?: () => Promise<void>; deleteNote?: string }) {
+/** One row: the cells, then `actions` (extra icon buttons), edit, and delete when `deleteAction` is given. `primary`: the cell that names the row (bold). */
+export function ListRow(props: { cells: React.ReactNode[]; primary?: number; label: string; editHref: string; actions?: React.ReactNode; deleteAction?: () => Promise<void>; deleteNote?: string }) {
   const primary = props.primary ?? 0;
   return (
     <TableRow>
@@ -135,7 +137,7 @@ export function ListRow(props: { cells: React.ReactNode[]; primary?: number; lab
             {i !== primary && <CellLabel i={i} />}
             {/* The name opens the record too: a bigger target than the pencil, and the first stop when tabbing */}
             {i === primary ? (
-              <Link href={props.editHref} className="underline-offset-2 hover:text-blue-700 hover:underline">
+              <Link href={props.editHref} className="underline-offset-2 hover:text-primary-700 hover:underline">
                 {content}
               </Link>
             ) : (
@@ -147,6 +149,7 @@ export function ListRow(props: { cells: React.ReactNode[]; primary?: number; lab
       {/* Pinned right, so a wide table's actions stay on screen; a flex <td> would lose its table-cell layout */}
       <TableCell className={ACTIONS_CELL}>
         <div className="flex gap-2 whitespace-nowrap">
+          {props.actions}
           <LinkButton href={props.editHref} size="xs" color="alternative" className="px-2" aria-label={`Editar ${props.label}`} data-tip="Editar">
             <span className="material-symbols-outlined" aria-hidden="true">
               edit

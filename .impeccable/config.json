@@ -29,6 +29,12 @@
         ],
         "createdAt": "2026-11-17T16:19:55.855Z",
         "reason": "agent: Arial ported from Django print_base.html; printed enrollment documents keep the legacy font"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "material symbols outlined",
+        "createdAt": "2026-11-18T10:41:02.171Z",
+        "reason": "Claude: icon font (not typography), already in layout.tsx before this change, same font the Django templates use"
       }
     ]
   }

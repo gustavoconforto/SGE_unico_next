@@ -179,7 +179,7 @@ export function Combobox(props: Props) {
                 pick(o);
               }}
               onMouseEnter={() => setActive(i)}
-              className={`flex cursor-pointer items-baseline justify-between gap-3 px-3 py-2 text-sm ${i === active ? "bg-blue-50 text-blue-900" : "text-gray-900"}`}
+              className={`flex cursor-pointer items-baseline justify-between gap-3 px-3 py-2 text-sm ${i === active ? "bg-primary-50 text-primary-900" : "text-gray-900"}`}
             >
               <span>
                 {o.label}

@@ -180,7 +180,7 @@ export function PaymentForm({ id, direction, returnToAccount, defaults = {}, sel
           />
           {/* key: a newly picked overdue installment opens it again, even if staff closed it for the last one */}
           <details key={installment?.id} open={showAdjustments || undefined} className="group sm:col-span-2">
-            <summary className="flex min-h-10 w-fit cursor-pointer list-none items-center gap-1 rounded-md text-sm font-medium text-blue-700 hover:underline [&::-webkit-details-marker]:hidden">
+            <summary className="flex min-h-10 w-fit cursor-pointer list-none items-center gap-1 rounded-md text-sm font-medium text-primary-700 hover:underline [&::-webkit-details-marker]:hidden">
               <span className="material-symbols-outlined transition-transform group-open:rotate-90" aria-hidden="true">
                 chevron_right
               </span>

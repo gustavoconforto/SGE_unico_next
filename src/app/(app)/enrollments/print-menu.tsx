@@ -1,7 +1,6 @@
 "use client";
 
 import { Dropdown, DropdownItem } from "flowbite-react";
-import Link from "next/link";
 
 const DOCUMENTS = [
   ["contrato", "Contrato"],
@@ -27,7 +26,7 @@ export function PrintMenu({ id, blocked }: { id: number; blocked: Record<Doc, st
             </span>
           </DropdownItem>
         ) : (
-          <DropdownItem key={doc} as={Link} href={`/enrollments/${id}/print/${doc}`}>
+          <DropdownItem key={doc} as="a" href={`/enrollments/${id}/print/${doc}`} target="_blank" rel="noopener">
             {name}
           </DropdownItem>
         ),

@@ -40,7 +40,7 @@ export default async function DiaryPage({ params, searchParams }: PageProps<"/pa
     "O ano escolar não tem as datas deste bimestre. Preencha-as no cadastro do ano escolar."
   ) : !weekdays.length ? (
     <>
-      Defina os dias de aula da turma para montar o diário. <Link className="text-blue-600 underline" href={`/pathways/offerings/${id}/edit`}>Editar turma de itinerário</Link>
+      Defina os dias de aula da turma para montar o diário. <Link className="text-primary-600 underline" href={`/pathways/offerings/${id}/edit`}>Editar turma de itinerário</Link>
     </>
   ) : !days.length ? (
     "Nenhum dia de aula neste bimestre."

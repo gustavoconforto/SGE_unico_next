@@ -7,6 +7,17 @@
 
 :root {
   color-scheme: light;
+  /* Action color: navy, replacing Flowbite's blue. Every `primary-*` class reads it (DESIGN.md, "Action Navy") */
+  --primary-50: #eef2f8;
+  --primary-100: #dbe4f0;
+  --primary-200: #b8c8df;
+  --primary-300: #8aa3c6;
+  --primary-400: #5b7ca8;
+  --primary-500: #3c5f8f;
+  --primary-600: #284a78;
+  --primary-700: #1e3a5f;
+  --primary-800: #172d4a;
+  --primary-900: #0f1f35;
 }
 
 @theme inline {
@@ -30,17 +41,25 @@ form:not(:has(.field-optional)) .required-note {
 }
 
 ::selection {
-  background: var(--color-blue-100);
+  background: var(--color-primary-100);
   color: var(--color-gray-900);
 }
 
 :where(input, textarea) {
-  caret-color: var(--color-blue-700);
+  caret-color: var(--color-primary-700);
 }
 
 .material-symbols-outlined {
   font-size: 20px;
   line-height: 1;
+}
+
+/* Icon-only actions rest in gray and take the button's color on hover/focus; never the action color (DESIGN.md) */
+[data-tip] > .material-symbols-outlined {
+  color: var(--color-gray-500);
+}
+[data-tip]:is(:hover, :focus-visible) > .material-symbols-outlined {
+  color: inherit;
 }
 
 /* Icon-only actions name themselves on hover and keyboard focus (data-tip mirrors the aria-label) */

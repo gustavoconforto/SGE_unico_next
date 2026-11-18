@@ -40,8 +40,8 @@ export function SearchBox({ placeholder = "Pesquisar..." }: { placeholder?: stri
   return <TextInput type="search" aria-label="Pesquisar" placeholder={placeholder} value={value} onChange={(e) => setValue(e.target.value)} className="w-full sm:max-w-md" />;
 }
 
-// Flowbite's cyan active page is 3.5:1 on its tint; the app's blue passes 4.5:1
-const PAGINATION_THEME = { pages: { selector: { active: "bg-blue-50 text-blue-800 hover:bg-blue-100 hover:text-blue-900" } } };
+// Flowbite's cyan active page is 3.5:1 on its tint; the app's navy passes 4.5:1
+const PAGINATION_THEME = { pages: { selector: { active: "bg-primary-50 text-primary-800 hover:bg-primary-100 hover:text-primary-900" } } };
 
 export function ListPagination({ page, totalPages }: { page: number; totalPages: number }) {
   const setParams = useSetParams();
