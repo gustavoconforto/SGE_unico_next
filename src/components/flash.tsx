@@ -20,6 +20,7 @@ const MESSAGES = {
   account_in_use: { text: "Esta conta possui parcelas em uso (ex.: boletos) e não pode ser excluída.", ok: false },
   payment_created: { text: "Baixa registrada com sucesso", ok: true },
   payment_updated: { text: "Baixa atualizada com sucesso", ok: true },
+  payments_created: { text: "Baixas registradas com sucesso", ok: true },
   payment_deleted: { text: "Baixa excluída. O valor voltou ao saldo da parcela.", ok: true },
   installment_created: { text: "Parcela cadastrada com sucesso", ok: true },
   student_created: { text: "Aluno cadastrado. Para matriculá-lo, use “Matricular” no topo da página.", ok: true },

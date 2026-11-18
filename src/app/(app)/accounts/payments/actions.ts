@@ -6,9 +6,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
 import { accountsAccount as account, accountsInstallment as installment, accountsPayment as payment, accountsSupplier as supplier, studentsGuardian as guardian } from "@/db/schema/app";
-import { PAYMENT_METHODS, PENDING_STATUSES, formatMoney, installmentBalance, money, principal } from "@/lib/finance";
+import { PAYMENT_METHODS, PENDING_STATUSES, formatMoney, installmentBalance, money, principal, toDb } from "@/lib/finance";
 import { lockInstallment, outstandingSql, refreshInstallmentStatus } from "@/lib/finance-db";
-import { type FormState, INVALID_CHOICE, REQUIRED, decimalField, foreignKey, parseForm, requiredDate } from "@/lib/form";
+import { type FormErrors, type FormState, INVALID_CHOICE, REQUIRED, decimalField, foreignKey, formIds, parseForm, requiredDate } from "@/lib/form";
 import { likePattern } from "@/lib/list";
 import { requireSession } from "@/lib/session";
 import { type InstallmentChoice, toChoice } from "./data";
@@ -114,6 +114,73 @@ export async function savePayment(id: number | null, direction: "R" | "P", retur
   // "Baixar" came from an account page: go back there to print the receipt
   if (returnToAccount) redirect(`/accounts/${direction === "R" ? "receivable" : "payable"}/${result.accountId}/edit?msg=${msg}`);
   redirect(`/accounts/payments${direction === "P" ? "?direction=P&" : "?"}msg=${msg}`);
+}
+
+const batchSchema = paymentSchema.pick({ paidAt: true, method: true, notes: true });
+const charge = decimalField({ min: 0, optional: true });
+const ROW_FIELDS = ["penalty", "interest", "discount"] as const;
+
+/**
+ * Several installments of one receivable account paid at once (no Django equivalent): one payment per installment,
+ * each settling its whole balance plus that row's multa/juros, minus its desconto. All or nothing.
+ * `balance_<id>` is the balance the screen showed, so a payment saved meanwhile can't change what the guardian pays.
+ */
+export async function saveBatchPayment(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireSession();
+  const { data, values, state } = parseForm(batchSchema, formData);
+  // Ascending, so two batches over the same installments lock them in the same order and can't deadlock
+  const ids = formIds(formData, "installment").sort((a, b) => a - b);
+  if (!ids.length) return { formError: "Selecione ao menos uma parcela.", values };
+  const errors: FormErrors = { ...state?.errors };
+  const rows = ids.map((id) => {
+    const row = { id, shown: values[`balance_${id}`] ?? "", penalty: "0.00", interest: "0.00", discount: "0.00" };
+    for (const k of ROW_FIELDS) {
+      const parsed = charge.safeParse(values[`${k}_${id}`] ?? "");
+      if (parsed.success) row[k] = parsed.data ?? "0.00";
+      else errors[`${k}_${id}`] = [parsed.error.issues[0].message];
+    }
+    return row;
+  });
+  if (!data || Object.keys(errors).length) return { errors, values };
+
+  const result = await db.transaction(async (tx) => {
+    // Check every installment before inserting anything: an early return commits what was already written
+    const checked = [];
+    let target: { accountId: number; enrollmentId: number | null } | undefined;
+    for (const row of rows) {
+      const locked = await lockInstallment(tx, row.id);
+      const [acc] = locked
+        ? await tx.select({ direction: account.direction, enrollmentId: account.enrollmentId }).from(account).where(eq(account.id, locked.accountId))
+        : [];
+      if (!locked || acc?.direction !== "R" || !PENDING_STATUSES.includes(locked.status) || (target && target.accountId !== locked.accountId))
+        return { formError: "Uma das parcelas não aceita mais baixa (já quitada ou cancelada). Volte à matrícula e selecione de novo." };
+      target = { accountId: locked.accountId, enrollmentId: acc.enrollmentId };
+      const balance = installmentBalance(locked.amount, locked.status, money(locked.paid));
+      if (!/^\d+(\.\d+)?$/.test(row.shown) || !balance.eq(money(row.shown)))
+        return { formError: "Uma das parcelas recebeu outra baixa enquanto esta tela estava aberta. Volte à matrícula e selecione de novo." };
+      const amount = balance.plus(money(row.penalty)).plus(money(row.interest)).minus(money(row.discount));
+      if (amount.lte(0)) return { errors: { [`discount_${row.id}`]: ["O desconto deve ser menor que o saldo mais multa e juros."] } };
+      checked.push({ ...row, amount: toDb(amount) });
+    }
+    for (const row of checked) {
+      await tx.insert(payment).values({
+        installmentId: row.id,
+        paidAt: data.paidAt,
+        method: data.method,
+        notes: data.notes,
+        amount: row.amount,
+        penalty: row.penalty,
+        interest: row.interest,
+        monetaryAdjust: "0.00",
+        discount: row.discount,
+      });
+      await refreshInstallmentStatus(tx, row.id);
+    }
+    return target!;
+  });
+  if ("formError" in result || "errors" in result) return { ...result, values };
+
+  redirect(result.enrollmentId ? `/enrollments/${result.enrollmentId}/edit?msg=payments_created` : `/accounts/receivable/${result.accountId}/edit?msg=payments_created`);
 }
 
 export async function deletePayment(id: number) {

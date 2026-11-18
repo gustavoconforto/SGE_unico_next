@@ -19,6 +19,26 @@ type Props = {
 
 const PLACEHOLDERS = { R: "Buscar por conta ou responsável…", P: "Buscar por conta, fornecedor ou CPF/CNPJ…" };
 const LAST_METHOD = "gestao:last-payment-method";
+
+/** A new payment starts with the method this person used last (per browser; nothing else depends on it). */
+export function useLastMethod(enabled: boolean) {
+  useEffect(() => {
+    const select = document.getElementById("method") as HTMLSelectElement | null;
+    if (!enabled || !select || select.value) return;
+    try {
+      const last = localStorage.getItem(LAST_METHOD);
+      if (last && PAYMENT_METHODS.some(([code]) => code === last)) select.value = last;
+    } catch {}
+  }, [enabled]);
+}
+
+export function rememberMethod(formData: FormData) {
+  try {
+    // A blank choice (failed submit) must not erase the remembered one
+    const method = String(formData.get("method") ?? "");
+    if (method) localStorage.setItem(LAST_METHOD, method);
+  } catch {}
+}
 const MONEY_FIELDS = ["amount", "discount", "penalty", "interest", "monetaryAdjust"] as const;
 const ADJUSTMENTS = [
   ["penalty", "Multa"],
@@ -69,15 +89,7 @@ export function PaymentForm({ id, direction, returnToAccount, defaults = {}, sel
   const late = installment ? daysLate(installment) : 0;
   const showAdjustments = !!late || !!state.errors?.amount || ADJUSTMENTS.some(([name]) => state.errors?.[name] || values[name]);
 
-  // A new payment starts with the method this person used last (per browser; nothing else depends on it)
-  useEffect(() => {
-    const select = document.getElementById("method") as HTMLSelectElement | null;
-    if (id || !select || select.value) return;
-    try {
-      const last = localStorage.getItem(LAST_METHOD);
-      if (last && PAYMENT_METHODS.some(([code]) => code === last)) select.value = last;
-    } catch {}
-  }, [id]);
+  useLastMethod(!id);
 
   // On edit, the server's balance already excludes this payment: add it back while the installment is unchanged
   const original = id && selected && installment?.id === selected.id ? principal(Object.fromEntries(MONEY_FIELDS.map((k) => [k, String(defaults[k] || 0)])) as PaymentValues) : money(0);
@@ -98,11 +110,7 @@ export function PaymentForm({ id, direction, returnToAccount, defaults = {}, sel
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    try {
-      // A blank choice (failed submit) must not erase the remembered one
-      const method = String(formData.get("method") ?? "");
-      if (method) localStorage.setItem(LAST_METHOD, method);
-    } catch {}
+    rememberMethod(formData);
     startTransition(() => action(formData));
   }
 
