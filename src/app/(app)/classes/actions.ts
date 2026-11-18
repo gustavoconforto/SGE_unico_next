@@ -8,7 +8,7 @@ import { classesClass } from "@/db/schema/app";
 import { deleteAndRedirect } from "@/lib/crud";
 import { UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import { type FormState, foreignKey, optionalSmallInt, parseForm, requiredText } from "@/lib/form";
-import { requireSession } from "@/lib/session";
+import { requirePermission } from "@/lib/access";
 
 const classSchema = z.object({
   programId: foreignKey,
@@ -19,7 +19,7 @@ const classSchema = z.object({
 });
 
 export async function saveClass(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSession();
+  await requirePermission("academicSetup.edit");
   const { data, values, state } = parseForm(classSchema, formData);
   if (!data) return state;
   try {
@@ -34,6 +34,6 @@ export async function saveClass(id: number | null, _prev: FormState, formData: F
 }
 
 export async function deleteClass(id: number) {
-  await requireSession();
+  await requirePermission("academicSetup.edit");
   await deleteAndRedirect(() => db.delete(classesClass).where(eq(classesClass.id, id)), "/classes");
 }

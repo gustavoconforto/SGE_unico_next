@@ -7,7 +7,7 @@ import { db } from "@/db";
 import { accountsAccount as account, accountsAccounttype as accountType, accountsInstallment as installment, accountsPayment as payment } from "@/db/schema/app";
 import { deletePayment, saveBatchPayment, savePayment } from "./actions";
 
-vi.mock("@/lib/session", () => ({ requireSession: async () => ({}) }));
+vi.mock("@/lib/session", () => ({ requireSession: async () => ({ user: { role: "admin" } }) }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT ${url}`);

@@ -8,13 +8,13 @@ import { accountsAccounttype as accountType } from "@/db/schema/app";
 import { deleteAndRedirect } from "@/lib/crud";
 import { UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import { REQUIRED, type FormState, parseForm, requiredText } from "@/lib/form";
-import { requireSession } from "@/lib/session";
+import { requirePermission } from "@/lib/access";
 import { accountsInCategory } from "./data";
 
 const categorySchema = z.object({ name: requiredText(100), direction: z.enum(["R", "P"], { error: REQUIRED }) });
 
 export async function saveCategory(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSession();
+  await requirePermission("finance.edit");
   const { data, values, state } = parseForm(categorySchema.partial({ direction: true }), formData);
   if (!data) return state;
   // Accounts only accept categories of their own direction, so it can't change once the category is in use
@@ -32,6 +32,6 @@ export async function saveCategory(id: number | null, _prev: FormState, formData
 }
 
 export async function deleteCategory(id: number) {
-  await requireSession();
+  await requirePermission("finance.edit");
   await deleteAndRedirect(() => db.delete(accountType).where(eq(accountType.id, id)), "/accounts/categories", "category_protected");
 }

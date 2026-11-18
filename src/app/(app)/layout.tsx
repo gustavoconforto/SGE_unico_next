@@ -4,7 +4,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { Flash } from "@/components/flash";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { isStaff } from "@/lib/grade-lock";
+import { userAccess } from "@/lib/access";
 import { Authenticated } from "@/lib/session";
 
 export default function AppLayout({ children }: LayoutProps<"/">) {
@@ -29,8 +29,9 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
   );
 }
 
-/** The menu, with staff-only items when the signed-in user is staff. */
+/** The menu, without the screens the signed-in user's groups don't allow. */
 async function Sidebar() {
   const session = await auth.api.getSession({ headers: await headers() });
-  return <AppSidebar staff={!!session && (await isStaff(session.user))} />;
+  const access = session ? await userAccess(session.user) : { all: false, granted: new Set<string>() };
+  return <AppSidebar all={access.all} granted={[...access.granted]} />;
 }

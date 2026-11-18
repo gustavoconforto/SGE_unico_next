@@ -6,16 +6,16 @@ import { db } from "@/db";
 import { gradesGrade as grade } from "@/db/schema/app";
 import { UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import type { FormErrors, FormState } from "@/lib/form";
-import { allLocks, gradeEditError, isStaff } from "@/lib/grade-lock";
+import { allLocks, gradeEditError } from "@/lib/grade-lock";
 import { formValues } from "@/lib/form";
-import { requireSession } from "@/lib/session";
+import { hasPermission, requirePermission } from "@/lib/access";
 import { SHEET_TAKEN, editedCell, parseScore } from "../score";
 import { cellName, loadSheet } from "./sheet";
 
 /** Saves a whole sheet: blank cells delete the grade; any invalid cell saves nothing. */
 export async function saveGradeSheet(selection: { query: string; classId: number; subjectId: number; period: number }, _prev: FormState, formData: FormData): Promise<FormState> {
-  const { user } = await requireSession();
-  const [sheet, staff, locks] = await Promise.all([loadSheet(selection.classId, selection.subjectId, selection.period), isStaff(user), allLocks()]);
+  const { user } = await requirePermission("grades.edit");
+  const [sheet, staff, locks] = await Promise.all([loadSheet(selection.classId, selection.subjectId, selection.period), hasPermission(user, "grades.manage"), allLocks()]);
   if (!sheet) redirect(`/grades/entry?${selection.query}`);
   const values = formValues(formData);
   const errors: FormErrors = {};

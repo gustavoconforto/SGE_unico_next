@@ -7,14 +7,14 @@ import { db } from "@/db";
 import { incidentsIncident as t } from "@/db/schema/app";
 import { deleteAndRedirect } from "@/lib/crud";
 import { foreignKey, type FormState, parseForm, anotherUrl } from "@/lib/form";
-import { requireSession } from "@/lib/session";
+import { requirePermission } from "@/lib/access";
 import { enrollmentAllowed } from "@/app/(app)/enrollments/data";
 import { INVALID_ENROLLMENT, recordFields } from "@/app/(app)/incidents/records";
 
 const schema = z.object({ ...recordFields, incidentTypeId: foreignKey });
 
 export async function saveRecord(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSession();
+  await requirePermission("incidents.edit");
   const { data, values, state } = parseForm(schema, formData);
   if (!data) return state;
   const [current] = id ? await db.select({ enrollmentId: t.enrollmentId }).from(t).where(eq(t.id, id)) : [];
@@ -29,6 +29,6 @@ export async function saveRecord(id: number | null, _prev: FormState, formData: 
 }
 
 export async function deleteRecord(id: number) {
-  await requireSession();
+  await requirePermission("incidents.edit");
   await deleteAndRedirect(() => db.delete(t).where(eq(t.id, id)), "/incidents");
 }

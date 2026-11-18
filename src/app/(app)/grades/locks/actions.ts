@@ -4,8 +4,7 @@ import { and, eq, or } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { gradesGradelock as lock } from "@/db/schema/app";
-import { isStaff } from "@/lib/grade-lock";
-import { requireSession } from "@/lib/session";
+import { requirePermission } from "@/lib/access";
 
 /** The "subjectId:bimester" keys posted under `name`. */
 const keys = (formData: FormData, name: string) => new Set(formData.getAll(name).map(String).filter((v) => /^\d+:[1-5]$/.test(v)));
@@ -16,10 +15,10 @@ const row = (key: string) => {
 
 /**
  * Applies only what this form changed (`shown` = the locks it loaded with), so a stale page can't undo a lock
- * someone else saved meanwhile. Staff only.
+ * someone else saved meanwhile.
  */
 export async function saveGradeLocks(formData: FormData) {
-  if (!(await isStaff((await requireSession()).user))) redirect("/");
+  await requirePermission("grades.manage");
   const shown = keys(formData, "shown");
   const checked = keys(formData, "lock");
   const removed = [...shown].filter((k) => !checked.has(k)).map(row);
