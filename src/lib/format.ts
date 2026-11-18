@@ -93,3 +93,16 @@ export function formatDocument(value: string | null | undefined): string {
 
 /** "Pessoa física" for a CPF, "Pessoa jurídica" for a CNPJ. */
 export const personKind = (value: string | null | undefined) => ({ 11: "Pessoa física", 14: "Pessoa jurídica" })[(value ?? "").length] ?? "";
+
+/** Login suggested from a person's name: "Maria da Conceição Silva" → "maria.silva" (first and last name, no accents). */
+export function suggestUsername(name: string): string {
+  const words = name
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w) => w.replace(/[^a-z0-9]/g, ""))
+    .filter(Boolean);
+  const parts = words.length > 1 ? [words[0], words[words.length - 1]] : words;
+  return parts.join(".").slice(0, 30);
+}

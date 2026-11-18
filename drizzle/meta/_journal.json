@@ -22,6 +22,20 @@
       "when": 1794919972182,
       "tag": "0002_wide_lenny_balinger",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794934995390,
+      "tag": "0003_yellow_skullbuster",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794935477302,
+      "tag": "0004_talented_patch",
+      "breakpoints": true
     }
   ]
 }
