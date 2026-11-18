@@ -1,11 +1,8 @@
-import { and, asc, count, desc, eq, exists, ilike, inArray, or } from "drizzle-orm";
-import { TableCell, TableRow } from "flowbite-react";
-import { CellLabel } from "@/components/list-labels";
+import { and, asc, count, desc, eq, exists, ilike, inArray, or, sql } from "drizzle-orm";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { DeleteButton } from "@/components/delete-button";
 import { FilterSelect } from "@/components/list-controls";
-import { ListPage, PRIMARY_CELL } from "@/components/list-page";
+import { ListPage, ListRow } from "@/components/list-page";
 import { LinkButton } from "@/components/link-button";
 import { db } from "@/db";
 import {
@@ -46,7 +43,7 @@ export default async function OfferingListPage({ searchParams }: PageProps<"/pat
   const page = pageParam(sp);
   const [rows, [{ total }], years, pathways] = await Promise.all([
     db
-      .select({ id: offering.id, name: offering.name, schedule: offering.schedule, capacity: offering.capacity, pathway: pathway.name, year: offeringYear, taken: seatsTaken })
+      .select({ id: offering.id, yearId: offering.schoolYearId, givesGrade: sql<boolean>`${pathway.extraPoints} > 0`, name: offering.name, schedule: offering.schedule, capacity: offering.capacity, pathway: pathway.name, year: offeringYear, taken: seatsTaken })
       .from(offering)
       .innerJoin(pathway, eq(offering.pathwayId, pathway.id))
       .innerJoin(year, eq(offering.schoolYearId, year.id))
@@ -79,45 +76,44 @@ export default async function OfferingListPage({ searchParams }: PageProps<"/pat
         </>
       }
       headers={["Itinerário", "Ano escolar", "Turma", "Horário", "Professores", "Inscritos"]}
+      numeric={["Inscritos"]}
       page={page}
       total={total}
     >
       {rows.map((r) => (
-        <TableRow key={r.id}>
-          <TableCell className={PRIMARY_CELL}>{r.pathway}</TableCell>
-          <TableCell>
-            <CellLabel i={1} />
-            {r.year}
-          </TableCell>
-          <TableCell>
-            <CellLabel i={2} />
-            {r.name || "—"}
-          </TableCell>
-          <TableCell>
-            <CellLabel i={3} />
-            {r.schedule || "—"}
-          </TableCell>
-          <TableCell>
-            <CellLabel i={4} />
-            {teachers.filter((t) => t.offeringId === r.id).map((t) => t.name).join(", ") || "—"}</TableCell>
-          <TableCell className="text-right">
-            <CellLabel i={5} />
-            {r.taken}
-            {r.capacity !== null && ` / ${r.capacity}`}
-          </TableCell>
-          <TableCell className="max-sm:basis-full">
-            <div className="flex flex-wrap items-center gap-2">
-              <Link className={link} href={`/pathways/enrollments?offering=${r.id}`}>Inscritos</Link>
-              <Link className={link} href={`/pathways/sessions?offering=${r.id}`}>Aulas</Link>
-              <Link className={link} href={`/pathways/grades?school_year=${yearId ?? ""}&offering=${r.id}`}>Notas</Link>
-              <a className={link} href={`/pathways/offerings/${r.id}/diary`} target="_blank" rel="noopener">Diário</a>
-              <LinkButton href={`/pathways/offerings/${r.id}/edit`} size="xs" color="alternative" aria-label={`Editar ${r.pathway}`}>
-                <span className="material-symbols-outlined" aria-hidden="true">edit</span>
+        <ListRow
+          key={r.id}
+          label={`${r.pathway} ${r.year}`}
+          editHref={`/pathways/offerings/${r.id}/edit`}
+          deleteAction={deleteOffering.bind(null, r.id)}
+          cells={[
+            r.pathway,
+            r.year,
+            r.name || "—",
+            r.schedule || "—",
+            teachers.filter((t) => t.offeringId === r.id).map((t) => t.name).join(", ") || "—",
+            <Link key="taken" className={`${link} block text-right whitespace-nowrap tabular-nums`} href={`/pathways/enrollments?offering=${r.id}`} aria-label={`Inscritos em ${r.pathway}: ${r.taken}${r.capacity !== null ? ` de ${r.capacity}` : ""}`}>
+              {r.taken}
+              {r.capacity !== null && ` / ${r.capacity}`}
+            </Link>,
+          ]}
+          actions={
+            <>
+              <LinkButton href={`/pathways/sessions?offering=${r.id}`} size="xs" color="alternative" className="px-2" aria-label={`Aulas de ${r.pathway}`} data-tip="Aulas e chamadas">
+                <span className="material-symbols-outlined" aria-hidden="true">fact_check</span>
               </LinkButton>
-              <DeleteButton action={deleteOffering.bind(null, r.id)} label={`${r.pathway} ${r.year}`} />
-            </div>
-          </TableCell>
-        </TableRow>
+              {/* The grades page only lists pathways that give extra points */}
+              {r.givesGrade && (
+                <LinkButton href={`/pathways/grades?school_year=${r.yearId}&offering=${r.id}`} size="xs" color="alternative" className="px-2" aria-label={`Notas de ${r.pathway}`} data-tip="Notas">
+                  <span className="material-symbols-outlined" aria-hidden="true">grading</span>
+                </LinkButton>
+              )}
+              <LinkButton href={`/pathways/offerings/${r.id}/diary`} target="_blank" rel="noopener" size="xs" color="alternative" className="px-2" aria-label={`Diário de ${r.pathway} (nova aba)`} data-tip="Diário">
+                <span className="material-symbols-outlined" aria-hidden="true">menu_book</span>
+              </LinkButton>
+            </>
+          }
+        />
       ))}
     </ListPage>
   );
