@@ -1,5 +1,6 @@
 import { asc, count, desc, eq, sql } from "drizzle-orm";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { LinkButton } from "@/components/link-button";
 import { ListPage, ListRow } from "@/components/list-page";
 import { db } from "@/db";
@@ -16,7 +17,7 @@ export default async function ClassListPage({ searchParams }: PageProps<"/classe
   const page = pageParam(sp);
   const from = () =>
     db
-      .select({ id: klass.id, name: klass.name, gradeLevel: klass.gradeLevel, program: program.name, year: yearLabel })
+      .select({ id: klass.id, yearId: klass.yearId, name: klass.name, gradeLevel: klass.gradeLevel, program: program.name, year: yearLabel })
       .from(klass)
       .innerJoin(program, eq(klass.programId, program.id))
       .innerJoin(year, eq(klass.yearId, year.id));
@@ -36,11 +37,19 @@ export default async function ClassListPage({ searchParams }: PageProps<"/classe
 
   return (
     <div className="flex flex-col gap-4">
-      <ListPage title="Turmas" newHref="/classes/new" newLabel="Nova turma" searchPlaceholder="Pesquisar por turma, curso ou ano..." headers={["Curso", "Ano", "Série", "Nome"]} page={page} total={total}>
+      <ListPage title="Turmas" newHref="/classes/new" newLabel="Nova turma" searchPlaceholder="Pesquisar por turma, curso ou ano..." headers={["Curso", "Ano", "Série", "Nome", "Alunos"]} page={page} total={total}>
         {rows.map((c) => (
           <ListRow
             key={c.id}
-            cells={[c.program, c.year, c.gradeLevel ?? "—", c.name]}
+            cells={[
+              c.program,
+              c.year,
+              c.gradeLevel ?? "—",
+              c.name,
+              <Link key="students" href={`/classes/detail?school_year=${c.yearId}&school_class=${c.id}`} className="text-blue-700 underline-offset-2 hover:underline">
+                Ver alunos
+              </Link>,
+            ]}
             label={c.name}
             editHref={`/classes/${c.id}/edit`}
             deleteAction={deleteClass.bind(null, c.id)}

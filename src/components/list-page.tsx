@@ -36,6 +36,8 @@ export function ListPage(props: {
   /** Sortable headers and their `?sort=` key (see sortParam); `sort` is the current param. */
   sortable?: Record<string, string>;
   sort?: string;
+  /** Shown in place of the rows when there are none. */
+  empty?: string;
   page: number;
   total: number;
   children: React.ReactNode;
@@ -77,7 +79,7 @@ export function ListPage(props: {
             {props.total === 0 && (
               <TableRow>
                 <TableCell colSpan={props.headers.length + 1} className="text-center text-gray-500">
-                  Nenhum registro encontrado.
+                  {props.empty ?? "Nenhum registro encontrado."}
                 </TableCell>
               </TableRow>
             )}
