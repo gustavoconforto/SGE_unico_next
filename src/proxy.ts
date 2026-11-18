@@ -22,5 +22,5 @@ export async function proxy(request: NextRequest) {
 const PASSWORD_PAGE = "/account/password";
 
 export const config = {
-  matcher: ["/((?!login|api/auth|_next|img|favicon.ico).*)"],
+  matcher: ["/((?!login|api/auth|_next|img|favicon.ico|apple-icon|manifest.webmanifest|robots.txt).*)"],
 };
