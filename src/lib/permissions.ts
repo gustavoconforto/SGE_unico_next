@@ -6,6 +6,8 @@ export const AREAS = [
   ["students", "Alunos e responsáveis"],
   ["enrollments", "Matrículas"],
   ["finance", "Financeiro"],
+  // Split from finance: the enrollment desk takes the first payment at signing without seeing the whole book
+  ["payments", "Baixas"],
   ["grades", "Notas"],
   ["lessons", "Grade horária, diário de classe e plantões"],
   ["pathways", "Itinerários"],
@@ -46,7 +48,8 @@ const ROUTES: [string, Permission][] = [
   ["/enrollments", "enrollments.view"],
   ["/classes/detail", "enrollments.view"],
   ["/accounts", "finance.view"],
-  ["/accounts/payments/batch", "finance.edit"],
+  ["/accounts/payments", "payments.view"],
+  ["/accounts/payments/batch", "payments.edit"],
   ["/grades/entry", "grades.edit"],
   ["/grades/student", "grades.view"],
   ["/grades/report-card", "grades.view"],

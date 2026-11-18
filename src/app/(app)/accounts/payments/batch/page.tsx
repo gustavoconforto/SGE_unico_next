@@ -1,11 +1,13 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull } from "drizzle-orm";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/db";
 import { accountsAccount as account, accountsInstallment as installment } from "@/db/schema/app";
 import { PENDING_STATUSES, money } from "@/lib/finance";
 import { outstandingSql } from "@/lib/finance-db";
+import { hasPermission } from "@/lib/access";
 import { param } from "@/lib/list";
+import { requireSession } from "@/lib/session";
 import { BatchPaymentForm } from "../batch-payment-form";
 
 export const metadata: Metadata = { title: "Baixa de várias parcelas" };
@@ -15,12 +17,14 @@ export default async function BatchPaymentPage({ searchParams }: PageProps<"/acc
   const sp = await searchParams;
   const ids = [sp.installment ?? []].flat().map(Number).filter(Number.isSafeInteger);
   const enrollment = Number(param(sp, "enrollment")) || null;
+  // Without the book (payments.view) only enrollment accounts, like saveBatchPayment
+  const book = await hasPermission((await requireSession()).user, "payments.view");
   const rows = ids.length
     ? await db
         .select({ id: installment.id, number: installment.number, dueDate: installment.dueDate, balance: outstandingSql, accountId: account.id, description: account.description, enrollmentId: account.enrollmentId })
         .from(installment)
         .innerJoin(account, eq(installment.accountId, account.id))
-        .where(and(inArray(installment.id, ids), inArray(installment.status, PENDING_STATUSES), eq(account.direction, "R")))
+        .where(and(inArray(installment.id, ids), inArray(installment.status, PENDING_STATUSES), eq(account.direction, "R"), book ? undefined : isNotNull(account.enrollmentId)))
         .orderBy(asc(installment.number))
     : [];
   // One account per batch: the enrollment page only offers its contract's installments

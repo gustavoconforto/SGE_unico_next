@@ -44,7 +44,8 @@ export default async function HomePage() {
     { href: "/students/new", label: "Novo aluno" },
     { href: "/guardians/new", label: "Novo responsável" },
     { href: "/accounts/payments/new", label: "Registrar baixa" },
-  ].filter((a) => can(a.href));
+    // The payment form without the book (payments.view) has nothing to search: the desk pays from the enrollment
+  ].filter((a) => can(a.href) && (a.href !== "/accounts/payments/new" || can("/accounts/payments")));
   const allRows = [
     { label: "Parcelas a receber vencidas", n: overdue.n, total: overdue.total, alert: true, href: "/accounts/installments?direction=R&status=overdue" },
     { label: "Parcelas a receber que vencem hoje", n: dueToday.n, total: dueToday.total, href: `/accounts/installments?direction=R&status=pending&due_from=${on}&due_to=${on}` },

@@ -11,7 +11,7 @@ import type { InstallmentChoice } from "./data";
 type Props = {
   id?: number;
   direction: "R" | "P";
-  returnToAccount: boolean;
+  returnTo: "account" | "enrollment" | null;
   defaults?: Record<string, unknown>;
   selected?: InstallmentChoice | null;
   cancelHref: string;
@@ -73,8 +73,8 @@ const toOption = (direction: "R" | "P") => (c: InstallmentChoice): ComboOption =
 /** "1234.50" → "1.234,50", the way the balance is shown. */
 const typed = (v: unknown) => (v == null || v === "" ? "" : formatMoney(String(v)));
 
-export function PaymentForm({ id, direction, returnToAccount, defaults = {}, selected, cancelHref }: Props) {
-  const [state, action, pending] = useActionState(savePayment.bind(null, id ?? null, direction, returnToAccount), {});
+export function PaymentForm({ id, direction, returnTo, defaults = {}, selected, cancelHref }: Props) {
+  const [state, action, pending] = useActionState(savePayment.bind(null, id ?? null, direction, returnTo), {});
   const [installment, setInstallment] = useState<InstallmentChoice | null>(selected ?? null);
   const seen = useRef(new Map<string, InstallmentChoice>(selected ? [[String(selected.id), selected]] : []));
   // The money fields drive the balance line, so they live in state; zero adjustments start blank

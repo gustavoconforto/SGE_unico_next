@@ -37,8 +37,22 @@ export function InstallmentTable({ rows, shifted }: { rows: { number: number; du
 /**
  * An account's installment row actions: the receipt once something was paid, a payment while something is owed.
  * `due`: the installment to collect now (overdue or next), whose payment button is spelled out instead of an icon.
+ * `enrollmentId`: on an enrollment page, the payment returns there. `canPay`: holds payments.edit.
  */
-export function InstallmentActions({ receiptHref, installment, due }: { receiptHref: string; installment: { id: number; number: number; status: string }; due?: boolean }) {
+export function InstallmentActions({
+  receiptHref,
+  installment,
+  due,
+  enrollmentId,
+  canPay,
+}: {
+  receiptHref: string;
+  installment: { id: number; number: number; status: string };
+  due?: boolean;
+  enrollmentId?: number;
+  canPay: boolean;
+}) {
+  const payHref = `/accounts/payments/new?installment=${installment.id}${enrollmentId ? `&enrollment=${enrollmentId}` : ""}`;
   return (
     <div className="flex gap-2 whitespace-nowrap">
       {(installment.status === InstallmentStatus.PAID || installment.status === InstallmentStatus.PARTIAL) && (
@@ -48,16 +62,17 @@ export function InstallmentActions({ receiptHref, installment, due }: { receiptH
           </span>
         </LinkButton>
       )}
-      {PENDING_STATUSES.includes(installment.status) &&
+      {canPay &&
+        PENDING_STATUSES.includes(installment.status) &&
         (due ? (
-          <LinkButton href={`/accounts/payments/new?installment=${installment.id}`} size="xs" color="alternative" className="gap-1 px-2" aria-label={`Registrar baixa da parcela ${installment.number}`}>
+          <LinkButton href={payHref} size="xs" color="alternative" className="gap-1 px-2" aria-label={`Registrar baixa da parcela ${installment.number}`}>
             <span className="material-symbols-outlined" aria-hidden="true">
               price_check
             </span>
             Registrar baixa
           </LinkButton>
         ) : (
-          <LinkButton href={`/accounts/payments/new?installment=${installment.id}`} size="xs" color="alternative" className="px-2" aria-label={`Registrar baixa da parcela ${installment.number}`} data-tip="Registrar baixa">
+          <LinkButton href={payHref} size="xs" color="alternative" className="px-2" aria-label={`Registrar baixa da parcela ${installment.number}`} data-tip="Registrar baixa">
             <span className="material-symbols-outlined" aria-hidden="true">
               price_check
             </span>

@@ -7,7 +7,15 @@ import { db } from "@/db";
 import { accountsAccount as account, accountsAccounttype as accountType, accountsInstallment as installment, accountsPayment as payment } from "@/db/schema/app";
 import { deletePayment, saveBatchPayment, savePayment } from "./actions";
 
-vi.mock("@/lib/session", () => ({ requireSession: async () => ({ user: { role: "admin" } }) }));
+// `book`: holds payments.view; every other permission is granted
+const access = vi.hoisted(() => ({ book: true }));
+vi.mock("@/lib/access", () => ({
+  hasPermission: async (_user: unknown, code: string) => code !== "payments.view" || access.book,
+  requirePermission: async (code: string) => {
+    if (code === "payments.view" && !access.book) throw new Error("REDIRECT /forbidden");
+    return { user: {} };
+  },
+}));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT ${url}`);
@@ -27,7 +35,7 @@ describe.skipIf(!local)("savePayment / deletePayment", () => {
     for (const [k, v] of Object.entries({ installmentId: String(installmentId), paidAt: "2026-01-10", amount, method: "PIX" })) f.set(k, v);
     return f;
   };
-  const save = (id: number | null, amount: string) => savePayment(id, "P", false, {}, form(amount)).catch((e: Error) => e.message);
+  const save = (id: number | null, amount: string) => savePayment(id, "P", null, {}, form(amount)).catch((e: Error) => e.message);
   const status = async () => (await db.select({ s: installment.status }).from(installment).where(eq(installment.id, installmentId)))[0].s;
 
   beforeAll(async () => {
@@ -67,6 +75,21 @@ describe.skipIf(!local)("savePayment / deletePayment", () => {
 
     await expect(deletePayment(id)).rejects.toThrow(/^REDIRECT/);
     expect(await status()).toBe("A");
+  });
+
+  it("without payments.view, only takes new payments of enrollment installments", async () => {
+    expect(await save(null, "10,00")).toMatch(/^REDIRECT/);
+    const [{ id }] = await db.select({ id: payment.id }).from(payment).where(eq(payment.installmentId, installmentId));
+    access.book = false;
+    try {
+      // This account has no enrollment: a typed-in installment id is refused, balance not revealed
+      expect(await save(null, "10,00")).toMatchObject({ errors: { installmentId: [expect.any(String)] } });
+      expect(await save(id, "20,00")).toBe("REDIRECT /forbidden");
+      await expect(deletePayment(id)).rejects.toThrow("REDIRECT /forbidden");
+    } finally {
+      access.book = true;
+    }
+    expect(await db.select({ amount: payment.amount }).from(payment).where(eq(payment.installmentId, installmentId))).toEqual([{ amount: "10.00" }]);
   });
 });
 

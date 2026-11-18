@@ -36,6 +36,14 @@ describe("canOpen", () => {
     expect(canOpen("/billing", new Set(), true)).toBe(true);
   });
 
+  it("lets the enrollment desk register payments without opening the book", () => {
+    const desk = new Set(["enrollments.view", "enrollments.edit", "payments.edit"]);
+    expect(canOpen("/accounts/payments/new", desk)).toBe(true);
+    expect(canOpen("/accounts/payments/batch", desk)).toBe(true);
+    for (const path of ["/accounts/payments", "/accounts/receivable", "/accounts/payable", "/accounts/installments"]) expect(canOpen(path, desk)).toBe(false);
+    expect(canOpen("/accounts/payments/new", new Set(["finance.view", "finance.edit"]))).toBe(false);
+  });
+
   it("needs the exact permission, and denies uncovered paths", () => {
     const viewer = new Set(["students.view"]);
     expect(canOpen("/students", viewer)).toBe(true);
