@@ -9,7 +9,7 @@ import { shownName } from "../score";
 import { saveGradeSheet } from "./actions";
 import { cellName, loadSheet } from "./sheet";
 
-vi.mock("@/lib/session", () => ({ requireSession: async () => ({}) }));
+vi.mock("@/lib/session", () => ({ requireSession: async () => ({ user: { role: "admin" } }) }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT ${url}`);

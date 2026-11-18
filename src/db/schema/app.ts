@@ -758,6 +758,22 @@ export const gradesExamtype = pgTable("grades_examtype", {
 	check("grades_examtype_order_check", sql`"order" >= 0`),
 ]);
 
+// Not in Django: a row closes a subject's bimester (5 = final recovery) to teachers; staff can still edit (grade-lock.ts).
+export const gradesGradelock = pgTable("grades_gradelock", {
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).notNull().$defaultFn(() => new Date().toISOString()),
+	subjectId: bigint("subject_id", { mode: "number" }).notNull(),
+	bimester: smallint().notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.subjectId],
+			foreignColumns: [gradesSubject.id],
+			name: "grades_gradelock_subject_id_fk_grades_subject_id"
+		}).onDelete("cascade"),
+	unique("unique_grade_lock").on(table.subjectId, table.bimester),
+	check("grade_lock_bimester_range", sql`(bimester >= 1) AND (bimester <= 5)`),
+]);
+
 export const incidentsBathroompermission = pgTable("incidents_bathroompermission", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),

@@ -26,7 +26,8 @@ type Exam = { id: number; code: string };
 const tone = (g: string | null) => (g === null ? "text-gray-400" : new Decimal(g).lt(PASSING_GRADE) ? "text-red-600" : "text-gray-900");
 
 /** One subject's row: read-only, or score inputs after "Editar" (Django's htmx row swap). */
-export function SubjectRow({ enrollmentId, row, examTypes, recoveryTypes }: { enrollmentId: number; row: Row; examTypes: Exam[]; recoveryTypes: Exam[] }) {
+/** `readOnly`: input names this user can't edit (locked bimester or staff-only exam). */
+export function SubjectRow({ enrollmentId, row, examTypes, recoveryTypes, readOnly }: { enrollmentId: number; row: Row; examTypes: Exam[]; recoveryTypes: Exam[]; readOnly: string[] }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [state, setState] = useState<RowState>({});
@@ -48,7 +49,7 @@ export function SubjectRow({ enrollmentId, row, examTypes, recoveryTypes }: { en
     return (
       <span key={name}>
         <input type="hidden" name={shownName(name)} form={formId} value={state.values?.[shownName(name)] ?? scoreInput(saved)} />
-        <TextInput name={name} form={formId} aria-label={`${row.subject.name} ${bimester === 5 ? "recuperação" : `${bimester}º bim.`} ${t.code}`} title={error} defaultValue={state.values?.[name] ?? scoreInput(saved)} sizing="sm" inputMode="decimal" color={error ? "failure" : undefined} className="w-10 [&_input]:px-0.5 [&_input]:text-right" />
+        <TextInput name={name} form={formId} aria-label={`${row.subject.name} ${bimester === 5 ? "recuperação" : `${bimester}º bim.`} ${t.code}`} title={error} defaultValue={state.values?.[name] ?? scoreInput(saved)} sizing="sm" inputMode="decimal" color={error ? "failure" : undefined} readOnly={readOnly.includes(name)} className="w-10 [&_input]:px-0.5 [&_input]:text-right" />
       </span>
     );
   };

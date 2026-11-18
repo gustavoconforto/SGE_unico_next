@@ -2,6 +2,9 @@ import { Spinner } from "flowbite-react";
 import { Suspense } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Flash } from "@/components/flash";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import { isStaff } from "@/lib/grade-lock";
 import { Authenticated } from "@/lib/session";
 
 export default function AppLayout({ children }: LayoutProps<"/">) {
@@ -12,7 +15,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
         Pular para o conteúdo
       </a>
       <Suspense>
-        <AppSidebar />
+        <Sidebar />
       </Suspense>
       <main id="main" tabIndex={-1} className="min-w-0 flex-1 p-4 pt-18 focus:outline-none lg:p-8">
         <Suspense fallback={<Spinner aria-label="Carregando" />}>
@@ -24,4 +27,10 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       </Suspense>
     </div>
   );
+}
+
+/** The menu, with staff-only items when the signed-in user is staff. */
+async function Sidebar() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  return <AppSidebar staff={!!session && (await isStaff(session.user))} />;
 }

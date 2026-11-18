@@ -11,15 +11,19 @@ type Props = {
   recovery: boolean;
   examTypes: { id: number; code: string; name: string; kind: string; maxScore: string }[];
   rows: { id: number; name: string; average: string | null; result: string | null; saved: Record<number, string> }[];
+  /** Exam type ids this user can't edit here (locked bimester or staff-only). */
+  readOnly: number[];
+  notice: string | null;
 };
 
-export function GradeSheet({ selection, recovery, examTypes, rows }: Props) {
+export function GradeSheet({ selection, recovery, examTypes, rows, readOnly, notice }: Props) {
   const [state, action, pending] = useActionState(saveGradeSheet.bind(null, selection), {});
   if (!examTypes.length) return <Alert color="warning">Cadastre um tipo de avaliação {recovery ? "de recuperação " : ""}para lançar notas.</Alert>;
   if (!rows.length) return <p className="text-gray-500">{recovery ? "Nenhum aluno desta turma está em recuperação nesta matéria." : "Nenhum aluno ativo nesta turma."}</p>;
   return (
     <form action={action} className="flex flex-col gap-3">
       {state.formError && <Alert color="failure">{state.formError}</Alert>}
+      {notice && <Alert color="warning">{notice}</Alert>}
       <p className="text-sm text-gray-500">Use vírgula nos decimais (ex.: 2,5) e apague o valor para remover uma nota.</p>
       <div className="overflow-x-auto">
         <Table striped>
@@ -52,6 +56,7 @@ export function GradeSheet({ selection, recovery, examTypes, rows }: Props) {
                         aria-label={`${r.name} - ${t.code}`}
                         defaultValue={state.values?.[name] ?? scoreInput(r.saved[t.id])}
                         color={error ? "failure" : undefined}
+                        readOnly={readOnly.includes(t.id)}
                         sizing="sm"
                         className="ml-auto w-20"
                       />
@@ -65,7 +70,7 @@ export function GradeSheet({ selection, recovery, examTypes, rows }: Props) {
           </TableBody>
         </Table>
       </div>
-      <div>
+      <div hidden={readOnly.length === examTypes.length}>
         <Button type="submit" disabled={pending}>
           Salvar notas
         </Button>
