@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { InstallmentActions } from "@/components/installment-table";
+import { hasPermission } from "@/lib/access";
+import { requireSession } from "@/lib/session";
 import { LinkButton } from "@/components/link-button";
 import { ACTIONS_CELL, PHONE_CARDS, PRIMARY_CELL } from "@/components/list-page";
 import { db } from "@/db";
@@ -59,6 +61,7 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
   await syncDocuments(db, id);
 
   const on = today();
+  const canPay = await hasPermission((await requireSession()).user, "payments.edit");
   const [types, classes, discounts, documents, [contract], receivables, [payer], parents] = await Promise.all([
     enrollmentTypeOptions(),
     classOptions(),
@@ -164,8 +167,9 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
 
       <Section
         title="Parcelas"
-        help={pending.length > 1 ? "Para registrar a baixa de várias parcelas de uma vez, marque-as e use “Baixar selecionadas”." : undefined}
+        help={canPay && pending.length > 1 ? "Para registrar a baixa de várias parcelas de uma vez, marque-as e use “Baixar selecionadas”." : undefined}
         action={
+          canPay &&
           pending.length > 1 && (
             <div className="flex flex-wrap gap-2">
               <Button type="submit" form="batch-payment" size="xs" color="alternative">
@@ -202,10 +206,10 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
                     <TableRow key={i.id}>
                       <TableCell className={`${PRIMARY_CELL} tabular-nums`}>
                         <label className="flex items-center gap-2">
-                          {pending.length > 1 && PENDING_STATUSES.includes(i.status) ? (
+                          {canPay && pending.length > 1 && PENDING_STATUSES.includes(i.status) ? (
                             <Checkbox name="installment" value={i.id} aria-label={`Selecionar a parcela ${i.number}`} />
                           ) : (
-                            pending.length > 1 && <span className="w-4" aria-hidden="true" />
+                            canPay && pending.length > 1 && <span className="w-4" aria-hidden="true" />
                           )}
                           <span>
                             <span className="sm:hidden">Parcela </span>
@@ -239,7 +243,7 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
                       </TableCell>
                       <TableCell className={ACTIONS_CELL}>
                         {contract && (
-                          <InstallmentActions receiptHref={`/accounts/receivable/${contract.id}/receipt`} installment={i} due={late || i.id === nextDue?.id} />
+                          <InstallmentActions receiptHref={`/accounts/receivable/${contract.id}/receipt`} installment={i} due={late || i.id === nextDue?.id} enrollmentId={id} canPay={canPay} />
                         )}
                       </TableCell>
                     </TableRow>

@@ -10,7 +10,7 @@ import { PAYMENT_METHODS, PENDING_STATUSES, formatMoney, installmentBalance, mon
 import { lockInstallment, outstandingSql, refreshInstallmentStatus } from "@/lib/finance-db";
 import { type FormErrors, type FormState, INVALID_CHOICE, REQUIRED, decimalField, foreignKey, formIds, parseForm, requiredDate } from "@/lib/form";
 import { likePattern } from "@/lib/list";
-import { requirePermission } from "@/lib/access";
+import { hasPermission, requirePermission } from "@/lib/access";
 import { type InstallmentChoice, toChoice } from "./data";
 
 const paymentSchema = z.object({
@@ -28,7 +28,9 @@ const paymentSchema = z.object({
 
 /** The installment search box: pending installments of one direction (ReceivableInstallmentLookupView). */
 export async function searchInstallments(direction: "R" | "P", q: string): Promise<InstallmentChoice[]> {
-  await requirePermission("finance.edit");
+  const { user } = await requirePermission("payments.edit");
+  // Searching every pending installment is reading the book: edit-only staff pay the installment they came with
+  if (!(await hasPermission(user, "payments.view"))) return [];
   const p = likePattern(stripAccents(q.trim()));
   const rows = await db
     .select({
@@ -72,8 +74,11 @@ function orIlike(columns: AnyPgColumn[], pattern: string) {
  * PaymentForm + PaymentSaveMixin: the principal (amount − charges + discount) must be positive and fit the
  * installment's balance, checked again with the installment row locked so a double submit can't pass twice.
  */
-export async function savePayment(id: number | null, direction: "R" | "P", returnToAccount: boolean, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("finance.edit");
+export async function savePayment(id: number | null, direction: "R" | "P", returnTo: "account" | "enrollment" | null, _prev: FormState, formData: FormData): Promise<FormState> {
+  const { user } = await requirePermission("payments.edit");
+  // Without the book (payments.view) only new payments of enrollment installments: the desk at signing
+  const book = await hasPermission(user, "payments.view");
+  if (id && !book) redirect("/forbidden");
   const { data, values, state } = parseForm(paymentSchema, formData);
   if (!data) return state;
   const fields = { ...data, discount: data.discount ?? "0.00", penalty: data.penalty ?? "0.00", interest: data.interest ?? "0.00", monetaryAdjust: data.monetaryAdjust ?? "0.00" };
@@ -85,10 +90,10 @@ export async function savePayment(id: number | null, direction: "R" | "P", retur
 
   const result = await db.transaction(async (tx) => {
     const target = await lockInstallment(tx, data.installmentId);
-    const [acc] = target ? await tx.select({ direction: account.direction }).from(account).where(eq(account.id, target.accountId)) : [];
+    const [acc] = target ? await tx.select({ direction: account.direction, enrollmentId: account.enrollmentId }).from(account).where(eq(account.id, target.accountId)) : [];
     // Only installments of this direction that still accept payments, plus the current one on edit
     const sameAsBefore = previous?.installmentId === data.installmentId;
-    if (!target || acc?.direction !== direction || (!PENDING_STATUSES.includes(target.status) && !sameAsBefore)) return { errors: { installmentId: [INVALID_CHOICE] } };
+    if (!target || acc?.direction !== direction || (!book && !acc.enrollmentId) || (!PENDING_STATUSES.includes(target.status) && !sameAsBefore)) return { errors: { installmentId: [INVALID_CHOICE] } };
 
     let balance = installmentBalance(target.amount, target.status, money(target.paid));
     // The payment being edited is already in the balance
@@ -106,13 +111,14 @@ export async function savePayment(id: number | null, direction: "R" | "P", retur
     } else await tx.insert(payment).values(fields);
     await refreshInstallmentStatus(tx, data.installmentId);
     if (previous && !sameAsBefore) await refreshInstallmentStatus(tx, previous.installmentId);
-    return { accountId: target.accountId };
+    return { accountId: target.accountId, enrollmentId: acc.enrollmentId };
   });
   if ("errors" in result) return { errors: result.errors, values };
 
   const msg = id ? "payment_updated" : "payment_created";
-  // "Baixar" came from an account page: go back there to print the receipt
-  if (returnToAccount) redirect(`/accounts/${direction === "R" ? "receivable" : "payable"}/${result.accountId}/edit?msg=${msg}`);
+  // "Baixar" came from an enrollment or account page: go back there to print the receipt
+  if (returnTo === "enrollment" && result.enrollmentId) redirect(`/enrollments/${result.enrollmentId}/edit?msg=${msg}`);
+  if (returnTo) redirect(`/accounts/${direction === "R" ? "receivable" : "payable"}/${result.accountId}/edit?msg=${msg}`);
   redirect(`/accounts/payments${direction === "P" ? "?direction=P&" : "?"}msg=${msg}`);
 }
 
@@ -126,7 +132,8 @@ const ROW_FIELDS = ["penalty", "interest", "discount"] as const;
  * `balance_<id>` is the balance the screen showed, so a payment saved meanwhile can't change what the guardian pays.
  */
 export async function saveBatchPayment(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("finance.edit");
+  const { user } = await requirePermission("payments.edit");
+  const book = await hasPermission(user, "payments.view");
   const { data, values, state } = parseForm(batchSchema, formData);
   // Ascending, so two batches over the same installments lock them in the same order and can't deadlock
   const ids = formIds(formData, "installment").sort((a, b) => a - b);
@@ -152,7 +159,7 @@ export async function saveBatchPayment(_prev: FormState, formData: FormData): Pr
       const [acc] = locked
         ? await tx.select({ direction: account.direction, enrollmentId: account.enrollmentId }).from(account).where(eq(account.id, locked.accountId))
         : [];
-      if (!locked || acc?.direction !== "R" || !PENDING_STATUSES.includes(locked.status) || (target && target.accountId !== locked.accountId))
+      if (!locked || acc?.direction !== "R" || (!book && !acc.enrollmentId) || !PENDING_STATUSES.includes(locked.status) || (target && target.accountId !== locked.accountId))
         return { formError: "Uma das parcelas não aceita mais baixa (já quitada ou cancelada). Volte à matrícula e selecione de novo." };
       target = { accountId: locked.accountId, enrollmentId: acc.enrollmentId };
       const balance = installmentBalance(locked.amount, locked.status, money(locked.paid));
@@ -184,7 +191,8 @@ export async function saveBatchPayment(_prev: FormState, formData: FormData): Pr
 }
 
 export async function deletePayment(id: number) {
-  await requirePermission("finance.edit");
+  await requirePermission("payments.edit");
+  await requirePermission("payments.view"); // deleting starts from the book's list
   await db.transaction(async (tx) => {
     const [row] = await tx.select({ installmentId: payment.installmentId }).from(payment).where(eq(payment.id, id));
     if (!row) return;

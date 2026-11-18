@@ -3,6 +3,8 @@ import { Badge, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { InstallmentActions } from "@/components/installment-table";
+import { hasPermission } from "@/lib/access";
+import { requireSession } from "@/lib/session";
 import { LinkButton } from "@/components/link-button";
 import { db } from "@/db";
 import { accountsAccount as account, accountsInstallment as installment } from "@/db/schema/app";
@@ -25,7 +27,7 @@ export default async function EditAccountPage({ params }: PageProps<"/accounts/[
     .where(and(eq(account.id, id), eq(account.direction, KINDS[kind].direction)));
   if (!row) notFound();
   const on = today();
-  const [options, installments, contract] = await Promise.all([
+  const [options, installments, contract, canPay] = await Promise.all([
     accountFormOptions(kind),
     db
       .select({ id: installment.id, number: installment.number, dueDate: installment.dueDate, amount: installment.amount, status: installment.status, outstanding: outstandingSql })
@@ -33,6 +35,7 @@ export default async function EditAccountPage({ params }: PageProps<"/accounts/[
       .where(eq(installment.accountId, id))
       .orderBy(asc(installment.dueDate), asc(installment.number)),
     row.enrollmentId ? getEnrollment(row.enrollmentId) : null,
+    requireSession().then((s) => hasPermission(s.user, "payments.edit")),
   ]);
 
   return (
@@ -94,7 +97,7 @@ export default async function EditAccountPage({ params }: PageProps<"/accounts/[
                     </TableCell>
                     <TableCell className="text-right">{formatMoney(i.outstanding)}</TableCell>
                     <TableCell>
-<InstallmentActions receiptHref={`/accounts/${kind}/${id}/receipt`} installment={i} />
+<InstallmentActions receiptHref={`/accounts/${kind}/${id}/receipt`} installment={i} canPay={canPay} />
 </TableCell>
                   </TableRow>
                 ))}
