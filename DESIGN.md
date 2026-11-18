@@ -2,10 +2,10 @@
 name: Gestão Escolar
 description: School management back office, a calm light interface where the data does the talking.
 colors:
-  action-blue: "#1a56db"
-  action-blue-deep: "#1e429f"
-  focus-blue: "#3f83f8"
-  selection-blue: "#ebf5ff"
+  action-navy: "#1e3a5f"
+  action-navy-deep: "#172d4a"
+  focus-navy: "#3c5f8f"
+  selection-navy: "#eef2f8"
   ink: "#111827"
   ink-soft: "#374151"
   ink-muted: "#6b7280"
@@ -58,14 +58,14 @@ spacing:
   lg: "32px"
 components:
   button-primary:
-    backgroundColor: "{colors.action-blue}"
+    backgroundColor: "{colors.action-navy}"
     textColor: "{colors.panel}"
     rounded: "{rounded.lg}"
     padding: "0 20px"
     height: "40px"
     typography: "{typography.body}"
   button-primary-hover:
-    backgroundColor: "{colors.action-blue-deep}"
+    backgroundColor: "{colors.action-navy-deep}"
   button-alternative:
     backgroundColor: "{colors.panel}"
     textColor: "{colors.ink}"
@@ -74,7 +74,7 @@ components:
     height: "32px"
   button-alternative-hover:
     backgroundColor: "{colors.hover-gray}"
-    textColor: "{colors.action-blue}"
+    textColor: "{colors.ink}"
   input:
     backgroundColor: "{colors.paper}"
     textColor: "{colors.ink}"
@@ -108,7 +108,7 @@ components:
 
 **Creative North Star: "The Quiet Office"**
 
-Gestão Escolar is where secretaria, finance, teachers and coordination spend whole working days. The interface recedes: a pale gray floor, white panels that hold the data, one blue for action, and color otherwise reserved for state. Nothing decorative competes with a student's name, a balance or a grade. If a screen draws attention to itself, it is too loud.
+Gestão Escolar is where secretaria, finance, teachers and coordination spend whole working days. The interface recedes: a pale gray floor, white panels that hold the data, one navy for action, and color otherwise reserved for state. Nothing decorative competes with a student's name, a balance or a grade. If a screen draws attention to itself, it is too loud.
 
 It is built on Flowbite React's light theme over Tailwind 4, used close to stock. Its craft is restraint and consistency: every list looks like every other list, every form like every other form, so someone who learned one screen has learned them all. Density is medium-high: 14px body text, 10px cell padding, tabular numerals wherever numbers stack.
 
@@ -116,20 +116,20 @@ The product serves Único Educacional today and other schools later. The school'
 
 **Key Characteristics:**
 - Light only: `color-scheme: light`; `dark:` utilities exist but nothing activates them.
-- One action color (blue), one typeface (Geist), one radius (8px).
+- One action color (navy), one typeface (Geist), one radius (8px).
 - Color carries state: green active/paid, red overdue/below passing, amber pending/recovery, gray neutral.
 - White data panels with a soft drop shadow, floating on a gray-50 floor.
 - Desktop-first density; lists reflow to stacked rows on phones.
 
 ## Colors
 
-A neutral gray office with a single blue for action and a small state vocabulary.
+A neutral gray office with a single navy for action and a small state vocabulary.
 
 ### Primary
-- **Action Blue** (`action-blue`): primary buttons ("Novo aluno", "Salvar"), the text caret, link-like emphasis. One primary button per view.
-- **Action Blue Deep** (`action-blue-deep`): primary hover.
-- **Focus Blue** (`focus-blue`): input focus border and 1px ring.
-- **Selection Blue** (`selection-blue`): text selection and the row being edited in place.
+- **Action Navy** (`action-navy`): primary buttons ("Novo aluno", "Salvar"), the text caret, link-like emphasis. One primary button per view. The scale is `--primary-50…900` in `globals.css` (replacing Flowbite's blue); code uses `primary-*` classes, never `blue-*`.
+- **Action Navy Deep** (`action-navy-deep`): primary hover.
+- **Focus Navy** (`focus-navy`): input focus border and 1px ring.
+- **Selection Navy** (`selection-navy`): text selection and the row being edited in place.
 
 ### Neutral
 - **Ink** (`ink`): body text, headings, names in the first column.
@@ -147,7 +147,7 @@ A neutral gray office with a single blue for action and a small state vocabulary
 - **Caution Brown** (yellow-800): pending and "em recuperação" text on a yellow wash.
 
 ### Named Rules
-**The One Blue Rule.** Blue means "you can act here" (buttons, focus, the caret, the row being edited). It is never a decorative accent or a section color.
+**The One Navy Rule.** Navy means "you can act here" (buttons, focus, the caret, the row being edited). It is never a decorative accent or a section color, and never an icon color: icons are gray (`ink-muted` at rest, `ink` on hover).
 
 **The Tenant Color Rule.** The school's brand colors (Único's red logo) appear only in the school's own logo and letterhead, never in buttons, nav or highlights. Another school must be able to drop in its logo without the UI clashing.
 
@@ -201,9 +201,9 @@ Gently rounded and uniform: 8px (`rounded.lg`) on buttons, inputs, panels and na
 
 ### Buttons
 - **Shape:** 8px radius; 40px tall by default, 32px (`size="xs"`) inside tables.
-- **Primary:** Action Blue fill, white 14px/500 text. Hover darkens to Action Blue Deep; focus adds a 4px pale-blue ring.
-- **Alternative (secondary):** white, 1px hairline border, ink text; hover turns gray-100 with blue text. Used for "Editar", "Cancelar", and row actions.
-- **Icon actions:** icon-only buttons in list rows carry an `aria-label` and a `data-tip` tooltip (dark ink pill, 0.75rem, fades in on hover and focus).
+- **Primary:** Action Navy fill, white 14px/500 text. Hover darkens to Action Navy Deep; focus adds a 4px pale-navy ring.
+- **Alternative (secondary):** white, 1px hairline border, ink text; hover turns gray-100 and the text stays ink (no navy; theme override in `src/app/layout.tsx`). Used for "Editar", "Cancelar", and row actions.
+- **Icon actions:** icon-only buttons in list rows carry an `aria-label` and a `data-tip` tooltip (dark ink pill, 0.75rem, fades in on hover and focus). The icon rests in `ink-muted` (gray-500) and takes the button's color on hover/focus (`globals.css`); delete turns red on hover.
 - **Pending:** a submit button disables itself and its label changes ("Salvando…") while the action runs.
 
 ### Badges
@@ -215,7 +215,7 @@ Gently rounded and uniform: 8px (`rounded.lg`) on buttons, inputs, panels and na
 
 ### Inputs / Fields
 - **Style:** Paper fill, 1px field border, 8px radius, 10px padding, 14px text. Label above the field; "(opcional)" marks optional fields.
-- **Focus:** border and a 1px ring in Focus Blue; the caret is Action Blue.
+- **Focus:** border and a 1px ring in Focus Navy; the caret is Action Navy.
 - **Error:** Flowbite's failure color: red border and red help text under the field.
 - **Masked fields:** CPF formats as it is typed (`mask`), shown with tabular digits.
 
@@ -232,7 +232,7 @@ Gently rounded and uniform: 8px (`rounded.lg`) on buttons, inputs, panels and na
 ## Do's and Don'ts
 
 ### Do:
-- **Do** keep one primary (blue) button per view; everything else uses the alternative button.
+- **Do** keep one primary (navy) button per view; everything else uses the alternative button.
 - **Do** put data in the white panel with the panel-lift shadow, using `<ListPage>` / `<ListRow>` for lists.
 - **Do** use `tabular-nums` and right alignment for grades, money and counts.
 - **Do** use state color only for record state (paid, overdue, below passing, recovery).

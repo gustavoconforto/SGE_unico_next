@@ -51,7 +51,7 @@ export default async function HomePage() {
         </label>
         <div className="flex gap-2">
           <HomeSearchInput />
-          <button type="submit" className="rounded-lg bg-blue-700 px-4 text-sm font-medium text-white hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 focus:outline-none">
+          <button type="submit" className="rounded-lg bg-primary-700 px-4 text-sm font-medium text-white hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 focus:outline-none">
             Buscar
           </button>
         </div>

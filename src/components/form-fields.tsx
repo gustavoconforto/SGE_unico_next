@@ -376,7 +376,7 @@ export function FormButtons({
       {/* A text link, so the two secondary actions don't look alike */}
       <Link
         href={cancelHref}
-        className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 underline-offset-4 hover:text-gray-900 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+        className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 underline-offset-4 hover:text-gray-900 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700"
       >
         Cancelar
       </Link>

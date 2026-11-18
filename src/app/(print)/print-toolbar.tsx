@@ -8,7 +8,7 @@ export function PrintToolbar({ children }: { children?: React.ReactNode }) {
       <button type="button" onClick={() => (history.length > 1 ? history.back() : window.close())} className="rounded-md bg-gray-600 px-4 py-2 text-sm font-semibold text-white">
         Voltar
       </button>
-      <button type="button" onClick={() => window.print()} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white">
+      <button type="button" onClick={() => window.print()} className="rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white">
         Imprimir / salvar PDF
       </button>
     </div>

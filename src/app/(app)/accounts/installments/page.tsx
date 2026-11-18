@@ -166,7 +166,7 @@ export default async function InstallmentListPage({ searchParams }: PageProps<"/
             </TableCell>
           )}
           <TableCell className={PRIMARY_CELL}>
-            <Link href={`/accounts/${kindOf(i.direction)}/${i.accountId}/edit`} className="underline-offset-2 hover:text-blue-700 hover:underline">
+            <Link href={`/accounts/${kindOf(i.direction)}/${i.accountId}/edit`} className="underline-offset-2 hover:text-primary-700 hover:underline">
               <AccountName text={i.description} />
             </Link>
           </TableCell>

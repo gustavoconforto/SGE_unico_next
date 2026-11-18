@@ -137,7 +137,7 @@ export function ListRow(props: { cells: React.ReactNode[]; primary?: number; lab
             {i !== primary && <CellLabel i={i} />}
             {/* The name opens the record too: a bigger target than the pencil, and the first stop when tabbing */}
             {i === primary ? (
-              <Link href={props.editHref} className="underline-offset-2 hover:text-blue-700 hover:underline">
+              <Link href={props.editHref} className="underline-offset-2 hover:text-primary-700 hover:underline">
                 {content}
               </Link>
             ) : (

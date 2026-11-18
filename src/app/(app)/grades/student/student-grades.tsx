@@ -91,8 +91,8 @@ export function SubjectRow({ enrollmentId, row, examTypes, recoveryTypes }: { en
     );
 
   return (
-    <TableRow className="bg-blue-50 hover:bg-blue-50 [&>td]:py-2">
-      <TableCell className={`${STICKY} bg-blue-50 font-medium whitespace-nowrap text-gray-900`}>
+    <TableRow className="bg-primary-50 hover:bg-primary-50 [&>td]:py-2">
+      <TableCell className={`${STICKY} bg-primary-50 font-medium whitespace-nowrap text-gray-900`}>
         {row.subject.name}
         <form id={formId} action={action} />
         {state.formError && (

@@ -20,7 +20,7 @@ import { deleteOffering } from "./actions";
 
 export const metadata: Metadata = { title: "Turmas de itinerário" };
 
-const link = "text-sm text-blue-600 hover:underline dark:text-blue-400";
+const link = "text-sm text-primary-600 hover:underline dark:text-primary-400";
 
 export default async function OfferingListPage({ searchParams }: PageProps<"/pathways/offerings">) {
   const sp = await searchParams;

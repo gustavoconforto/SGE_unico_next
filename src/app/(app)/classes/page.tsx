@@ -46,7 +46,7 @@ export default async function ClassListPage({ searchParams }: PageProps<"/classe
               c.year,
               c.gradeLevel ?? "—",
               c.name,
-              <Link key="students" href={`/classes/detail?school_year=${c.yearId}&school_class=${c.id}`} className="text-blue-700 underline-offset-2 hover:underline">
+              <Link key="students" href={`/classes/detail?school_year=${c.yearId}&school_class=${c.id}`} className="text-primary-700 underline-offset-2 hover:underline">
                 Ver alunos
               </Link>,
             ]}

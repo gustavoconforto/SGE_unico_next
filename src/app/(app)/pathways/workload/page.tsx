@@ -23,7 +23,7 @@ export default async function StudentWorkloadPage({ searchParams }: PageProps<"/
         <>
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm text-gray-500">Por presença: 45 minutos por aula assistida.</p>
-            <a href={`/pathways/workload/${enrollmentId}/print`} target="_blank" rel="noopener" className="flex items-center gap-1 text-sm text-blue-600 hover:underline">
+            <a href={`/pathways/workload/${enrollmentId}/print`} target="_blank" rel="noopener" className="flex items-center gap-1 text-sm text-primary-600 hover:underline">
               <span className="material-symbols-outlined" aria-hidden="true">print</span>Imprimir
             </a>
           </div>

@@ -66,7 +66,7 @@ async function Report({ enrollmentId, bimester }: { enrollmentId: number; bimest
     return (
       <>
         <p className="text-gray-500">
-          O ano letivo deste aluno não tem as datas deste bimestre. <Link className="text-blue-600 hover:underline" href={`/enrollments/school-years/${e.y.id}/edit`}>Cadastre as datas do bimestre</Link>.
+          O ano letivo deste aluno não tem as datas deste bimestre. <Link className="text-primary-600 hover:underline" href={`/enrollments/school-years/${e.y.id}/edit`}>Cadastre as datas do bimestre</Link>.
         </p>
         {footer}
       </>
