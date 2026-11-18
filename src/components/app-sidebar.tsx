@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 
-type NavItem = { href: string; label: string; icon: string };
+type NavItem = { href: string; label: string; icon: string; staffOnly?: boolean };
 type NavGroup = {
   label: string;
   icon: string;
@@ -45,6 +45,7 @@ const NAV: NavGroup[] = [
     items: [
       { href: "/grades/entry", label: "Lançamento de notas", icon: "edit_note" },
       { href: "/grades/student", label: "Notas do aluno", icon: "grading" },
+      { href: "/grades/locks", label: "Bloqueio de notas", icon: "lock", staffOnly: true },
       { href: "/lessons/timetable", label: "Grade horária", icon: "calendar_view_week" },
       { href: "/lessons/lectures", label: "Diário de classe", icon: "menu_book" },
       { href: "/q-and-a", label: "Plantões", icon: "support_agent" },
@@ -158,7 +159,8 @@ function NavCollapse({ group, pathname, onNavigate, depth = 0 }: { group: NavGro
   );
 }
 
-export function AppSidebar() {
+/** `staff`: show the staff-only items (isStaff(), computed on the server). */
+export function AppSidebar({ staff }: { staff: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -234,7 +236,7 @@ export function AppSidebar() {
                   Início
                 </span>
               </SidebarItem>
-              {NAV.map((group) => (
+              {(staff ? NAV : NAV.map((g) => ({ ...g, items: g.items.filter((i) => !i.staffOnly) }))).map((group) => (
                 <NavCollapse key={group.label} group={group} pathname={pathname} onNavigate={() => setOpen(false)} />
               ))}
             </SidebarItemGroup>

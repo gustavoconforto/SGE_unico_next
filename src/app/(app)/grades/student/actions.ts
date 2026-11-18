@@ -4,6 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { gradesGrade as grade } from "@/db/schema/app";
 import { type FormErrors, formValues } from "@/lib/form";
+import { allLocks, gradeEditError, isStaff } from "@/lib/grade-lock";
 import { requireSession } from "@/lib/session";
 import { loadReportCard } from "../report";
 import { editedCell, parseScore } from "../score";
@@ -13,8 +14,8 @@ export type RowState = { errors?: FormErrors; values?: Record<string, string>; f
 
 /** One subject's scores of one enrollment (StudentSubjectGradesForm): a cell blanked deletes; any invalid saves nothing. */
 export async function saveSubjectGrades(enrollmentId: number, subjectId: number, prev: RowState, formData: FormData): Promise<RowState> {
-  await requireSession();
-  const card = await loadReportCard(enrollmentId);
+  const { user } = await requireSession();
+  const [card, staff, locks] = await Promise.all([loadReportCard(enrollmentId), isStaff(user), allLocks()]);
   if (!card || card.enrollment.status !== "A" || !card.rows.some((r) => r.subject.id === subjectId)) return { formError: "Matéria ou matrícula inválida." };
   const periods = [...[1, 2, 3, 4].map((b) => [b, card.examTypes] as const), [FINAL_RECOVERY, card.recoveryTypes] as const];
   const values = formValues(formData);
@@ -26,6 +27,11 @@ export async function saveSubjectGrades(enrollmentId: number, subjectId: number,
       // Only cells the user changed: an untouched one must not undo a grade entered meanwhile in the class sheet
       const raw = editedCell(values, name);
       if (raw === null) continue;
+      const denied = gradeEditError(staff, locks.has(`${subjectId}:${bimester}`), t.code);
+      if (denied) {
+        errors[name] = [denied];
+        continue;
+      }
       const parsed = parseScore(raw, t.maxScore);
       if ("error" in parsed) errors[name] = [parsed.error];
       else cells.push({ bimester, examTypeId: t.id, score: parsed.score });

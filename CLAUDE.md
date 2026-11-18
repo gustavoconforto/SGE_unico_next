@@ -99,6 +99,9 @@ Ported rules keep their Django names in camelCase; find them in the `src/lib/` m
   request with `grades.ts` (`bimesterGrade`, `finalAverage`, `finalGrade`, `passed`). `PASSING_GRADE` is 6.
 - The concept (`conceptGrades()`) and extra `EX` (`extraGrades()`) scores are calculated, not typed, then saved
   to every subject of the series with `saveSeriesGrades()`.
+- Grade locks (not in Django, `src/lib/grade-lock.ts`): staff lock a subject × bimester on `/grades/locks`; then
+  teachers can't edit it, and they never edit `C`, `EX` or `A` (adjustment). Every grade write checks
+  `gradeEditError()`; "staff" = `isStaff()` (admin, or a login whose employee teaches nothing).
 
 ### Lessons
 - Lessons run Monday to Saturday: 12 periods a day Monday to Friday, 7 on Saturday. Build a day's periods with
