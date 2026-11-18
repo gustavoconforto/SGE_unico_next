@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
-import { Badge, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow } from "flowbite-react";
+import { Badge, Button, Checkbox, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow } from "flowbite-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -113,6 +113,7 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
   const owed = installments?.reduce((sum, i) => sum.plus(money(i.outstanding)), money(0)) ?? money(0);
   // The installment to collect now: labelled action on it and on the overdue ones, icons on the rest
   const nextDue = installments?.find((i) => PENDING_STATUSES.includes(i.status) && !isOverdue(i.status, i.dueDate, on));
+  const pending = installments?.filter((i) => PENDING_STATUSES.includes(i.status)) ?? [];
   const delivered = documents.filter((d) => d.isDelivered).length;
   const classChoices = classesFor(classes, type).map((c) => [c.id, c.label] as [number, string]);
   // Django's print guards (financial payer; father and mother for the ficha), shown before the click
@@ -161,11 +162,28 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
         </div>
       </div>
 
-      <Section title="Parcelas">
+      <Section
+        title="Parcelas"
+        help={pending.length > 1 ? "Para registrar a baixa de várias parcelas de uma vez, marque-as e use “Baixar selecionadas”." : undefined}
+        action={
+          pending.length > 1 && (
+            <div className="flex flex-wrap gap-2">
+              <Button type="submit" form="batch-payment" size="xs" color="alternative">
+                Baixar selecionadas
+              </Button>
+              <LinkButton href={`/accounts/payments/batch?${new URLSearchParams([["enrollment", String(id)], ...pending.map((i) => ["installment", String(i.id)])])}`} size="xs" color="alternative">
+                Baixar todas em aberto ({pending.length})
+              </LinkButton>
+            </div>
+          )
+        }
+      >
         {!installments ? (
           <p className="text-sm text-gray-600">Nenhuma duplicata gerada para esta matrícula.</p>
         ) : (
-          <div className="overflow-x-auto">
+          // A plain GET form: the checked installments become ?installment=… on the batch payment page
+          <form id="batch-payment" action="/accounts/payments/batch" className="overflow-x-auto">
+            <input type="hidden" name="enrollment" value={id} />
             <Table className={`${DENSE} ${PHONE_CARDS}`}>
               <TableHead>
                 <TableRow>
@@ -183,8 +201,17 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
                   return (
                     <TableRow key={i.id}>
                       <TableCell className={`${PRIMARY_CELL} tabular-nums`}>
-                        <span className="sm:hidden">Parcela </span>
-                        {i.number}
+                        <label className="flex items-center gap-2">
+                          {pending.length > 1 && PENDING_STATUSES.includes(i.status) ? (
+                            <Checkbox name="installment" value={i.id} aria-label={`Selecionar a parcela ${i.number}`} />
+                          ) : (
+                            pending.length > 1 && <span className="w-4" aria-hidden="true" />
+                          )}
+                          <span>
+                            <span className="sm:hidden">Parcela </span>
+                            {i.number}
+                          </span>
+                        </label>
                       </TableCell>
                       <TableCell className="whitespace-nowrap tabular-nums">
                         <PhoneLabel>Vencimento</PhoneLabel>
@@ -220,7 +247,7 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
                 })}
               </TableBody>
             </Table>
-          </div>
+          </form>
         )}
       </Section>
 
