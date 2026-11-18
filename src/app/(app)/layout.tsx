@@ -2,6 +2,7 @@ import { Spinner } from "flowbite-react";
 import { Suspense } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Flash } from "@/components/flash";
+import { FreshOnNavigate } from "@/components/fresh-on-navigate";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { userAccess } from "@/lib/access";
@@ -19,7 +20,9 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       </Suspense>
       <main id="main" tabIndex={-1} className="min-w-0 flex-1 p-4 pt-18 focus:outline-none lg:p-8">
         <Suspense fallback={<Spinner aria-label="Carregando" />}>
-          <Authenticated>{children}</Authenticated>
+          <Authenticated>
+            <FreshOnNavigate>{children}</FreshOnNavigate>
+          </Authenticated>
         </Suspense>
       </main>
       <Suspense>
