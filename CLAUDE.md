@@ -47,7 +47,7 @@ never the reset or the seed; the migration goes in before the code that needs it
 - Forms: `<FormFields state defaults>` + `TextField` / `SelectField` / `CheckboxField` (`src/components/form-fields.tsx`);
   Person models reuse `<PersonFields>` and `personFields` / `personUniqueError` (`src/lib/person.ts`).
   A form with client-side rows (students' guardians) submits via `onSubmit` + `startTransition` so React doesn't reset it.
-- Mutations: Server Actions in `actions.ts`; **every action calls `requireSession()` first**; `parseForm(schema, formData)`
+- Mutations: Server Actions in `actions.ts`; **every action calls `requirePermission("<area>.edit")` first** (`src/lib/access.ts`); `parseForm(schema, formData)`
   (`src/lib/form.ts`); map `UNIQUE_VIOLATION` to a field/form error; success redirects with `?msg=created|updated|deleted`
   (`src/components/flash.tsx`). Edit pages use `idParam(params)`.
 - Delete: `deleteAndRedirect(() => ..., listPath)` (`src/lib/crud.ts`) turns a FK violation into `?msg=protected`.
@@ -65,12 +65,17 @@ never the reset or the seed; the migration goes in before the code that needs it
 - Action color is navy: use `primary-*` classes (the `--primary-*` scale in `globals.css`), never `blue-*`.
   Icons stay gray; secondary buttons darken on hover (DESIGN.md, "The One Navy Rule").
 - Client components that read the URL (`usePathname`, `useSearchParams`) must sit inside `<Suspense>`.
-- Add each migrated page to `NAV` in `src/components/app-sidebar.tsx`.
+- Add each migrated page to `NAV` in `src/components/app-sidebar.tsx` **and** to `ROUTES` in `src/lib/permissions.ts`
+  (unlisted paths are denied to everyone but admins).
+
+### Permissions (not in Django)
+- Employee role → groups (`/groups`) → permission codes (`src/lib/permissions.ts`). Admins hold all; a login without
+  an employee holds none. Pages are gated by `src/proxy.ts` from `ROUTES`; actions by `requirePermission()`.
 
 ## Business rules (from Django — don't break)
 
 Ported rules keep their Django names in camelCase; find them in the `src/lib/` module listed in ARCHITECTURE.md
-(Modules). Not migrated yet: bank slips (`billing`), users/groups screens.
+(Modules). Not migrated yet: bank slips (`billing`), users screens.
 
 ### Records
 - Fixed options are short codes (`"R"`, `"A"`, `"PIX"`) with Portuguese labels (`label(choices, code)`).
@@ -101,7 +106,7 @@ Ported rules keep their Django names in camelCase; find them in the `src/lib/` m
   to every subject of the series with `saveSeriesGrades()`.
 - Grade locks (not in Django, `src/lib/grade-lock.ts`): staff lock a subject × bimester on `/grades/locks`; then
   teachers can't edit it, and they never edit `C`, `EX` or `A` (adjustment). Every grade write checks
-  `gradeEditError()`; "staff" = `isStaff()` (admin, or a login whose employee teaches nothing).
+  `gradeEditError()`; "staff" = holds `grades.manage`.
 
 ### Lessons
 - Lessons run Monday to Saturday: 12 periods a day Monday to Friday, 7 on Saturday. Build a day's periods with

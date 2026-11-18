@@ -1,18 +1,15 @@
 import { asc } from "drizzle-orm";
 import { Button, Checkbox, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow } from "flowbite-react";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { gradesSubject as subject } from "@/db/schema/app";
-import { allLocks, isStaff } from "@/lib/grade-lock";
+import { allLocks } from "@/lib/grade-lock";
 import { GRADE_PERIODS } from "@/lib/grades";
-import { requireSession } from "@/lib/session";
 import { saveGradeLocks } from "./actions";
 
 export const metadata: Metadata = { title: "Bloqueio de notas" };
 
 export default async function GradeLocksPage() {
-  if (!(await isStaff((await requireSession()).user))) redirect("/");
   const [subjects, locks] = await Promise.all([db.select({ id: subject.id, name: subject.name }).from(subject).orderBy(asc(subject.name)), allLocks()]);
   return (
     <form action={saveGradeLocks} className="flex flex-col gap-4">

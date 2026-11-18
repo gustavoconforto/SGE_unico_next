@@ -5,10 +5,12 @@ import { eq } from "drizzle-orm";
 import { auth } from "../src/lib/auth";
 import { db } from "../src/db";
 import * as t from "../src/db/schema/app";
+import { user } from "../src/db/schema/auth";
 import { addDays } from "../src/lib/dates";
 import { LEVELS, accountInstallments, contractValues, initialStatus, label, money, today, toDb } from "../src/lib/finance";
 import { createEnrollmentAccount, refreshInstallmentStatus, syncDocuments } from "../src/lib/finance-db";
 import { lessonDays } from "../src/lib/pathways";
+import { PERMISSIONS } from "../src/lib/permissions";
 import { nextRegistration } from "../src/lib/students";
 
 export const SEED_PASSWORD = process.env.SEED_PASSWORD ?? "senha1234";
@@ -95,7 +97,19 @@ export async function seed() {
   ]);
   const exams = Object.fromEntries((await db.select().from(t.gradesExamtype)).map((e) => [e.code, e]));
   const incidentTypes = await db.insert(t.incidentsIncidenttype).values([["Conversa excessiva", "0.10"], ["Uso de celular em sala", "0.20"], ["Cola em avaliação", "0.50"]].map(([type, penalty]) => ({ type, penalty }))).returning();
-  const [teacherRole] = await db.insert(t.employeesEmployeeroletype).values([{ role: "Professor" }, { role: "Coordenação" }, { role: "Secretaria" }]).returning();
+  const [teacherRole, , secretaryRole] = await db.insert(t.employeesEmployeeroletype).values([{ role: "Professor" }, { role: "Coordenação" }, { role: "Secretaria" }]).returning();
+  // Access groups: the secretaria login is a Secretaria employee; groups.manage stays with admins
+  const [secretary] = await db.insert(t.employeesEmployee).values({ ...person("Secretaria Escolar", "F", 1985), roleId: secretaryRole.id, canAccessSuga: false, passwordSuga: "" }).returning();
+  await db.update(user).set({ employeeId: secretary.id }).where(eq(user.username, "secretaria"));
+  const TEACHER_PERMISSIONS = ["students.view", "grades.view", "grades.edit", "lessons.view", "lessons.edit", "pathways.view", "pathways.edit", "incidents.view", "incidents.edit"];
+  for (const [name, roleId, codes] of [
+    ["Secretaria", secretaryRole.id, PERMISSIONS.map(([code]) => code).filter((code) => code !== "groups.manage")],
+    ["Professores", teacherRole.id, TEACHER_PERMISSIONS],
+  ] as const) {
+    const [g] = await db.insert(t.accessGroup).values({ name }).returning();
+    await db.insert(t.accessGroupRoles).values({ groupId: g.id, roleId });
+    await db.insert(t.accessGroupPermissions).values(codes.map((codename) => ({ groupId: g.id, codename })));
+  }
   await db.insert(t.accountsAccounttype).values([{ name: "Mensalidade", direction: "R" }, { name: "Material didático", direction: "R" }, { name: "Energia elétrica", direction: "P" }, { name: "Manutenção", direction: "P" }]);
   const categories = Object.fromEntries((await db.select().from(t.accountsAccounttype)).map((c) => [c.name, c.id]));
 

@@ -8,7 +8,7 @@ import { pathwaysPathway as pathway } from "@/db/schema/app";
 import { deleteAndRedirect } from "@/lib/crud";
 import { UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import { REQUIRED, type FormState, decimalField, parseForm, requiredText } from "@/lib/form";
-import { requireSession } from "@/lib/session";
+import { requirePermission } from "@/lib/access";
 
 const schema = z.object({
   name: requiredText(50),
@@ -19,7 +19,7 @@ const schema = z.object({
 });
 
 export async function savePathway(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSession();
+  await requirePermission("pathways.edit");
   const { data, values, state } = parseForm(schema, formData);
   if (!data) return state;
   // Pathway.clean(): hours only for a fixed workload, and then required
@@ -37,6 +37,6 @@ export async function savePathway(id: number | null, _prev: FormState, formData:
 }
 
 export async function deletePathway(id: number) {
-  await requireSession();
+  await requirePermission("pathways.edit");
   await deleteAndRedirect(() => db.delete(pathway).where(eq(pathway.id, id)), "/pathways");
 }

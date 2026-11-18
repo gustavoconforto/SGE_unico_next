@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { LOCKED, allLocks, gradeEditError, isStaff } from "@/lib/grade-lock";
+import { hasPermission } from "@/lib/access";
+import { LOCKED, allLocks, gradeEditError } from "@/lib/grade-lock";
 import { requireSession } from "@/lib/session";
 import { gradeSelection } from "../selection";
 import { GradePicker } from "./grade-picker";
@@ -12,7 +13,7 @@ export default async function GradeEntryPage({ searchParams }: PageProps<"/grade
   const s = await gradeSelection(await searchParams);
   const { klass, subject, period } = s.selected;
   const sheet = klass && subject && period ? await loadSheet(klass, subject, period) : null;
-  const [staff, locks] = sheet ? await Promise.all([requireSession().then((s) => isStaff(s.user)), allLocks()]) : [true, new Set<string>()];
+  const [staff, locks] = sheet ? await Promise.all([requireSession().then((s) => hasPermission(s.user, "grades.manage")), allLocks()]) : [true, new Set<string>()];
   const locked = locks.has(`${subject}:${period}`);
   const query = new URLSearchParams({ school_year: String(s.selected.year), school_class: String(klass), subject: String(subject), bimester: String(period) }).toString();
   return (

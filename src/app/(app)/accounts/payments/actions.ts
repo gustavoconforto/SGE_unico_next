@@ -10,7 +10,7 @@ import { PAYMENT_METHODS, PENDING_STATUSES, formatMoney, installmentBalance, mon
 import { lockInstallment, outstandingSql, refreshInstallmentStatus } from "@/lib/finance-db";
 import { type FormErrors, type FormState, INVALID_CHOICE, REQUIRED, decimalField, foreignKey, formIds, parseForm, requiredDate } from "@/lib/form";
 import { likePattern } from "@/lib/list";
-import { requireSession } from "@/lib/session";
+import { requirePermission } from "@/lib/access";
 import { type InstallmentChoice, toChoice } from "./data";
 
 const paymentSchema = z.object({
@@ -28,7 +28,7 @@ const paymentSchema = z.object({
 
 /** The installment search box: pending installments of one direction (ReceivableInstallmentLookupView). */
 export async function searchInstallments(direction: "R" | "P", q: string): Promise<InstallmentChoice[]> {
-  await requireSession();
+  await requirePermission("finance.edit");
   const p = likePattern(stripAccents(q.trim()));
   const rows = await db
     .select({
@@ -73,7 +73,7 @@ function orIlike(columns: AnyPgColumn[], pattern: string) {
  * installment's balance, checked again with the installment row locked so a double submit can't pass twice.
  */
 export async function savePayment(id: number | null, direction: "R" | "P", returnToAccount: boolean, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSession();
+  await requirePermission("finance.edit");
   const { data, values, state } = parseForm(paymentSchema, formData);
   if (!data) return state;
   const fields = { ...data, discount: data.discount ?? "0.00", penalty: data.penalty ?? "0.00", interest: data.interest ?? "0.00", monetaryAdjust: data.monetaryAdjust ?? "0.00" };
@@ -126,7 +126,7 @@ const ROW_FIELDS = ["penalty", "interest", "discount"] as const;
  * `balance_<id>` is the balance the screen showed, so a payment saved meanwhile can't change what the guardian pays.
  */
 export async function saveBatchPayment(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSession();
+  await requirePermission("finance.edit");
   const { data, values, state } = parseForm(batchSchema, formData);
   // Ascending, so two batches over the same installments lock them in the same order and can't deadlock
   const ids = formIds(formData, "installment").sort((a, b) => a - b);
@@ -184,7 +184,7 @@ export async function saveBatchPayment(_prev: FormState, formData: FormData): Pr
 }
 
 export async function deletePayment(id: number) {
-  await requireSession();
+  await requirePermission("finance.edit");
   await db.transaction(async (tx) => {
     const [row] = await tx.select({ installmentId: payment.installmentId }).from(payment).where(eq(payment.id, id));
     if (!row) return;

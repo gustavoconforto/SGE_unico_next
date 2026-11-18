@@ -1,0 +1,96 @@
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { NAV } from "@/components/app-sidebar";
+import { canOpen, isPermission, routePermission } from "./permissions";
+
+describe("routePermission", () => {
+  it("lets any signed-in user open home, password, forbidden and media", () => {
+    for (const path of ["/", "/account/password", "/forbidden", "/media/students/a.jpg"]) expect(routePermission(path)).toBeNull();
+  });
+
+  it("asks view on lists and edit on form pages", () => {
+    expect(routePermission("/students")).toBe("students.view");
+    expect(routePermission("/students/new")).toBe("students.edit");
+    expect(routePermission("/students/12/edit")).toBe("students.edit");
+    expect(routePermission("/accounts/receivable/3/receipt")).toBe("finance.view");
+  });
+
+  it("takes the longest matching prefix", () => {
+    expect(routePermission("/enrollments")).toBe("enrollments.view");
+    expect(routePermission("/enrollments/discounts/new")).toBe("enrollmentSetup.edit");
+    expect(routePermission("/classes/detail")).toBe("enrollments.view");
+    expect(routePermission("/classes/4/edit")).toBe("academicSetup.edit");
+    expect(routePermission("/grades/locks")).toBe("grades.manage");
+  });
+
+  it("doesn't match a prefix inside a word, and denies paths no rule covers", () => {
+    expect(routePermission("/studentsx")).toBeUndefined();
+    expect(routePermission("/billing")).toBeUndefined();
+  });
+});
+
+describe("canOpen", () => {
+  it("lets admins open everything", () => {
+    expect(canOpen("/groups", new Set(), true)).toBe(true);
+    expect(canOpen("/billing", new Set(), true)).toBe(true);
+  });
+
+  it("needs the exact permission, and denies uncovered paths", () => {
+    const viewer = new Set(["students.view"]);
+    expect(canOpen("/students", viewer)).toBe(true);
+    expect(canOpen("/students/new", viewer)).toBe(false);
+    expect(canOpen("/accounts/payable", viewer)).toBe(false);
+    expect(canOpen("/billing", viewer)).toBe(false);
+  });
+
+  it("knows its own codes", () => {
+    expect(isPermission("students.view")).toBe(true);
+    expect(isPermission("students.delete")).toBe(false);
+  });
+});
+
+/** Every file named `name` under `dir`. */
+function find(dir: string, name: string): string[] {
+  return readdirSync(dir).flatMap((entry) => {
+    const path = join(dir, entry);
+    return statSync(path).isDirectory() ? find(path, name) : entry === name ? [path] : [];
+  });
+}
+
+/** A page file's URL: route groups dropped, dynamic segments filled in. */
+const pageUrl = (file: string, root: string) =>
+  "/" +
+  file
+    .slice(root.length + 1, -"page.tsx".length)
+    .split("/")
+    .filter((s) => s && !s.startsWith("("))
+    .map((s) => (s.startsWith("[") ? "1" : s))
+    .join("/");
+
+describe("coverage", () => {
+  it("gives every page a rule, so a new screen isn't silently admin-only", () => {
+    const pages = ["src/app/(app)", "src/app/(print)"].flatMap((root) => find(root, "page.tsx").map((f) => pageUrl(f, root).replace(/\/$/, "") || "/"));
+    expect(pages.length).toBeGreaterThan(50);
+    expect(pages.filter((url) => routePermission(url) === undefined)).toEqual([]);
+  });
+
+  it("gives every menu item a rule", () => {
+    const hrefs = NAV.flatMap(function items(g): string[] {
+      return [...g.items.map((i) => i.href), ...(g.groups ?? []).flatMap(items)];
+    });
+    expect(hrefs.filter((href) => routePermission(href) === undefined)).toEqual([]);
+  });
+
+  it("checks a permission at the top of every Server Action", () => {
+    const missing = find("src/app", "actions.ts").flatMap((file) =>
+      readFileSync(file, "utf8")
+        .split(/^export async function /m)
+        .slice(1)
+        .filter((body) => !/requirePermission\(|hasPermission\(/.test(body.split("\n").slice(0, 3).join("\n")))
+        .map((body) => `${file}: ${body.slice(0, body.indexOf("("))}`),
+    );
+    // Changing your own password needs only the session
+    expect(missing).toEqual(["src/app/(app)/account/password/actions.ts: changePassword"]);
+  });
+});

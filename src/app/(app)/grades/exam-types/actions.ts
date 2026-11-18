@@ -8,7 +8,7 @@ import { gradesExamtype as examType } from "@/db/schema/app";
 import { deleteAndRedirect } from "@/lib/crud";
 import { UNIQUE_VIOLATION, pgConstraint, pgErrorCode } from "@/lib/db-error";
 import { REQUIRED, type FormState, decimalField, intField, parseForm, requiredText } from "@/lib/form";
-import { requireSession } from "@/lib/session";
+import { requirePermission } from "@/lib/access";
 
 const examTypeSchema = z.object({
   name: requiredText(50),
@@ -19,7 +19,7 @@ const examTypeSchema = z.object({
 });
 
 export async function saveExamType(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSession();
+  await requirePermission("academicSetup.edit");
   const { data, values, state } = parseForm(examTypeSchema, formData);
   if (!data) return state;
   try {
@@ -36,6 +36,6 @@ export async function saveExamType(id: number | null, _prev: FormState, formData
 }
 
 export async function deleteExamType(id: number) {
-  await requireSession();
+  await requirePermission("academicSetup.edit");
   await deleteAndRedirect(() => db.delete(examType).where(eq(examType.id, id)), "/grades/exam-types");
 }

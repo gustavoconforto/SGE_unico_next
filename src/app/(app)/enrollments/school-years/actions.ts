@@ -7,7 +7,7 @@ import { db } from "@/db";
 import { enrollmentsSchoolyear } from "@/db/schema/app";
 import { deleteAndRedirect } from "@/lib/crud";
 import { type FormState, intField, optionalDate, parseForm, requiredDate } from "@/lib/form";
-import { requireSession } from "@/lib/session";
+import { requirePermission } from "@/lib/access";
 
 const schoolYearSchema = z.object({
   begins: requiredDate,
@@ -26,7 +26,7 @@ const schoolYearSchema = z.object({
 });
 
 export async function saveSchoolYear(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSession();
+  await requirePermission("enrollmentSetup.edit");
   const { data, state } = parseForm(schoolYearSchema, formData);
   if (!data) return state;
   if (id === null) await db.insert(enrollmentsSchoolyear).values(data);
@@ -35,6 +35,6 @@ export async function saveSchoolYear(id: number | null, _prev: FormState, formDa
 }
 
 export async function deleteSchoolYear(id: number) {
-  await requireSession();
+  await requirePermission("enrollmentSetup.edit");
   await deleteAndRedirect(() => db.delete(enrollmentsSchoolyear).where(eq(enrollmentsSchoolyear.id, id)), "/enrollments/school-years");
 }

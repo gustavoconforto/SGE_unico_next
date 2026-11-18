@@ -6,8 +6,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { canOpen } from "@/lib/permissions";
 
-type NavItem = { href: string; label: string; icon: string; staffOnly?: boolean };
+type NavItem = { href: string; label: string; icon: string };
 type NavGroup = {
   label: string;
   icon: string;
@@ -16,7 +17,7 @@ type NavGroup = {
 };
 
 // Grouped by the staff's tasks, most-used first; Django's menu grouped by app. Add each item when its app is migrated.
-const NAV: NavGroup[] = [
+export const NAV: NavGroup[] = [
   {
     label: "Secretaria",
     icon: "how_to_reg",
@@ -45,7 +46,7 @@ const NAV: NavGroup[] = [
     items: [
       { href: "/grades/entry", label: "Lançamento de notas", icon: "edit_note" },
       { href: "/grades/student", label: "Notas do aluno", icon: "grading" },
-      { href: "/grades/locks", label: "Bloqueio de notas", icon: "lock", staffOnly: true },
+      { href: "/grades/locks", label: "Bloqueio de notas", icon: "lock" },
       { href: "/lessons/timetable", label: "Grade horária", icon: "calendar_view_week" },
       { href: "/lessons/lectures", label: "Diário de classe", icon: "menu_book" },
       { href: "/q-and-a", label: "Plantões", icon: "support_agent" },
@@ -84,6 +85,7 @@ const NAV: NavGroup[] = [
     items: [
       { href: "/employees", label: "Funcionários", icon: "badge" },
       { href: "/employees/roles", label: "Cargos", icon: "work" },
+      { href: "/groups", label: "Grupos e permissões", icon: "admin_panel_settings" },
     ],
   },
   {
@@ -116,6 +118,13 @@ function isActive(pathname: string, href: string): boolean {
   const matches = (h: string) => pathname === h || pathname.startsWith(`${h}/`);
   if (!matches(href)) return false;
   return !NAV.flatMap(allItems).some((i) => i.href.length > href.length && matches(i.href));
+}
+
+/** The menu without the items this access can't open, nor the groups left empty. */
+function visibleNav(granted: ReadonlySet<string>, all: boolean, groups = NAV): NavGroup[] {
+  return groups
+    .map((g) => ({ ...g, items: g.items.filter((i) => canOpen(i.href, granted, all)), groups: g.groups && visibleNav(granted, all, g.groups) }))
+    .filter((g) => g.items.length || g.groups?.length);
 }
 
 function allItems(group: NavGroup): NavItem[] {
@@ -159,8 +168,8 @@ function NavCollapse({ group, pathname, onNavigate, depth = 0 }: { group: NavGro
   );
 }
 
-/** `staff`: show the staff-only items (isStaff(), computed on the server). */
-export function AppSidebar({ staff }: { staff: boolean }) {
+/** Only the menu items the user may open; `all`, `granted`: their access (userAccess(), computed on the server). */
+export function AppSidebar({ all, granted }: { all: boolean; granted: string[] }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -236,7 +245,7 @@ export function AppSidebar({ staff }: { staff: boolean }) {
                   Início
                 </span>
               </SidebarItem>
-              {(staff ? NAV : NAV.map((g) => ({ ...g, items: g.items.filter((i) => !i.staffOnly) }))).map((group) => (
+              {visibleNav(new Set(granted), all).map((group) => (
                 <NavCollapse key={group.label} group={group} pathname={pathname} onNavigate={() => setOpen(false)} />
               ))}
             </SidebarItemGroup>
