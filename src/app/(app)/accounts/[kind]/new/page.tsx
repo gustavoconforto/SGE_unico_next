@@ -14,11 +14,12 @@ export async function generateMetadata({ params }: PageProps<"/accounts/[kind]/n
 
 export default async function NewAccountPage({ params, searchParams }: PageProps<"/accounts/[kind]/new">) {
   const kind = await kindParam(params);
-  const options = await accountFormOptions(kind);
+  const optionsPromise = accountFormOptions(kind); // runs alongside the prefill lookups below
   // "Nova conta a receber" on the enrollment page: ?enrollment=<id> prefills the student and payer
   const enrollmentId = kind === "receivable" ? Number(param(await searchParams, "enrollment")) || null : null;
   const [source] = enrollmentId ? await db.select({ id: enrollment.id, studentId: enrollment.studentId }).from(enrollment).where(eq(enrollment.id, enrollmentId)) : [];
   const [payer] = source ? await financialGuardians(db, source.studentId).limit(1) : [];
+  const options = await optionsPromise;
   const back = source ? `/enrollments/${source.id}/edit` : `/accounts/${kind}`;
   return (
     <div className="flex flex-col gap-4">

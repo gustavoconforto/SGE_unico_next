@@ -51,9 +51,12 @@ export default async function StudentAttendancePage({ searchParams }: PageProps<
 }
 
 async function Report({ enrollmentId, bimester }: { enrollmentId: number; bimester: number }) {
-  const [e] = await db.select({ y: year }).from(enrollment).innerJoin(enrollmentType, eq(enrollment.enrollmentTypeId, enrollmentType.id)).innerJoin(year, eq(enrollmentType.schoolYearId, year.id)).where(eq(enrollment.id, enrollmentId));
+  const [[e], workload] = await Promise.all([
+    db.select({ y: year }).from(enrollment).innerJoin(enrollmentType, eq(enrollment.enrollmentTypeId, enrollmentType.id)).innerJoin(year, eq(enrollmentType.schoolYearId, year.id)).where(eq(enrollment.id, enrollmentId)),
+    enrollmentWorkload(enrollmentId),
+  ]);
   const range = bimesterRange(e.y, bimester);
-  const total = ((await enrollmentWorkload(enrollmentId)) ?? []).reduce((s, m) => s.plus(m.workload), new Decimal(0));
+  const total = (workload ?? []).reduce((s, m) => s.plus(m.workload), new Decimal(0));
   const footer = (
     <p className="text-sm">
       Carga horária no ano letivo: <strong>{formatHours(total)} h</strong>

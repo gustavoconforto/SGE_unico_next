@@ -13,9 +13,9 @@ export const metadata: Metadata = { title: "Editar plantão" };
 
 export default async function EditQandAPage({ params }: PageProps<"/q-and-a/[id]/edit">) {
   const id = await idParam(params);
-  const [row] = await db.select().from(qa).where(eq(qa.id, id));
+  const [[row], year, subjects] = await Promise.all([db.select().from(qa).where(eq(qa.id, id)), currentSchoolYear(), subjectOptions()]);
   if (!row) notFound();
-  const [enrollments, subjects] = await Promise.all([activeEnrollmentOptions(row.enrollmentId, (await currentSchoolYear())?.id ?? null), subjectOptions()]);
+  const enrollments = await activeEnrollmentOptions(row.enrollmentId, year?.id ?? null);
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">Editar plantão</h1>
