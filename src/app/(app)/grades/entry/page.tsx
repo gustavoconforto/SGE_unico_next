@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { hasPermission } from "@/lib/access";
-import { LOCKED, allLocks, gradeEditError } from "@/lib/grade-lock";
+import { LOCKED, allLocks, gradeEditError, staffOnly } from "@/lib/grade-lock";
+import { currentSchoolYear } from "@/lib/concept-db";
 import { requireSession } from "@/lib/session";
+import { LAST_SHEET } from "../score";
 import { gradeSelection } from "../selection";
 import { GradePicker } from "./grade-picker";
 import { GradeSheet } from "./grade-sheet";
@@ -9,8 +13,34 @@ import { loadSheet } from "./sheet";
 
 export const metadata: Metadata = { title: "Lançamento de notas" };
 
+const SHEET_KEYS = ["school_year", "school_class", "subject", "bimester"];
+
+/** With nothing picked, reopen the last sheet (saved by the sheet in a cookie), else start on the current school year. */
+async function startingQuery(): Promise<string | null> {
+  // shortcut: the cookie is per browser, not per user; a shared office computer reopens the last person's sheet, harmless since access is checked on load
+  let last = new URLSearchParams();
+  try {
+    last = new URLSearchParams(decodeURIComponent((await cookies()).get(LAST_SHEET)?.value ?? ""));
+  } catch {} // a mangled cookie just starts fresh
+  const kept = new URLSearchParams(SHEET_KEYS.flatMap((k) => (/^\d+$/.test(last.get(k) ?? "") ? [[k, last.get(k)!]] : [])));
+  if (kept.has("school_year")) return kept.toString();
+  const year = await currentSchoolYear();
+  return year ? `school_year=${year.id}` : null;
+}
+
+/** "a turma, a matéria e o período": only what is still to pick (the year usually comes preselected). */
+function missingChoices(selected: { year: number | null; klass: number | null; subject: number | null; period: number | null }) {
+  const missing = [!selected.year && "o ano letivo", !selected.klass && "a turma", !selected.subject && "a matéria", !selected.period && "o período"].filter((m) => !!m);
+  return missing.length > 1 ? `${missing.slice(0, -1).join(", ")} e ${missing.at(-1)}` : (missing[0] ?? "outra matéria");
+}
+
 export default async function GradeEntryPage({ searchParams }: PageProps<"/grades/entry">) {
-  const s = await gradeSelection(await searchParams);
+  const sp = await searchParams;
+  if (!Object.keys(sp).length) {
+    const start = await startingQuery();
+    if (start) redirect(`/grades/entry?${start}`);
+  }
+  const s = await gradeSelection(sp);
   const { klass, subject, period } = s.selected;
   const sheet = klass && subject && period ? await loadSheet(klass, subject, period) : null;
   const [staff, locks] = sheet ? await Promise.all([requireSession().then((s) => hasPermission(s.user, "grades.manage")), allLocks()]) : [true, new Set<string>()];
@@ -25,19 +55,19 @@ export default async function GradeEntryPage({ searchParams }: PageProps<"/grade
           key={query}
           selection={{ query, classId: klass!, subjectId: subject!, period: period! }}
           recovery={sheet.recovery}
-          examTypes={sheet.examTypes}
-          readOnly={sheet.examTypes.filter((t) => gradeEditError(staff, locked, t.code)).map((t) => t.id)}
-          notice={locked ? (staff ? "Bimestre bloqueado para os professores nesta matéria." : LOCKED) : null}
+          unaveraged={sheet.unaveraged}
+          examTypes={sheet.examTypes.map((t) => ({ ...t, calculated: staffOnly(t) }))}
+          readOnly={Object.fromEntries(sheet.examTypes.flatMap((t) => (gradeEditError(staff, locked, t) ? [[t.id, gradeEditError(staff, locked, t)!]] : [])))}
+          notice={locked ? { text: staff ? "Bimestre bloqueado para os professores nesta matéria." : LOCKED, staff } : null}
           rows={sheet.rows.map((r) => ({
             id: r.id,
             name: r.name,
             average: r.average?.toFixed(2) ?? null,
-            result: r.result?.toFixed(2) ?? null,
             saved: Object.fromEntries(Object.entries(r.saved).map(([k, g]) => [k, g.score])),
           }))}
         />
       ) : (
-        <p className="text-gray-500">Selecione o ano letivo, a turma, a matéria e o bimestre.</p>
+        <p className="text-gray-500">Selecione {missingChoices(s.selected)}.</p>
       )}
     </div>
   );

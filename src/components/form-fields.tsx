@@ -12,7 +12,8 @@ const FormContext = createContext<Ctx>({ state: {}, defaults: {}, fixed: new Set
 
 const EMPTY = new Set<string>();
 
-export function FormFields({ state, defaults = {}, children }: { state: FormState; defaults?: Record<string, unknown>; children: React.ReactNode }) {
+/** `note` adds to the "required fields" line, so a form opens with one instruction, not a stack of them. */
+export function FormFields({ state, defaults = {}, note, children }: { state: FormState; defaults?: Record<string, unknown>; note?: React.ReactNode; children: React.ReactNode }) {
   const noteRef = useRef<HTMLParagraphElement>(null);
   const summaryRef = useRef<HTMLDivElement>(null);
   // Tied to the state it was collected for, so the next submit's errors start fresh
@@ -68,7 +69,7 @@ export function FormFields({ state, defaults = {}, children }: { state: FormStat
   return (
     <FormContext.Provider value={{ state, defaults, fixed, markFixed }}>
       <p ref={noteRef} className="required-note text-sm text-gray-600">
-        Campos sem “opcional” são obrigatórios.
+        Campos sem “opcional” são obrigatórios.{note && <> {note}</>}
       </p>
       {showSummary && (
         // Flowbite's Alert carries role="alert"; the wrapper only takes focus
@@ -308,36 +309,94 @@ export function Fieldset({ legend, description, children }: { legend: string; de
   );
 }
 
-const DISCARD = "Sair sem salvar? As alterações deste formulário serão perdidas.";
+export const DISCARD = "Sair sem salvar? As alterações deste formulário serão perdidas.";
 
-/** Once the user edits the form, leaving it (reload, close, any link) asks first. A save's redirect isn't a link click. */
+/**
+ * While `isDirty()`, leaving (reload, close, any link, the browser's Back) asks first; `onLeave` runs when
+ * the user accepts. Back can't be cancelled, so `arm()` pushes a copy of this page to land on, and Back
+ * then asks: staying pushes it again, leaving goes back once more.
+ */
+function guardLeave(isDirty: () => boolean, onLeave: () => void) {
+  let armed = false;
+  // shortcut: the copy stays in history after a save, so the first Back afterwards stays on the page; drop it if users notice
+  const arm = () => {
+    if (armed || !isDirty()) return;
+    window.history.pushState(window.history.state, "");
+    armed = true;
+  };
+  const onPop = () => {
+    if (!armed) return;
+    armed = false;
+    if (isDirty() && !window.confirm(DISCARD)) return arm();
+    onLeave();
+    window.history.back();
+  };
+  const onUnload = (e: BeforeUnloadEvent) => {
+    if (isDirty()) e.preventDefault();
+  };
+  // Capture on document runs before Next's <Link> handler, so a declined leave never navigates
+  const onClick = (e: MouseEvent) => {
+    const link = (e.target as Element | null)?.closest?.("a[href]");
+    if (!isDirty() || !link || link.getAttribute("target") === "_blank" || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    if (!window.confirm(DISCARD)) {
+      e.preventDefault();
+      e.stopPropagation();
+    } else onLeave();
+  };
+  window.addEventListener("beforeunload", onUnload);
+  window.addEventListener("popstate", onPop);
+  document.addEventListener("click", onClick, true);
+  return {
+    arm,
+    stop: () => {
+      window.removeEventListener("beforeunload", onUnload);
+      window.removeEventListener("popstate", onPop);
+      document.removeEventListener("click", onClick, true);
+    },
+  };
+}
+
+/** Once the user edits the form, leaving it (reload, close, any link, Back) asks first. A save's redirect isn't a link click. */
 function useUnsavedGuard(ref: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
     const form = ref.current?.closest("form");
     if (!form) return;
     let dirty = false;
-    const onInput = () => (dirty = true);
-    const onUnload = (e: BeforeUnloadEvent) => {
-      if (dirty) e.preventDefault();
-    };
-    // Capture on document runs before Next's <Link> handler, so a declined leave never navigates
-    const onClick = (e: MouseEvent) => {
-      const link = (e.target as Element | null)?.closest?.("a[href]");
-      if (!dirty || !link || link.getAttribute("target") === "_blank" || e.metaKey || e.ctrlKey || e.shiftKey) return;
-      if (!window.confirm(DISCARD)) {
-        e.preventDefault();
-        e.stopPropagation();
-      } else dirty = false;
+    const guard = guardLeave(
+      () => dirty,
+      () => (dirty = false),
+    );
+    const onInput = () => {
+      dirty = true;
+      guard.arm();
     };
     form.addEventListener("input", onInput);
-    window.addEventListener("beforeunload", onUnload);
-    document.addEventListener("click", onClick, true);
     return () => {
       form.removeEventListener("input", onInput);
-      window.removeEventListener("beforeunload", onUnload);
-      document.removeEventListener("click", onClick, true);
+      guard.stop();
     };
   }, [ref]);
+}
+
+/** The same guard for a form that tracks its own changes (the grade sheet). One guard for the form's life, so Back's copy is pushed once. */
+export function useLeaveGuard(dirty: boolean) {
+  const dirtyRef = useRef(dirty);
+  const guardRef = useRef<ReturnType<typeof guardLeave>>(null);
+  useEffect(() => {
+    const guard = guardLeave(
+      () => dirtyRef.current,
+      () => (dirtyRef.current = false),
+    );
+    guardRef.current = guard;
+    return () => {
+      guard.stop();
+      guardRef.current = null;
+    };
+  }, []);
+  useEffect(() => {
+    dirtyRef.current = dirty;
+    if (dirty) guardRef.current?.arm();
+  }, [dirty]);
 }
 
 /**
@@ -363,7 +422,7 @@ export function FormButtons({
   const ref = useRef<HTMLDivElement>(null);
   useUnsavedGuard(ref);
   return (
-    <div ref={ref} className={sticky ? "sticky bottom-0 z-10 -mx-4 flex flex-wrap gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3 lg:-mx-8 lg:px-8" : "flex flex-wrap gap-2"}>
+    <div ref={ref} className={sticky ? "sticky bottom-0 z-10 -mx-4 flex flex-wrap gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3 lg:mx-0 lg:px-0" : "flex flex-wrap gap-2"}>
       {note && <div className="basis-full">{note}</div>}
       <Button type="submit" disabled={pending} aria-busy={pending}>
         {pending ? "Salvando…" : label}

@@ -1,16 +1,17 @@
 "use server";
 
-import { and, desc, eq, inArray, like } from "drizzle-orm";
+import { and, desc, eq, ilike, inArray, like } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
 import { studentsGuardianassociation as link, studentsStudent as student } from "@/db/schema/app";
 import { UNIQUE_VIOLATION, pgConstraint, pgErrorCode } from "@/lib/db-error";
 import { today } from "@/lib/finance";
-import { type FormState, REQUIRED, checkbox, optionalText, parseForm } from "@/lib/form";
+import { type FormState, REQUIRED, anotherUrl, checkbox, optionalText, parseForm } from "@/lib/form";
 import { readPhoto, saveStudentPhoto } from "@/lib/media";
 import { personFields, personUniqueError, phoneDigits } from "@/lib/person";
 import { requirePermission } from "@/lib/access";
+import { foldSql, stripAccents } from "@/lib/list";
 import { BLOOD_TYPES, type GuardianRow, guardianRowSchema, guardianRowsError, nextRegistration } from "@/lib/students";
 
 const studentSchema = z.object({
@@ -73,6 +74,20 @@ export async function saveStudent(id: number | null, _prev: FormState, formData:
   // The guardian error shows inside Responsáveis (GuardianRows reads errors.guardians)
   if (!data || guardianError || Object.keys(errors).length) return { errors: { ...errors, ...(guardianError && { guardians: [guardianError] }) }, values };
 
+  // Homonyms are legitimate, so a same-name student only asks for a second save, not a block (not in Django)
+  if (id === null && values.duplicateOk !== data.name) {
+    const [twin] = await db
+      .select({ registration: student.registration })
+      .from(student)
+      .where(ilike(foldSql(student.name), stripAccents(data.name).replace(/[\\%_]/g, "\\$&")))
+      .limit(1);
+    if (twin)
+      return {
+        formError: `Já existe um aluno chamado ${data.name} (matrícula ${twin.registration}). Confira se não é o mesmo aluno; se for outro, clique em Cadastrar aluno de novo.`,
+        values: { ...values, duplicateOk: data.name },
+      };
+  }
+
   let studentId = id;
   let registration = "";
   let oldPhoto = "";
@@ -108,6 +123,9 @@ export async function saveStudent(id: number | null, _prev: FormState, formData:
     const name = await saveStudentPhoto(photo, registration, oldPhoto);
     await db.update(student).set({ photo: name }).where(eq(student.id, studentId!));
   }
-  // Land on the saved student, where the new registration number shows
-  redirect(`/students/${studentId}/edit?msg=${id === null ? "student_created" : "updated"}`);
+  // "Cadastrar e começar outro": a blank form that names who was just saved
+  const next = id === null ? anotherUrl("/students/new", formData, [], studentId!) : null;
+  if (next) redirect(next);
+  // Land on the saved student's page, where the new registration number shows
+  redirect(`/students/${studentId}?msg=${id === null ? "student_created" : "updated"}`);
 }

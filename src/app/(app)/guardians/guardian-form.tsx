@@ -15,6 +15,7 @@ export function GuardianForm({ id = null, defaults }: { id?: number | null; defa
     <form action={action} className="flex max-w-3xl flex-col gap-4">
       <FormFields state={state} defaults={shown}>
         <PersonFields
+          digitPhones
           personal={<SelectField name="maritalStatus" label="Estado civil" options={MARITAL_STATUS} optional />}
           // Saved guardians only, like the student form; it follows the number as it is edited
           mobileAction={id ? <WhatsAppLink field="mobile" phone={defaults?.mobile as string} /> : undefined}

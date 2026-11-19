@@ -1,11 +1,10 @@
 "use client";
 
-import Decimal from "decimal.js";
 import { Alert, Badge, Button, TableCell, TableRow, TextInput } from "flowbite-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { PASSING_GRADE, formatGrade } from "@/lib/grades";
-import { scoreInput, shownName } from "../score";
+import { formatGrade } from "@/lib/grades";
+import { gradeTone as tone, scoreInput, shownName } from "../score";
 import { type RowState, saveSubjectGrades } from "./actions";
 import { GROUP, RESULT, SCORE, STICKY, STICKY_BODY } from "./cells";
 
@@ -22,8 +21,6 @@ type Row = {
 };
 type Exam = { id: number; code: string };
 
-/** Text color for a computed grade: muted when missing, red below passing. */
-const tone = (g: string | null) => (g === null ? "text-gray-400" : new Decimal(g).lt(PASSING_GRADE) ? "text-red-600" : "text-gray-900");
 
 /** One subject's row: read-only, or score inputs after "Editar" (Django's htmx row swap). */
 /** `readOnly`: input names this user can't edit (locked bimester or staff-only exam). */

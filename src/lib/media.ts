@@ -1,4 +1,5 @@
 // Uploaded files (Django's MEDIA_ROOT). Point MEDIA_ROOT at Django's media/ while both apps run.
+import { STUDENT_PLACEHOLDER } from "./students";
 import { access, unlink, writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 
@@ -49,5 +50,5 @@ export async function studentPhotoUrl(photo: string, registration: string): Prom
     const name = `students/${registration}${ext}`;
     if (await access(mediaPath(name)).then(() => true, () => false)) return `/media/${name}`;
   }
-  return "/img/student-placeholder.svg";
+  return STUDENT_PLACEHOLDER;
 }

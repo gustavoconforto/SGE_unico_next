@@ -1,13 +1,15 @@
 // Port of grades/services.py: grades are computed from the scores on every request, never stored.
-// Bimester grade = regular + bonus scores capped at 10 (recovery doesn't count); annual average =
-// 20/30/20/30 weighted mean rounded to the half point; below 6 the final recovery is averaged in.
+// Bimester grade = regular + bonus scores capped at 10 (recovery doesn't count), or the adjustment when
+// there is one (not in Django); annual average = 20/30/20/30 weighted mean rounded to the half point;
+// below 6 the final recovery is averaged in.
 import Decimal from "decimal.js";
 
-export const ExamKind = { REGULAR: "R", BONUS: "B", RECOVERY: "C" } as const;
+export const ExamKind = { REGULAR: "R", BONUS: "B", RECOVERY: "C", ADJUSTMENT: "A" } as const;
 export const EXAM_KINDS = [
   ["R", "Avaliação"],
   ["B", "Ponto extra"],
   ["C", "Recuperação"],
+  ["A", "Ajuste"],
 ] as const;
 export const BIMESTERS = [1, 2, 3, 4] as const;
 /** Recovery grades live in a fifth period, taken once the year is over. */
@@ -36,8 +38,10 @@ const cents = (v: Decimal) => v.toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
 /** .0 or .5, with .25 and .75 as thresholds (7.24 → 7.0, 7.25 → 7.5, 7.75 → 8.0). */
 export const roundToHalf = (v: Decimal) => cents(v.div("0.5").toDecimalPlaces(0, Decimal.ROUND_HALF_UP).times("0.5"));
 
-/** One subject in one bimester; null without a regular grade. */
+/** One subject in one bimester; null without a regular grade. A staff adjustment replaces the grade (the highest one, if several). */
 export function bimesterGrade(scores: Score[]): Grade {
+  const adjustments = scores.filter((s) => s.kind === ExamKind.ADJUSTMENT).map((s) => new Decimal(s.score));
+  if (adjustments.length) return cents(Decimal.min(Decimal.max(...adjustments), MAX_GRADE));
   let total = new Decimal(0);
   let hasRegular = false;
   for (const s of scores) {

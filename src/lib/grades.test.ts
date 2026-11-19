@@ -12,6 +12,12 @@ describe("grades (grades/services.py)", () => {
     expect(bimesterGrade([s("R", "4"), s("C", "9")])?.toFixed(2)).toBe("4.00");
     expect(bimesterGrade([s("B", "1")])).toBeNull();
   });
+  it("an adjustment replaces the bimester grade, up or down", () => {
+    expect(bimesterGrade([s("R", "2"), s("R", "3"), s("B", "1"), s("A", "6.5")])?.toFixed(2)).toBe("6.50");
+    expect(bimesterGrade([s("R", "3"), s("R", "6"), s("A", "7")])?.toFixed(2)).toBe("7.00");
+    expect(bimesterGrade([s("A", "6")])?.toFixed(2)).toBe("6.00");
+    expect(bimesterGrade([s("R", "4"), s("A", "5"), s("A", "6")])?.toFixed(2)).toBe("6.00");
+  });
   it("rounds to the half point at .25 and .75", () => {
     expect(roundToHalf(d("7.24")).toFixed(2)).toBe("7.00");
     expect(roundToHalf(d("7.25")).toFixed(2)).toBe("7.50");

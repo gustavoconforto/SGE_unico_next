@@ -93,7 +93,7 @@ export async function seed() {
     { code: "PB", name: "Prova bimestral", kind: "R", maxScore: "6.00", order: 2 },
     { code: "C", name: "Conceito", kind: "R", maxScore: "1.00", order: 3 },
     { code: "EX", name: "Nota extra", kind: "B", maxScore: "5.00", order: 4 },
-    { code: "A", name: "Ajuste", kind: "C", maxScore: "10.00", order: 5 },
+    { code: "A", name: "Ajuste", kind: "A", maxScore: "10.00", order: 5 },
   ]);
   const exams = Object.fromEntries((await db.select().from(t.gradesExamtype)).map((e) => [e.code, e]));
   const incidentTypes = await db.insert(t.incidentsIncidenttype).values([["Conversa excessiva", "0.10"], ["Uso de celular em sala", "0.20"], ["Cola em avaliação", "0.50"]].map(([type, penalty]) => ({ type, penalty }))).returning();

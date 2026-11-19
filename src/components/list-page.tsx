@@ -125,8 +125,10 @@ export function MoneyCell({ children }: { children: React.ReactNode }) {
 export const ACTIONS_CELL = "sticky right-0 border-l border-gray-200 bg-inherit max-sm:static max-sm:ml-auto max-sm:border-0";
 
 /** One row: the cells, then `actions` (extra icon buttons), edit, and delete when `deleteAction` is given. `primary`: the cell that names the row (bold). */
-export function ListRow(props: { cells: React.ReactNode[]; primary?: number; label: string; editHref: string; actions?: React.ReactNode; deleteAction?: () => Promise<void>; deleteNote?: string }) {
+/** `href`: where the name leads when the record has its own page (defaults to `editHref`); no `editHref`, no pencil (read-only viewers). */
+export function ListRow(props: { cells: React.ReactNode[]; primary?: number; label: string; href?: string; editHref?: string; actions?: React.ReactNode; deleteAction?: () => Promise<void>; deleteNote?: string }) {
   const primary = props.primary ?? 0;
+  const href = props.href ?? props.editHref;
   return (
     <TableRow>
       {props.cells.map((cell, i) => {
@@ -136,8 +138,8 @@ export function ListRow(props: { cells: React.ReactNode[]; primary?: number; lab
           <TableCell key={i} className={`${i === primary ? PRIMARY_CELL : ""} ${text !== null ? "whitespace-nowrap" : ""}`}>
             {i !== primary && <CellLabel i={i} />}
             {/* The name opens the record too: a bigger target than the pencil, and the first stop when tabbing */}
-            {i === primary ? (
-              <Link href={props.editHref} className="underline-offset-2 hover:text-primary-700 hover:underline">
+            {i === primary && href ? (
+              <Link href={href} className="underline-offset-2 hover:text-primary-700 hover:underline">
                 {content}
               </Link>
             ) : (
@@ -150,11 +152,11 @@ export function ListRow(props: { cells: React.ReactNode[]; primary?: number; lab
       <TableCell className={ACTIONS_CELL}>
         <div className="flex gap-2 whitespace-nowrap">
           {props.actions}
-          <LinkButton href={props.editHref} size="xs" color="alternative" className="px-2" aria-label={`Editar ${props.label}`} data-tip="Editar">
+          {props.editHref && <LinkButton href={props.editHref} size="xs" color="alternative" className="px-2" aria-label={`Editar ${props.label}`} data-tip="Editar">
             <span className="material-symbols-outlined" aria-hidden="true">
               edit
             </span>
-          </LinkButton>
+          </LinkButton>}
           {props.deleteAction && <DeleteButton action={props.deleteAction} label={props.label} note={props.deleteNote} />}
         </div>
       </TableCell>
