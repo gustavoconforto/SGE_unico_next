@@ -27,7 +27,7 @@ export async function saveSubjectGrades(enrollmentId: number, subjectId: number,
       // Only cells the user changed: an untouched one must not undo a grade entered meanwhile in the class sheet
       const raw = editedCell(values, name);
       if (raw === null) continue;
-      const denied = gradeEditError(staff, locks.has(`${subjectId}:${bimester}`), t.code);
+      const denied = gradeEditError(staff, locks.has(`${subjectId}:${bimester}`), t);
       if (denied) {
         errors[name] = [denied];
         continue;

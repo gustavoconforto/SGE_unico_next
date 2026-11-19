@@ -37,7 +37,7 @@ export async function loadSheet(classId: number, subjectId: number, period: numb
     : [];
   const scoresOf = (enrollmentId: number, b: number): Score[] => grades.filter((g) => g.enrollmentId === enrollmentId && g.bimester === b);
 
-  const rows = enrollments
+  const all = enrollments
     .map((e) => {
       const average = recovery ? finalAverage(BIMESTERS.map((b) => bimesterGrade(scoresOf(e.id, b)))) : null;
       const saved = Object.fromEntries(grades.filter((g) => g.enrollmentId === e.id && g.bimester === period).map((g) => [g.examTypeId, g]));
@@ -48,10 +48,12 @@ export async function loadSheet(classId: number, subjectId: number, period: numb
         // The bimester grade, or the final grade after recovery
         result: recovery ? finalGrade(average, recoveryScore(scoresOf(e.id, period))) : bimesterGrade(scoresOf(e.id, period)),
       };
-    })
-    // The final recovery lists only the students below the passing grade
-    .filter((r) => !recovery || needsRecovery(r.average));
-  return { rows, examTypes, recovery };
+    });
+  // The final recovery lists only the students below the passing grade
+  const rows = all.filter((r) => !recovery || needsRecovery(r.average));
+  // Students whose annual average can't be computed yet (a bimester grade missing): they may still land in recovery
+  const unaveraged = recovery ? all.filter((r) => r.average === null).length : 0;
+  return { rows, examTypes, recovery, unaveraged };
 }
 
 export const cellName = (enrollmentId: number, examTypeId: number) => `score_${enrollmentId}_${examTypeId}`;

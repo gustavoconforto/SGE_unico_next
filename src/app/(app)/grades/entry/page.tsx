@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { hasPermission } from "@/lib/access";
-import { LOCKED, STAFF_ONLY_CODES, allLocks, gradeEditError } from "@/lib/grade-lock";
+import { LOCKED, allLocks, gradeEditError, staffOnly } from "@/lib/grade-lock";
 import { currentSchoolYear } from "@/lib/concept-db";
 import { requireSession } from "@/lib/session";
 import { LAST_SHEET } from "../score";
@@ -28,9 +28,9 @@ async function startingQuery(): Promise<string | null> {
   return year ? `school_year=${year.id}` : null;
 }
 
-/** "a turma, a matéria e o bimestre": only what is still to pick (the year usually comes preselected). */
+/** "a turma, a matéria e o período": only what is still to pick (the year usually comes preselected). */
 function missingChoices(selected: { year: number | null; klass: number | null; subject: number | null; period: number | null }) {
-  const missing = [!selected.year && "o ano letivo", !selected.klass && "a turma", !selected.subject && "a matéria", !selected.period && "o bimestre"].filter((m) => !!m);
+  const missing = [!selected.year && "o ano letivo", !selected.klass && "a turma", !selected.subject && "a matéria", !selected.period && "o período"].filter((m) => !!m);
   return missing.length > 1 ? `${missing.slice(0, -1).join(", ")} e ${missing.at(-1)}` : (missing[0] ?? "outra matéria");
 }
 
@@ -55,8 +55,9 @@ export default async function GradeEntryPage({ searchParams }: PageProps<"/grade
           key={query}
           selection={{ query, classId: klass!, subjectId: subject!, period: period! }}
           recovery={sheet.recovery}
-          examTypes={sheet.examTypes.map((t) => ({ ...t, calculated: STAFF_ONLY_CODES.includes(t.code) }))}
-          readOnly={Object.fromEntries(sheet.examTypes.flatMap((t) => (gradeEditError(staff, locked, t.code) ? [[t.id, gradeEditError(staff, locked, t.code)!]] : [])))}
+          unaveraged={sheet.unaveraged}
+          examTypes={sheet.examTypes.map((t) => ({ ...t, calculated: staffOnly(t) }))}
+          readOnly={Object.fromEntries(sheet.examTypes.flatMap((t) => (gradeEditError(staff, locked, t) ? [[t.id, gradeEditError(staff, locked, t)!]] : [])))}
           notice={locked ? { text: staff ? "Bimestre bloqueado para os professores nesta matéria." : LOCKED, staff } : null}
           rows={sheet.rows.map((r) => ({
             id: r.id,

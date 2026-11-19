@@ -104,6 +104,8 @@ Ported rules keep their Django names in camelCase; find them in the `src/lib/` m
   request with `grades.ts` (`bimesterGrade`, `finalAverage`, `finalGrade`, `passed`). `PASSING_GRADE` is 6.
 - The concept (`conceptGrades()`) and extra `EX` (`extraGrades()`) scores are calculated, not typed, then saved
   to every subject of the series with `saveSeriesGrades()`.
+- Adjustment (not in Django): an exam type of kind `A` ("Ajuste", staff only) replaces that bimester's grade
+  (`bimesterGrade`). Django has no such kind; there the `A` exam type is a recovery exam.
 - Grade locks (not in Django, `src/lib/grade-lock.ts`): staff lock a subject × bimester on `/grades/locks`; then
   teachers can't edit it, and they never edit `C`, `EX` or `A` (adjustment). Every grade write checks
   `gradeEditError()`; "staff" = holds `grades.manage`.

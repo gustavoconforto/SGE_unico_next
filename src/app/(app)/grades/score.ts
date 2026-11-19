@@ -78,12 +78,15 @@ function sheetGrade(cells: SheetCell[], recovery: boolean, average: string | nul
 export function rowResult(cells: SheetCell[], recovery: boolean, average: string | null) {
   const now = sheetGrade(cells, recovery, average);
   if ("invalid" in now) return { result: null, invalid: true, incomplete: false, atRisk: false };
+  // A blank adjustment stays blank in the best case: full marks there would replace the grade with 10
   const best = sheetGrade(
-    cells.map((c) => (c.raw.trim() ? c : { ...c, raw: c.maxScore })),
+    cells.map((c) => (c.raw.trim() || c.kind === ExamKind.ADJUSTMENT ? c : { ...c, raw: c.maxScore })),
     recovery,
     average,
   );
-  const incomplete = cells.some(awaited);
+  // An adjustment settles the grade, whatever is still blank
+  const adjusted = cells.some((c) => c.kind === ExamKind.ADJUSTMENT && c.raw.trim());
+  const incomplete = !adjusted && cells.some(awaited);
   const below = (g: Decimal | null | undefined) => g?.lt(PASSING_GRADE) === true;
   return { result: now.grade, invalid: false, incomplete, atRisk: below(now.grade) && (!incomplete || below("grade" in best ? best.grade : null)) };
 }

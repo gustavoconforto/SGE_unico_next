@@ -74,10 +74,10 @@ describe.skipIf(!local)("saveGradeSheet", async () => {
     await db.delete(grade).where(mine());
     const { ta, tb, a, b } = cells();
 
-    expect(await save({ [a]: "0,5", [b]: "0,25" })).toMatchObject({ saved: expect.any(Number) });
+    expect(await save({ [a]: "0,5", [b]: "0,25" })).toMatchObject({ saved: expect.any(Number), count: 2 });
     expect(await scores()).toEqual({ [ta.id]: "0.50", [tb.id]: "0.25" });
 
-    expect(await save({ [a]: "0,75", [shownName(a)]: "0,50", [b]: "", [shownName(b)]: "0,25" })).toMatchObject({ saved: expect.any(Number) });
+    expect(await save({ [a]: "0,75", [shownName(a)]: "0,50", [b]: "", [shownName(b)]: "0,25" })).toMatchObject({ saved: expect.any(Number), count: 2 });
     expect(await scores()).toEqual({ [ta.id]: "0.75" });
   });
 

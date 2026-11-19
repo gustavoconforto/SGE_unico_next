@@ -23,7 +23,7 @@ export default async function StudentGradesPage({ searchParams }: PageProps<"/gr
   // The score inputs this user can't edit in a subject's row (view-only user, locked bimester or staff-only exam)
   const readOnly = (subjectId: number) =>
     [...[1, 2, 3, 4].map((b) => [b, active!.examTypes] as const), [FINAL_RECOVERY, active!.recoveryTypes] as const].flatMap(([b, types]) =>
-      types.filter((t) => !canEdit || gradeEditError(staff, locks.has(`${subjectId}:${b}`), t.code)).map((t) => `score_${b}_${t.id}`),
+      types.filter((t) => !canEdit || gradeEditError(staff, locks.has(`${subjectId}:${b}`), t)).map((t) => `score_${b}_${t.id}`),
     );
   const fix = (v: { toFixed(n: number): string } | null) => v?.toFixed(2) ?? null;
   return (

@@ -32,6 +32,10 @@ describe("sameScore", () => {
 
 describe("rowResult", () => {
   const cell = (kind: string, raw: string, maxScore = "10", calculated = false) => ({ kind, raw, maxScore, calculated });
+  it("an adjustment settles the row; a blank one doesn't count as full marks", () => {
+    expect(rowResult([cell("R", "2", "3"), cell("R", "", "6"), cell("A", "7", "10", true)], false, null)).toMatchObject({ result: new Decimal("7"), incomplete: false, atRisk: false });
+    expect(rowResult([cell("R", "1", "3"), cell("R", "4", "6"), cell("A", "", "10", true)], false, null)).toMatchObject({ incomplete: false, atRisk: true });
+  });
   it("matches bimesterGrade: regular plus bonus, capped at 10", () => {
     expect(rowResult([cell("R", "3"), cell("R", "4,5"), cell("B", "")], false, null)).toEqual({ result: new Decimal("7.5"), invalid: false, incomplete: false, atRisk: false });
     expect(rowResult([cell("R", "9"), cell("B", "2")], false, null).result?.toFixed(2)).toBe("10.00");

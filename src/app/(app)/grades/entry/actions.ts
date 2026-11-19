@@ -13,8 +13,8 @@ import { hasPermission, requirePermission } from "@/lib/access";
 import { SHEET_CHANGED, editedCell, parseScore, takenCell } from "../score";
 import { cellName, loadSheet } from "./sheet";
 
-/** `saved`: when the last save went through, so the sheet can drop its edits and say so. */
-export type SheetState = FormState & { saved?: number };
+/** `saved`: when the last save went through, so the sheet can drop its edits and say so; `count`: the grades it wrote or removed. */
+export type SheetState = FormState & { saved?: number; count?: number };
 
 /**
  * Saves a whole sheet: blank cells delete the grade; any invalid cell saves nothing. The page reloads in
@@ -32,7 +32,7 @@ export async function saveGradeSheet(selection: { query: string; classId: number
       const name = cellName(row.id, t.id);
       const raw = editedCell(values, name);
       if (raw === null) continue;
-      const denied = gradeEditError(staff, locks.has(`${selection.subjectId}:${selection.period}`), t.code);
+      const denied = gradeEditError(staff, locks.has(`${selection.subjectId}:${selection.period}`), t);
       if (denied) {
         errors[name] = [denied];
         continue;
@@ -74,5 +74,5 @@ export async function saveGradeSheet(selection: { query: string; classId: number
     return { values, errors: taken, formError: SHEET_CHANGED };
   }
   refresh();
-  return { saved: Date.now() };
+  return { saved: Date.now(), count: writes.length };
 }
