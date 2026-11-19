@@ -16,7 +16,11 @@ import {
 import { PersonFields } from "@/components/person-fields";
 import { WhatsAppLink } from "@/components/whatsapp-link";
 import { formatPhone } from "@/lib/person";
-import { BLOOD_TYPES, type GuardianRow, STUDENT_PLACEHOLDER as PLACEHOLDER } from "@/lib/students";
+import {
+  BLOOD_TYPES,
+  type GuardianRow,
+  STUDENT_PLACEHOLDER as PLACEHOLDER,
+} from "@/lib/students";
 import { saveStudent } from "./actions";
 import { type GuardianOption, GuardianRows } from "./guardian-rows";
 
@@ -58,15 +62,53 @@ export function StudentForm({
       <FormFields
         state={state}
         defaults={shown}
-        note={id === null && "Tenha em mãos o CPF, o RG (com o órgão expedidor) e o tipo sanguíneo do aluno: sem eles o cadastro não é salvo."}
+        note={
+          id === null &&
+          "Tenha em mãos o CPF, o RG (com o órgão expedidor) e o tipo sanguíneo do aluno: sem eles o cadastro não é salvo."
+        }
       >
         {/* Set by the action after a same-name warning: saving again with this name goes through */}
-        <input type="hidden" name="duplicateOk" value={state.values?.duplicateOk ?? ""} />
+        <input
+          type="hidden"
+          name="duplicateOk"
+          value={state.values?.duplicateOk ?? ""}
+        />
+        <Fieldset legend="Foto">
+          <div className="flex items-center gap-4 sm:col-span-2">
+            {/* eslint-disable-next-line @next/next/no-img-element -- served by the authenticated /media route */}
+            <img
+              src={photoUrl ?? PLACEHOLDER}
+              // The placeholder silhouette says nothing to a screen reader
+              alt={photoUrl && photoUrl !== PLACEHOLDER ? "Foto do aluno" : ""}
+              className="size-24 rounded-lg border border-gray-200 object-cover"
+            />
+            <div>
+              <FieldLabel htmlFor="photo" label="Foto" optional />
+              <FileInput
+                id="photo"
+                name="photo"
+                accept="image/jpeg,image/png,image/webp"
+                color={photoError ? "failure" : undefined}
+                aria-invalid={!!photoError}
+                aria-describedby={photoError ? "photo-error" : "photo-help"}
+              />
+              <FieldMessage
+                name="photo"
+                error={photoError}
+                help="JPG, PNG ou WebP"
+              />
+            </div>
+          </div>
+        </Fieldset>
         <PersonFields
           digitPhones
           autoFocusName={id === null}
           // Saved students only, like the guardians' links; it follows the number as it is edited
-          mobileAction={id ? <WhatsAppLink field="mobile" phone={defaults?.mobile as string} /> : undefined}
+          mobileAction={
+            id ? (
+              <WhatsAppLink field="mobile" phone={defaults?.mobile as string} />
+            ) : undefined
+          }
           personal={
             <>
               <TextField
@@ -99,33 +141,6 @@ export function StudentForm({
             </GuardianRows>
           }
         />
-        <Fieldset legend="Foto">
-          <div className="flex items-center gap-4 sm:col-span-2">
-            {/* eslint-disable-next-line @next/next/no-img-element -- served by the authenticated /media route */}
-            <img
-              src={photoUrl ?? PLACEHOLDER}
-              // The placeholder silhouette says nothing to a screen reader
-              alt={photoUrl && photoUrl !== PLACEHOLDER ? "Foto do aluno" : ""}
-              className="size-24 rounded-lg border border-gray-200 object-cover"
-            />
-            <div>
-              <FieldLabel htmlFor="photo" label="Foto" optional />
-              <FileInput
-                id="photo"
-                name="photo"
-                accept="image/jpeg,image/png,image/webp"
-                color={photoError ? "failure" : undefined}
-                aria-invalid={!!photoError}
-                aria-describedby={photoError ? "photo-error" : "photo-help"}
-              />
-              <FieldMessage
-                name="photo"
-                error={photoError}
-                help="JPG, PNG ou WebP"
-              />
-            </div>
-          </div>
-        </Fieldset>
         <Fieldset legend="Vida escolar">
           <TextField
             name="schoolFrom"
@@ -141,7 +156,6 @@ export function StudentForm({
             className="sm:col-span-2"
           />
         </Fieldset>
-
       </FormFields>
       <FormButtons
         pending={pending}
