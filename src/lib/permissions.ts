@@ -6,7 +6,6 @@ export const AREAS = [
   ["students", "Alunos e responsáveis"],
   ["enrollments", "Matrículas"],
   ["finance", "Financeiro"],
-  // Split from finance: the enrollment desk takes the first payment at signing without seeing the whole book
   ["payments", "Baixas"],
   ["grades", "Notas"],
   ["lessons", "Grade horária, diário de classe e plantões"],
@@ -21,19 +20,28 @@ export const AREAS = [
 /** Permissions beyond view/edit. */
 export const EXTRA_PERMISSIONS = [
   // What isStaff() used to decide: lock bimesters, edit locked bimesters and the C / EX / A grades
-  ["grades.manage", "Notas: bloquear bimestres e lançar notas de conceito, extra e ajuste"],
+  [
+    "grades.manage",
+    "Notas: bloquear bimestres e lançar notas de conceito, extra e ajuste",
+  ],
 ] as const;
 
 export type Area = (typeof AREAS)[number][0];
-export type Permission = `${Area}.${"view" | "edit"}` | (typeof EXTRA_PERMISSIONS)[number][0];
+export type Permission =
+  | `${Area}.${"view" | "edit"}`
+  | (typeof EXTRA_PERMISSIONS)[number][0];
 
 /** Every permission with its label, in display order. */
 export const PERMISSIONS: readonly (readonly [Permission, string])[] = [
-  ...AREAS.flatMap(([area, label]) => [[`${area}.view`, `${label}: ver`] as const, [`${area}.edit`, `${label}: cadastrar, editar e excluir`] as const]),
+  ...AREAS.flatMap(([area, label]) => [
+    [`${area}.view`, `${label}: ver`] as const,
+    [`${area}.edit`, `${label}: cadastrar, editar e excluir`] as const,
+  ]),
   ...EXTRA_PERMISSIONS,
 ];
 const CODES = new Set<string>(PERMISSIONS.map(([code]) => code));
-export const isPermission = (code: string): code is Permission => CODES.has(code);
+export const isPermission = (code: string): code is Permission =>
+  CODES.has(code);
 
 /** Any signed-in user may open these. */
 const OPEN = ["/", "/account/password", "/forbidden", "/media"];
@@ -81,22 +89,34 @@ const ROUTES: [string, Needed][] = [
   ["/groups", ADMIN],
 ];
 
-const under = (path: string, prefix: string) => path === prefix || path.startsWith(`${prefix}/`);
+const under = (path: string, prefix: string) =>
+  path === prefix || path.startsWith(`${prefix}/`);
 const FORM_PAGE = /\/(new|edit)(\/|$)/;
 
 /** The permission a page needs: null when any signed-in user may open it, undefined when no rule covers it (deny). */
 export function routePermission(path: string): Needed | null | undefined {
-  if (OPEN.some((p) => (p === "/" ? path === "/" : under(path, p)))) return null;
+  if (OPEN.some((p) => (p === "/" ? path === "/" : under(path, p))))
+    return null;
   let best: [string, Needed] | undefined;
-  for (const route of ROUTES) if (under(path, route[0]) && (!best || route[0].length > best[0].length)) best = route;
+  for (const route of ROUTES)
+    if (under(path, route[0]) && (!best || route[0].length > best[0].length))
+      best = route;
   if (!best) return undefined;
   const [, permission] = best;
-  return FORM_PAGE.test(path) && permission.endsWith(".view") ? (permission.replace(/\.view$/, ".edit") as Permission) : permission;
+  return FORM_PAGE.test(path) && permission.endsWith(".view")
+    ? (permission.replace(/\.view$/, ".edit") as Permission)
+    : permission;
 }
 
 /** May a holder of `granted` open `path`? `all`: an admin, who holds every permission. */
-export function canOpen(path: string, granted: ReadonlySet<string>, all = false): boolean {
+export function canOpen(
+  path: string,
+  granted: ReadonlySet<string>,
+  all = false,
+): boolean {
   const needed = routePermission(path);
   if (needed === null) return true;
-  return all || (needed !== undefined && needed !== ADMIN && granted.has(needed));
+  return (
+    all || (needed !== undefined && needed !== ADMIN && granted.has(needed))
+  );
 }
