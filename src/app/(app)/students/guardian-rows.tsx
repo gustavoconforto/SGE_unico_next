@@ -48,8 +48,8 @@ export function GuardianRows({
   /** Fields shown above the rows (the "student is self-financial" box). */
   children?: React.ReactNode;
 }) {
-  // Keys count per form, not per module, so the server render and hydration agree
-  const [rows, setRows] = useState<Row[]>(() => [...initial.map((r, i) => ({ ...r, key: i })), blank(initial.length)]);
+  // Keys count per form, not per module, so the server render and hydration agree. A blank row only when there is none yet
+  const [rows, setRows] = useState<Row[]>(() => (initial.length ? initial.map((r, i) => ({ ...r, key: i })) : [blank(0)]));
   const nextKey = useRef(initial.length + 1);
   const markFixed = useMarkFixed();
   // A guardian registered in another tab shows up here when staff come back to this one
@@ -81,7 +81,9 @@ export function GuardianRows({
   return (
     <fieldset className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
       <legend className="px-1.5 text-base font-semibold text-gray-900">Responsáveis</legend>
-      <p className="-mt-2 text-sm text-gray-600">Quem responde pelo aluno, quem paga e quem pode buscá-lo.</p>
+      <p className="-mt-2 text-sm text-gray-600">
+        Quem responde pelo aluno e quem pode buscá-lo. O responsável financeiro é quem paga: as parcelas e os recibos da matrícula saem no nome dele.
+      </p>
       {children}
       <input type="hidden" name="guardians" value={JSON.stringify(rows.map(({ key: _key, ...r }) => r))} />
       {rows.map((row, i) => {
@@ -136,9 +138,9 @@ export function GuardianRows({
                 (row.id || row.guardianId || row.relationship) && (
                   <Button
                     size="sm"
-                    color="red"
-                    outline
-                    className="ml-auto"
+                    color="alternative"
+                    // Undoable, so it stays quiet until pointed at (DESIGN.md: delete turns red on hover)
+                    className="ml-auto enabled:hover:text-red-700"
                     aria-label={`Remover ${name ?? rowLabel.toLowerCase()}`}
                     onClick={() => (row.id ? update(row.key, { delete: true }) : setRows((all) => all.filter((r) => r.key !== row.key)))}
                   >

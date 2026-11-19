@@ -13,6 +13,22 @@ export function maskCpf(value: string): string {
   return d.length > 9 ? `${head}-${d.slice(9)}` : head;
 }
 
+/** Phone typed so far as (61) 3234-5678 or (61) 99854-4554 (the ninth digit moves the dash). */
+export function maskPhone(value: string): string {
+  const all = value.replace(/\D/g, "");
+  // A pasted +55 number: drop the country code, the field holds DDD + number
+  const d = (all.length > 11 && all.startsWith("55") ? all.slice(2) : all).slice(0, 11);
+  if (d.length <= 2) return d && `(${d}`;
+  const split = d.length === 11 ? 7 : 6;
+  return d.length <= 6 ? `(${d.slice(0, 2)}) ${d.slice(2)}` : `(${d.slice(0, 2)}) ${d.slice(2, split)}-${d.slice(split)}`;
+}
+
+/** CEP typed so far as 70000-000. */
+export function maskZipCode(value: string): string {
+  const d = value.replace(/\D/g, "").slice(0, 8);
+  return d.length > 5 ? `${d.slice(0, 5)}-${d.slice(5)}` : d;
+}
+
 export function formatZipCode(zipCode: string): string {
   return `${zipCode.slice(0, -3)}-${zipCode.slice(-3)}`;
 }

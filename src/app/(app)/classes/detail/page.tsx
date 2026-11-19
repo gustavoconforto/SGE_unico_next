@@ -10,6 +10,7 @@ import {
 import { currentSchoolYear } from "@/lib/concept-db";
 import { PAGE_SIZE, pageParam, param, searchWhere } from "@/lib/list";
 import { yearOptions } from "../options";
+import { studentName } from "../../enrollments/data";
 import { ClassPicker } from "./class-picker";
 
 export const metadata: Metadata = { title: "Alunos da turma" };
@@ -36,7 +37,7 @@ export default async function ClassDetailPage({
   // The class's own year wins, so the picker never disagrees with the roster; no year at all: the current one
   const yearId = selected?.yearId ?? urlYearId ?? current?.id ?? null;
   const where = selected
-    ? and(eq(enrollment.schoolClassId, selected.id), eq(enrollment.status, ACTIVE), searchWhere(q, [student.name]))
+    ? and(eq(enrollment.schoolClassId, selected.id), eq(enrollment.status, ACTIVE), searchWhere(q, [student.name, student.socialName]))
     : undefined;
 
   const [years, classes, students, [{ total }]] = await Promise.all([
@@ -50,11 +51,11 @@ export default async function ClassDetailPage({
       : [],
     where
       ? db
-          .selectDistinct({ id: student.id, name: student.name })
+          .selectDistinct({ id: student.id, name: studentName })
           .from(student)
           .innerJoin(enrollment, eq(enrollment.studentId, student.id))
           .where(where)
-          .orderBy(asc(student.name))
+          .orderBy(asc(studentName))
           .limit(PAGE_SIZE)
           .offset((page - 1) * PAGE_SIZE)
       : [],
@@ -93,7 +94,7 @@ export default async function ClassDetailPage({
       total={total}
     >
       {students.map((s) => (
-        <ListRow key={s.id} cells={[s.name]} label={s.name} editHref={`/students/${s.id}/edit`} />
+        <ListRow key={s.id} cells={[s.name]} label={s.name} href={`/students/${s.id}`} />
       ))}
     </ListPage>
   );

@@ -1,24 +1,31 @@
 "use client";
 
-import { maskCpf } from "@/lib/format";
+import { maskCpf, maskPhone, maskZipCode } from "@/lib/format";
 import { SEX_CHOICES, UFS } from "@/lib/person";
 import { Fieldset, SelectField, TextField } from "./form-fields";
 
 /**
  * The base.models.Person fields, grouped like the Django tabs. Extra fields go in the slots; `afterPersonal` is a whole
  * section placed right after Dados pessoais; `mobileAction` sits under Celular (the WhatsApp link).
+ * `digitPhones`: phones are stored as digits (students, guardians), so they're masked as typed; employees keep theirs as typed.
  */
 export function PersonFields({
   personal,
   documents,
   afterPersonal,
   mobileAction,
+  digitPhones = false,
+  autoFocusName = false,
 }: {
   personal?: React.ReactNode;
   documents?: React.ReactNode;
   afterPersonal?: React.ReactNode;
   mobileAction?: React.ReactNode;
+  digitPhones?: boolean;
+  /** A new record: typing starts at the name. */
+  autoFocusName?: boolean;
 }) {
+  const phoneMask = digitPhones ? maskPhone : undefined;
   return (
     <>
       <Fieldset legend="Dados pessoais">
@@ -27,6 +34,7 @@ export function PersonFields({
           label="Nome civil"
           maxLength={200}
           autoComplete="off"
+          autoFocus={autoFocusName}
           className="sm:col-span-2"
         />
         <SelectField name="sex" label="Sexo" options={SEX_CHOICES} optional />
@@ -74,6 +82,7 @@ export function PersonFields({
           label="Telefone"
           inputMode="tel"
           placeholder="(00) 0000-0000"
+          mask={phoneMask}
           optional
         />
         <div>
@@ -82,6 +91,7 @@ export function PersonFields({
             label="Celular"
             inputMode="tel"
             placeholder="(00) 00000-0000"
+            mask={phoneMask}
             optional
           />
           {mobileAction}
@@ -123,7 +133,8 @@ export function PersonFields({
           label="CEP"
           maxLength={9}
           inputMode="numeric"
-          placeholder="00000000"
+          placeholder="00000-000"
+          mask={maskZipCode}
           optional
         />
       </Fieldset>

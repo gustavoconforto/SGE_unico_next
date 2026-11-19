@@ -1,6 +1,6 @@
 "use server";
 
-import { type SQL, and, asc, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import { and, asc, eq, ilike, inArray, or } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -9,7 +9,7 @@ import { accountsAccount as account, accountsInstallment as installment, account
 import { PAYMENT_METHODS, PENDING_STATUSES, formatMoney, installmentBalance, money, principal, toDb } from "@/lib/finance";
 import { lockInstallment, outstandingSql, refreshInstallmentStatus } from "@/lib/finance-db";
 import { type FormErrors, type FormState, INVALID_CHOICE, REQUIRED, decimalField, foreignKey, formIds, parseForm, requiredDate } from "@/lib/form";
-import { likePattern } from "@/lib/list";
+import { foldSql, likePattern, stripAccents } from "@/lib/list";
 import { hasPermission, requirePermission } from "@/lib/access";
 import { type InstallmentChoice, toChoice } from "./data";
 
@@ -58,12 +58,6 @@ export async function searchInstallments(direction: "R" | "P", q: string): Promi
     .limit(10);
   return rows.map(toChoice);
 }
-
-// shortcut: accent folding by translate(), since the DB has no unaccent extension (Django owns it); covers pt-BR letters only
-const ACCENTED = "áàâãäéèêëíìîïóòôõöúùûüçÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ";
-const PLAIN = "aaaaaeeeeiiiiooooouuuucAAAAAEEEEIIIIOOOOOUUUUC";
-const stripAccents = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
-const foldSql = (c: AnyPgColumn): SQL => sql`translate(${c}, ${ACCENTED}, ${PLAIN})`;
 
 /** "agatha" finds "Ágatha": both sides lose their accents. */
 function orIlike(columns: AnyPgColumn[], pattern: string) {

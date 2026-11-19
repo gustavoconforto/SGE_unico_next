@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { adjustWeekend } from "./dates";
-import { amountInWords, formatCpf, formatZipCode, maskCpf, suggestUsername } from "./format";
+import { amountInWords, formatCpf, formatZipCode, maskCpf, maskPhone, maskZipCode, suggestUsername } from "./format";
 
 describe("amountInWords (from accounts/tests.py AmountInWordsTests)", () => {
   it.each([
@@ -73,4 +73,20 @@ describe("suggestUsername", () => {
     ["José D'Ávila", "jose.davila"],
     ["", ""],
   ])("%s → %s", (name, expected) => expect(suggestUsername(name)).toBe(expected));
+});
+
+describe("maskPhone / maskZipCode", () => {
+  it("formats landlines and mobiles, partial or pasted", () => {
+    expect(maskPhone("6132345678")).toBe("(61) 3234-5678");
+    expect(maskPhone("61998544554")).toBe("(61) 99854-4554");
+    expect(maskPhone("+55 61 99854-4554")).toBe("(61) 99854-4554");
+    expect(maskPhone("619")).toBe("(61) 9");
+    expect(maskPhone("6")).toBe("(6");
+    expect(maskPhone("")).toBe("");
+  });
+  it("formats a CEP", () => {
+    expect(maskZipCode("70000000")).toBe("70000-000");
+    expect(maskZipCode("7000")).toBe("7000");
+    expect(maskZipCode("70.000-000")).toBe("70000-000");
+  });
 });

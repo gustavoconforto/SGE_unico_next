@@ -13,6 +13,7 @@ describe("routePermission", () => {
     expect(routePermission("/students")).toBe("students.view");
     expect(routePermission("/students/new")).toBe("students.edit");
     expect(routePermission("/students/12/edit")).toBe("students.edit");
+    expect(routePermission("/students/12")).toBe("students.view");
     expect(routePermission("/accounts/receivable/3/receipt")).toBe("finance.view");
   });
 

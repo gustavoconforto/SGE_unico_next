@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { formatPhone, personFields, phoneDigits, whatsapp } from "./person";
-import { type GuardianRow, guardianRowsError, nextRegistration } from "./students";
+import { type GuardianRow, ageOn, displayName, guardianRowsError, nextRegistration } from "./students";
 
 const row = (guardianId: number, isFinancial = false, del = false): GuardianRow => ({
   id: null,
@@ -70,5 +70,22 @@ describe("personFields.cpf", () => {
   it("rejects a short or empty CPF", () => {
     expect(personFields.cpf.safeParse("123.456").success).toBe(false);
     expect(personFields.cpf.safeParse("").success).toBe(false);
+  });
+});
+
+describe("displayName", () => {
+  it("uses the social name only when the student chose it and filled it", () => {
+    expect(displayName({ name: "João", socialName: "Joana", useSocialName: true })).toBe("Joana");
+    expect(displayName({ name: "João", socialName: "Joana", useSocialName: false })).toBe("João");
+    expect(displayName({ name: "João", socialName: "", useSocialName: true })).toBe("João");
+  });
+});
+
+describe("ageOn", () => {
+  it("counts a year only once the birthday has come", () => {
+    expect(ageOn("2010-11-19", "2026-11-19")).toBe(16);
+    expect(ageOn("2010-11-20", "2026-11-19")).toBe(15);
+    expect(ageOn("2010-12-01", "2026-11-19")).toBe(15);
+    expect(ageOn("2010-02-28", "2026-03-01")).toBe(16);
   });
 });

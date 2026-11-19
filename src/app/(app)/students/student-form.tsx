@@ -1,7 +1,6 @@
 "use client";
 
-import { FileInput, Select } from "flowbite-react";
-import { useRouter } from "next/navigation";
+import { FileInput } from "flowbite-react";
 import { startTransition, useActionState } from "react";
 import {
   CheckboxField,
@@ -17,7 +16,7 @@ import {
 import { PersonFields } from "@/components/person-fields";
 import { WhatsAppLink } from "@/components/whatsapp-link";
 import { formatPhone } from "@/lib/person";
-import { BLOOD_TYPES, type GuardianRow } from "@/lib/students";
+import { BLOOD_TYPES, type GuardianRow, STUDENT_PLACEHOLDER as PLACEHOLDER } from "@/lib/students";
 import { saveStudent } from "./actions";
 import { type GuardianOption, GuardianRows } from "./guardian-rows";
 
@@ -27,7 +26,6 @@ type Props = {
   photoUrl?: string;
   guardianRows?: GuardianRow[];
   guardianOptions: GuardianOption[];
-  enrollments?: { id: number; label: string }[];
 };
 
 export function StudentForm({
@@ -36,9 +34,7 @@ export function StudentForm({
   photoUrl,
   guardianRows = [],
   guardianOptions,
-  enrollments = [],
 }: Props) {
-  const router = useRouter();
   const [state, action, pending] = useActionState(
     saveStudent.bind(null, id),
     {},
@@ -59,66 +55,16 @@ export function StudentForm({
 
   return (
     <form onSubmit={onSubmit} className="flex max-w-3xl flex-col gap-4">
-      <FormFields state={state} defaults={shown}>
-        {id === null && (
-          <p className="text-sm text-gray-700">
-            Antes de começar, tenha em mãos o CPF, o RG (com o órgão expedidor)
-            e o tipo sanguíneo do aluno: sem eles o cadastro não é salvo.
-          </p>
-        )}
-        {/* Name first: it's what staff type first, and where focus lands on a failed submit */}
-        <Fieldset legend="Foto e matrícula">
-          <div className="flex items-center gap-4 sm:col-span-2">
-            {/* eslint-disable-next-line @next/next/no-img-element -- served by the authenticated /media route */}
-            <img
-              src={photoUrl ?? "/img/student-placeholder.svg"}
-              alt="Foto do aluno"
-              className="size-24 rounded-lg border border-gray-200 object-cover"
-            />
-            <div>
-              <FieldLabel htmlFor="photo" label="Foto" optional />
-              <FileInput
-                id="photo"
-                name="photo"
-                accept="image/jpeg,image/png,image/webp"
-                color={photoError ? "failure" : undefined}
-                aria-invalid={!!photoError}
-                aria-describedby={photoError ? "photo-error" : "photo-help"}
-              />
-              <FieldMessage
-                name="photo"
-                error={photoError}
-                help="JPG, PNG ou WebP"
-              />
-            </div>
-          </div>
-          {typeof defaults?.registration === "string" && (
-            <p className="text-sm sm:col-span-2">
-              Matrícula: <strong>{defaults.registration}</strong>
-            </p>
-          )}
-          {enrollments.length > 0 && (
-            <div className="sm:col-span-2">
-              <FieldLabel htmlFor="enrollment-nav" label="Matrículas" />
-              {/* No name: navigation only, never sent with the student form */}
-              <Select
-                id="enrollment-nav"
-                defaultValue=""
-                onChange={(e) => e.target.value && router.push(`/enrollments/${e.target.value}/edit`)}
-              >
-                <option value="" disabled>
-                  Abrir matrícula…
-                </option>
-                {enrollments.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.label}
-                  </option>
-                ))}
-              </Select>
-            </div>
-          )}
-        </Fieldset>
+      <FormFields
+        state={state}
+        defaults={shown}
+        note={id === null && "Tenha em mãos o CPF, o RG (com o órgão expedidor) e o tipo sanguíneo do aluno: sem eles o cadastro não é salvo."}
+      >
+        {/* Set by the action after a same-name warning: saving again with this name goes through */}
+        <input type="hidden" name="duplicateOk" value={state.values?.duplicateOk ?? ""} />
         <PersonFields
+          digitPhones
+          autoFocusName={id === null}
           // Saved students only, like the guardians' links; it follows the number as it is edited
           mobileAction={id ? <WhatsAppLink field="mobile" phone={defaults?.mobile as string} /> : undefined}
           personal={
@@ -153,6 +99,33 @@ export function StudentForm({
             </GuardianRows>
           }
         />
+        <Fieldset legend="Foto">
+          <div className="flex items-center gap-4 sm:col-span-2">
+            {/* eslint-disable-next-line @next/next/no-img-element -- served by the authenticated /media route */}
+            <img
+              src={photoUrl ?? PLACEHOLDER}
+              // The placeholder silhouette says nothing to a screen reader
+              alt={photoUrl && photoUrl !== PLACEHOLDER ? "Foto do aluno" : ""}
+              className="size-24 rounded-lg border border-gray-200 object-cover"
+            />
+            <div>
+              <FieldLabel htmlFor="photo" label="Foto" optional />
+              <FileInput
+                id="photo"
+                name="photo"
+                accept="image/jpeg,image/png,image/webp"
+                color={photoError ? "failure" : undefined}
+                aria-invalid={!!photoError}
+                aria-describedby={photoError ? "photo-error" : "photo-help"}
+              />
+              <FieldMessage
+                name="photo"
+                error={photoError}
+                help="JPG, PNG ou WebP"
+              />
+            </div>
+          </div>
+        </Fieldset>
         <Fieldset legend="Vida escolar">
           <TextField
             name="schoolFrom"
@@ -172,8 +145,9 @@ export function StudentForm({
       </FormFields>
       <FormButtons
         pending={pending}
-        cancelHref="/students"
+        cancelHref={id ? `/students/${id}` : "/students"}
         label={id ? "Salvar alterações" : "Cadastrar aluno"}
+        another={id ? undefined : "Cadastrar e começar outro"}
         sticky
       />
     </form>

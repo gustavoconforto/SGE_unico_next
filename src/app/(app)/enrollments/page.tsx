@@ -1,5 +1,5 @@
 import { and, count, desc, asc, eq } from "drizzle-orm";
-import { Badge } from "flowbite-react";
+import { EnrollmentStatusBadge } from "@/components/enrollment-status-badge";
 import type { Metadata } from "next";
 import { FilterSelect } from "@/components/list-controls";
 import { ListPage, ListRow } from "@/components/list-page";
@@ -12,7 +12,6 @@ import {
   programsProgram as program,
   studentsStudent as student,
 } from "@/db/schema/app";
-import { ENROLLMENT_STATUSES, label } from "@/lib/finance";
 import { PAGE_SIZE, pageParam, param, searchWhere } from "@/lib/list";
 import { yearOptions } from "../classes/options";
 import { enrollmentTypeLabel, studentName, yearOf } from "./data";
@@ -79,9 +78,7 @@ export default async function EnrollmentListPage({ searchParams }: PageProps<"/e
             e.registration,
             enrollmentTypeLabel(e.program, e.level, e.schoolYear),
             e.className ? `${e.gradeLevel ? `${e.gradeLevel}º ` : ""}${e.className}` : "—",
-            <Badge key="s" color={e.status === "A" ? "success" : "gray"} className="w-fit">
-              {label(ENROLLMENT_STATUSES, e.status)}
-            </Badge>,
+            <EnrollmentStatusBadge key="s" status={e.status} />,
           ]}
           label={e.student}
           editHref={`/enrollments/${e.id}/edit`}

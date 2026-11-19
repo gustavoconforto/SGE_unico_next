@@ -163,7 +163,7 @@ A neutral gray office with a single navy for action and a small state vocabulary
 
 ### Hierarchy
 - **Headline** (600, 1.5rem/2rem): the page title, one per page ("Alunos", "Notas do aluno").
-- **Title** (600, 1.125rem): section and fieldset headings inside forms and detail pages.
+- **Title** (600, 1.125rem): section headings on detail pages. Form fieldset legends are one step down (600, 1rem), so a long form doesn't shout.
 - **Body** (400, 0.875rem/1.25rem): table cells, inputs, buttons, most UI text. Names in a list's first column use 500.
 - **Label** (700, 0.75rem, uppercase): table header cells (Flowbite's head style).
 - **Caption** (400, 0.75rem): field labels above values in summaries, help text, record counts.
@@ -184,7 +184,7 @@ A neutral gray office with a single navy for action and a small state vocabulary
 
 ## Elevation & Depth
 
-Mostly flat, with one soft lift for data. Data panels (tables) sit on a white surface with a small drop shadow over the gray floor. Forms and page chrome are flat. Menus, comboboxes and dropdowns use Flowbite's larger shadow because they float over content.
+Mostly flat, with one soft lift for data. Data panels (tables) sit on a white surface with a small drop shadow over the gray floor. Page chrome is flat; forms group fields in white fieldsets with a 1px hairline border and no shadow, so they read as sections, not as data panels. Menus, comboboxes and dropdowns use Flowbite's larger shadow because they float over content.
 
 ### Shadow Vocabulary
 - **Panel lift** (`filter: drop-shadow(0 3px 3px rgba(0,0,0,0.12))`): the white surface behind every table.
@@ -207,7 +207,7 @@ Gently rounded and uniform: 8px (`rounded.lg`) on buttons, inputs, panels and na
 - **Pending:** a submit button disables itself and its label changes ("Salvando…") while the action runs.
 
 ### Badges
-- **Style:** 12px/600 text on a pale wash of the state color, 4px radius, 2px 8px padding. Green for active/approved, yellow for pending/recovery, red for overdue/failed, gray for "em andamento".
+- **Style:** 12px/600 text on a pale wash of the state color, 4px radius, 2px 8px padding. Green for active/approved, yellow for pending/recovery, red for overdue/failed and enrollments ended early (transferida, desistente, cancelada), gray for "em andamento" and concluída (`<EnrollmentStatusBadge>`).
 
 ### Cards / Containers
 - **Data panel:** white, 8px radius, panel-lift shadow, no border, no internal padding (the table fills it).

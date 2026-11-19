@@ -12,7 +12,8 @@ const FormContext = createContext<Ctx>({ state: {}, defaults: {}, fixed: new Set
 
 const EMPTY = new Set<string>();
 
-export function FormFields({ state, defaults = {}, children }: { state: FormState; defaults?: Record<string, unknown>; children: React.ReactNode }) {
+/** `note` adds to the "required fields" line, so a form opens with one instruction, not a stack of them. */
+export function FormFields({ state, defaults = {}, note, children }: { state: FormState; defaults?: Record<string, unknown>; note?: React.ReactNode; children: React.ReactNode }) {
   const noteRef = useRef<HTMLParagraphElement>(null);
   const summaryRef = useRef<HTMLDivElement>(null);
   // Tied to the state it was collected for, so the next submit's errors start fresh
@@ -68,7 +69,7 @@ export function FormFields({ state, defaults = {}, children }: { state: FormStat
   return (
     <FormContext.Provider value={{ state, defaults, fixed, markFixed }}>
       <p ref={noteRef} className="required-note text-sm text-gray-600">
-        Campos sem “opcional” são obrigatórios.
+        Campos sem “opcional” são obrigatórios.{note && <> {note}</>}
       </p>
       {showSummary && (
         // Flowbite's Alert carries role="alert"; the wrapper only takes focus
@@ -421,7 +422,7 @@ export function FormButtons({
   const ref = useRef<HTMLDivElement>(null);
   useUnsavedGuard(ref);
   return (
-    <div ref={ref} className={sticky ? "sticky bottom-0 z-10 -mx-4 flex flex-wrap gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3 lg:-mx-8 lg:px-8" : "flex flex-wrap gap-2"}>
+    <div ref={ref} className={sticky ? "sticky bottom-0 z-10 -mx-4 flex flex-wrap gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3 lg:mx-0 lg:px-0" : "flex flex-wrap gap-2"}>
       {note && <div className="basis-full">{note}</div>}
       <Button type="submit" disabled={pending} aria-busy={pending}>
         {pending ? "Salvando…" : label}

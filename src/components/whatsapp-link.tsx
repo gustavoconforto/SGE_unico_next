@@ -24,7 +24,7 @@ export function WhatsAppLink({ phone, field, who }: { phone?: string | null; fie
       href={`https://web.whatsapp.com/send?phone=${number}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="mt-1.5 inline-flex items-center gap-1 rounded text-sm font-medium text-green-700 underline-offset-2 hover:text-green-800 hover:underline focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:outline-none"
+      className="mt-1.5 inline-flex items-center gap-1 rounded text-sm font-medium text-gray-700 underline-offset-2 hover:text-gray-900 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-700"
     >
       <span className="material-symbols-outlined text-base" aria-hidden="true">
         chat

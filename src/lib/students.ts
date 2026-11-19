@@ -57,3 +57,18 @@ export function guardianRowsError(rows: GuardianRow[], selfFinancial: boolean): 
     return "Marque um responsável financeiro ou indique que o próprio aluno é o responsável financeiro.";
   return undefined;
 }
+
+/** Shown when a student has no photo (served from public/). */
+export const STUDENT_PLACEHOLDER = "/img/student-placeholder.svg";
+
+/** Whole years between an ISO birth date and an ISO day ("2010-11-17", "2026-11-19" → 16). */
+export function ageOn(birthDate: string, day: string): number {
+  const [by, bm, bd] = birthDate.split("-").map(Number);
+  const [y, m, d] = day.split("-").map(Number);
+  return y - by - (m < bm || (m === bm && d < bd) ? 1 : 0);
+}
+
+/** The name a student goes by: the social name when they chose to use it (the SQL twin is `studentName` in enrollments/data.ts). */
+export function displayName(s: { name: string; socialName: string; useSocialName: boolean }): string {
+  return s.useSocialName && s.socialName ? s.socialName : s.name;
+}

@@ -1,6 +1,6 @@
 // Port of base/search.py apply_search + Django's paginate_by = 10.
 import { notFound } from "next/navigation";
-import { type SQL, asc, desc, ilike, or } from "drizzle-orm";
+import { type SQL, asc, desc, ilike, or, sql } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 
 export const PAGE_SIZE = 25;
@@ -18,11 +18,26 @@ export function pageParam(searchParams: SearchParams): number {
   return Number.isFinite(page) && page > 0 ? page : 1;
 }
 
-/** Case-insensitive "contains" over the columns, OR'ed together (Django's icontains). */
+// shortcut: accent folding by translate(), since the DB has no unaccent extension (Django owns it); covers pt-BR letters only
+const ACCENTED = "áàâãäéèêëíìîïóòôõöúùûüçÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ";
+const PLAIN = "aaaaaeeeeiiiiooooouuuucAAAAAEEEEIIIIOOOOOUUUUC";
+export const stripAccents = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
+export const foldSql = (c: AnyPgColumn | SQL): SQL => sql`translate(${c}, ${ACCENTED}, ${PLAIN})`;
+
+/**
+ * The texts a search looks for: the query without accents, plus its digits alone when it is a formatted
+ * number ("123.456.789-00"), since CPF, CNPJ and CEP are stored as digits.
+ */
+export function searchTerms(query: string): string[] {
+  const plain = stripAccents(query);
+  const digits = query.replace(/\D/g, "");
+  return /^[\d.\-/()\s]+$/.test(query) && digits && digits !== query ? [plain, digits] : [plain];
+}
+
+/** Case-insensitive "contains" over the columns, OR'ed together (Django's icontains), ignoring accents: "otavio" finds "Otávio". */
 export function searchWhere(query: string, columns: (AnyPgColumn | SQL)[]): SQL | undefined {
   if (!query || columns.length === 0) return undefined;
-  const pattern = likePattern(query);
-  return or(...columns.map((column) => ilike(column, pattern)));
+  return or(...searchTerms(query).flatMap((term) => columns.map((column) => ilike(foldSql(column), likePattern(term)))));
 }
 
 /** `%query%` with LIKE wildcards escaped. */

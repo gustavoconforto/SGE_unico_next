@@ -1,5 +1,6 @@
 import { asc, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LinkButton } from "@/components/link-button";
 import { db } from "@/db";
@@ -11,10 +12,11 @@ import {
   studentsGuardianassociation as link,
   studentsStudent as student,
 } from "@/db/schema/app";
-import { ENROLLMENT_STATUSES, label } from "@/lib/finance";
+import { EnrollmentStatusBadge } from "@/components/enrollment-status-badge";
 import { idParam } from "@/lib/list";
 import { studentPhotoUrl } from "@/lib/media";
 import { enrollmentTypeLabel, yearOf } from "../../../enrollments/data";
+import { displayName } from "@/lib/students";
 import { guardianOptions } from "../../options";
 import { StudentForm } from "../../student-form";
 
@@ -39,21 +41,43 @@ export default async function EditStudentPage({ params }: PageProps<"/students/[
   return (
     <div className="flex max-w-3xl flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Editar aluno — {row.name}</h1>
+        <h1 className="text-2xl font-semibold">Editar aluno — {displayName(row)}</h1>
         <LinkButton href={`/enrollments/new?student=${id}`} color="alternative">
           Matricular
         </LinkButton>
       </div>
+      {/* Who this is at a glance: the registration and every enrollment, each a link (not a select that navigates on change) */}
+      <dl className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
+        <div>
+          <dt className="text-xs text-gray-600">Matrícula</dt>
+          <dd className="font-medium tabular-nums">{row.registration}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-gray-600">Matrículas em cursos</dt>
+          <dd>
+            {enrollments.length ? (
+              <ul className="flex flex-col gap-1">
+                {enrollments.map((e) => (
+                  <li key={e.id} className="flex flex-wrap items-center gap-2">
+                    <Link href={`/enrollments/${e.id}/edit`} className="font-medium text-gray-900 underline underline-offset-2 hover:text-primary-700">
+                      {enrollmentTypeLabel(e.program, e.level, e.schoolYear)}
+                    </Link>
+                    <EnrollmentStatusBadge status={e.status} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <span className="text-gray-600">Nenhuma ainda. Use “Matricular”.</span>
+            )}
+          </dd>
+        </div>
+      </dl>
       <StudentForm
         id={id}
         defaults={row}
         photoUrl={await studentPhotoUrl(row.photo, row.registration)}
         guardianRows={links.map(({ studentId: _s, ...l }) => ({ ...l, delete: false }))}
         guardianOptions={options}
-        enrollments={enrollments.map((e) => ({
-          id: e.id,
-          label: `${enrollmentTypeLabel(e.program, e.level, e.schoolYear)} (${label(ENROLLMENT_STATUSES, e.status)})`,
-        }))}
       />
     </div>
   );
