@@ -38,16 +38,16 @@ export default async function ReportCardPage({ params }: PageProps<"/grades/repo
         <Table striped>
           <TableHead>
             <TableRow>
-              <TableHeadCell>Matéria</TableHeadCell>
+              <TableHeadCell className="px-3">Matéria</TableHeadCell>
               {[1, 2, 3, 4].map((b) => (
-                <TableHeadCell key={b} className="text-right">
+                <TableHeadCell key={b} className="px-3 text-right whitespace-nowrap">
                   {b}º bim.
                 </TableHeadCell>
               ))}
-              <TableHeadCell className="text-right whitespace-nowrap">Média anual</TableHeadCell>
-              <TableHeadCell className="text-right">Recuperação</TableHeadCell>
-              <TableHeadCell className="text-right whitespace-nowrap">Média final</TableHeadCell>
-              <TableHeadCell className="text-right">Situação</TableHeadCell>
+              <TableHeadCell className="px-3 text-right">Média anual</TableHeadCell>
+              <TableHeadCell className="px-3 text-right">Recuperação</TableHeadCell>
+              <TableHeadCell className="px-3 text-right">Média final</TableHeadCell>
+              <TableHeadCell className="px-3 text-right">Situação</TableHeadCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -62,17 +62,17 @@ export default async function ReportCardPage({ params }: PageProps<"/grades/repo
               const sit = situation(r);
               return (
                 <TableRow key={r.subject.id}>
-                  <TableCell className="font-medium text-gray-900 dark:text-white">{r.subject.name}</TableCell>
+                  <TableCell className="min-w-48 px-3 font-medium text-gray-900 dark:text-white">{r.subject.name}</TableCell>
                   {r.bimesters.map((g, i) => (
-                    <TableCell key={i} className="text-right">
+                    <TableCell key={i} className="px-3 text-right tabular-nums">
                       {formatGrade(g)}
                     </TableCell>
                   ))}
-                  <TableCell className="text-right">{formatGrade(r.average)}</TableCell>
-                  <TableCell className="text-right">{r.needsRecovery ? formatGrade(r.recovery) : "—"}</TableCell>
-                  <TableCell className="text-right font-semibold">{formatGrade(r.final)}</TableCell>
-                  <TableCell className="text-right">
-                    <Badge color={sit.color} className="ml-auto w-fit">
+                  <TableCell className="px-3 text-right tabular-nums">{formatGrade(r.average)}</TableCell>
+                  <TableCell className="px-3 text-right tabular-nums">{r.needsRecovery ? formatGrade(r.recovery) : "—"}</TableCell>
+                  <TableCell className="px-3 text-right font-semibold tabular-nums">{formatGrade(r.final)}</TableCell>
+                  <TableCell className="px-3 text-right">
+                    <Badge color={sit.color} className="ml-auto w-fit whitespace-nowrap">
                       {sit.text}
                     </Badge>
                   </TableCell>

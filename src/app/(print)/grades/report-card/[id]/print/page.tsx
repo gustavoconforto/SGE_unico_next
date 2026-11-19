@@ -1,33 +1,31 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { formatGrade } from "@/lib/grades";
+import { ExamKind, formatGrade } from "@/lib/grades";
 import { idParam } from "@/lib/list";
 import { loadReportCard, situation } from "../../../../../(app)/grades/report";
+import { Letterhead } from "../../../../letterhead";
 import { PrintToolbar } from "../../../../print-toolbar";
 
 export const metadata: Metadata = { title: "Boletim escolar" };
 
-const cell = "border border-gray-900 px-1 py-0.5 text-center";
+// 8pt and tight: up to 29 columns must fit A4 landscape (277mm); tbody keeps scores on one line
+const cell = "border border-gray-900 px-px py-0.5 text-center tabular-nums";
 
 export default async function ReportCardPrintPage({ params }: PageProps<"/grades/report-card/[id]/print">) {
   const card = await loadReportCard(await idParam(params));
   if (!card) notFound();
   const e = card.enrollment;
-  const n = card.examTypes.length + 1;
+  // The Ajuste column only when some subject has one: it's rare and costs four columns
+  const cols = card.examTypes
+    .map((t, i) => ({ t, i }))
+    .filter(({ t, i }) => t.kind !== ExamKind.ADJUSTMENT || card.rows.some((r) => r.examScores.some((b) => b[i] !== null)));
+  const n = cols.length + 1;
   return (
     <>
       <PrintToolbar />
       <main className="mx-auto my-6 max-w-[297mm] bg-white p-[10mm] text-[9pt] shadow-lg print:m-0 print:max-w-none print:p-0 print:shadow-none">
         <style>{"@page { size: A4 landscape; margin: 10mm; }"}</style>
-        <header className="mb-2 flex items-center justify-between border-b border-gray-900 pb-2">
-          <div>
-            <p className="text-[13pt] font-bold">ÚNICO EDUCACIONAL</p>
-            <p>SGAS 606 BLOCO F PARTE A ASA SUL - Brasília - DF CEP:70200-660</p>
-            <p>Telefone: (61)3244-0910</p>
-          </div>
-          {/* eslint-disable-next-line @next/next/no-img-element -- print page */}
-          <img src="/img/Logo_light.png" alt="Único Educacional" className="h-14 w-auto" />
-        </header>
+        <Letterhead />
         <h1 className="mb-2 text-center text-[14pt] font-bold uppercase">Boletim escolar</h1>
         <table className="mb-2 w-full border-collapse text-left">
           <tbody>
@@ -47,7 +45,7 @@ export default async function ReportCardPrintPage({ params }: PageProps<"/grades
             </tr>
           </tbody>
         </table>
-        <table className="w-full border-collapse">
+        <table className="w-full border-collapse text-[8pt]">
           <thead className="bg-gray-200">
             <tr>
               <th rowSpan={2} className={`${cell} text-left`}>
@@ -61,8 +59,8 @@ export default async function ReportCardPrintPage({ params }: PageProps<"/grades
               <th rowSpan={2} className={cell}>
                 Média anual
               </th>
-              <th rowSpan={2} className={cell}>
-                Recuperação
+              <th rowSpan={2} className={cell} title="Recuperação">
+                Recup.
               </th>
               <th rowSpan={2} className={cell}>
                 Média final
@@ -73,7 +71,7 @@ export default async function ReportCardPrintPage({ params }: PageProps<"/grades
             </tr>
             <tr>
               {[1, 2, 3, 4].flatMap((b) => [
-                ...card.examTypes.map((t) => (
+                ...cols.map(({ t }) => (
                   <th key={`${b}-${t.id}`} className={cell}>
                     {t.code}
                   </th>
@@ -84,14 +82,14 @@ export default async function ReportCardPrintPage({ params }: PageProps<"/grades
               ])}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="whitespace-nowrap">
             {card.rows.map((r) => (
-              <tr key={r.subject.id}>
-                <td className={`${cell} text-left`}>{r.subject.name}</td>
+              <tr key={r.subject.id} className="break-inside-avoid">
+                <td className={`${cell} text-left whitespace-normal`}>{r.subject.name}</td>
                 {r.examScores.flatMap((scores, b) => [
-                  ...scores.map((s, i) => (
+                  ...cols.map(({ i }) => (
                     <td key={`${b}-${i}`} className={cell}>
-                      {s === null ? "" : formatGrade(s)}
+                      {scores[i] === null ? "" : formatGrade(scores[i])}
                     </td>
                   )),
                   <td key={`${b}-n`} className={`${cell} font-bold`}>
