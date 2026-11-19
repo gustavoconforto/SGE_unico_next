@@ -1,7 +1,11 @@
 # How the permission system works
 
-The system is **custom-built and not ported from Django**. It works in five layers. A request passes through them
-in this order: **who you are → what you hold → can you open the page → what the page shows → can you run the action**.
+The system works in five layers. A request passes through them in this order: 
+1 - who you are  
+2 - what you hold 
+3 - can you open the page 
+4 - what the page shows 
+5 - can you run the action
 
 ## 1. The data model: who holds what
 

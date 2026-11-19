@@ -1147,3 +1147,35 @@ export const accessGroupPermissions = pgTable("access_group_permissions", {
 		}).onDelete("cascade"),
 	unique("access_group_permissions_group_id_codename_key").on(table.groupId, table.codename),
 ]);
+
+// Not in Django: early exits (Liberações), a motive picked from a list the staff edit
+export const releasesExitreason = pgTable("releases_exitreason", {
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
+	reason: varchar({ length: 100 }).notNull(),
+}, (table) => [
+	unique("releases_exitreason_reason_key").on(table.reason),
+]);
+
+export const releasesEarlyexit = pgTable("releases_earlyexit", {
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).notNull().$defaultFn(() => new Date().toISOString()),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).notNull().$defaultFn(() => new Date().toISOString()).$onUpdate(() => new Date().toISOString()),
+	exitDate: date("exit_date").notNull(),
+	enrollmentId: bigint("enrollment_id", { mode: "number" }).notNull(),
+	reasonId: bigint("reason_id", { mode: "number" }).notNull(),
+}, (table) => [
+	index("releases_earlyexit_reason_id_idx").using("btree", table.reasonId.asc().nullsLast().op("int8_ops")),
+	index("releases_earlyexit_exit_date_idx").using("btree", table.exitDate.asc().nullsLast().op("date_ops")),
+	foreignKey({
+			columns: [table.enrollmentId],
+			foreignColumns: [enrollmentsEnrollment.id],
+			name: "releases_earlyexit_enrollment_id_fk_enrollments_enrollment_id"
+		}),
+	foreignKey({
+			columns: [table.reasonId],
+			foreignColumns: [releasesExitreason.id],
+			name: "releases_earlyexit_reason_id_fk_releases_exitreason_id"
+		}),
+	// Also serves lookups by enrollment (leading column)
+	unique("releases_earlyexit_enrollment_date_reason_key").on(table.enrollmentId, table.exitDate, table.reasonId),
+]);
