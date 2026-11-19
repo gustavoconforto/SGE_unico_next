@@ -36,3 +36,10 @@ export async function requirePermission(permission: Permission) {
   if (!(await hasPermission(session.user, permission))) redirect("/forbidden");
   return session;
 }
+
+/** Admin-only actions (groups): no session → /login, not an admin → /forbidden. */
+export async function requireAdmin() {
+  const session = await requireSession();
+  if (session.user.role !== "admin") redirect("/forbidden");
+  return session;
+}

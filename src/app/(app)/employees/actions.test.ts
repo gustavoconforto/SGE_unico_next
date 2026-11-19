@@ -9,9 +9,9 @@ import { session as sessionTable, user } from "@/db/schema/auth";
 import { applyLoginPlan, employeeLogin } from "@/lib/employee-login";
 import { deleteEmployee, saveEmployee } from "./actions";
 
-const caller = vi.hoisted(() => ({ user: { id: "", role: "user" }, managesGroups: false }));
-// A caller holding employees.edit (and groups.manage when `managesGroups`): the login and role rules are under test
-vi.mock("@/lib/access", () => ({ requirePermission: async () => caller, hasPermission: async () => caller.managesGroups }));
+const caller = vi.hoisted(() => ({ user: { id: "", role: "user" } }));
+// A caller holding employees.edit: the login and role rules are under test
+vi.mock("@/lib/access", () => ({ requirePermission: async () => caller }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT ${url}`);
@@ -59,27 +59,28 @@ describe.skipIf(!local)("employee logins", () => {
     expect(await db.select().from(sessionTable).where(eq(sessionTable.userId, login.id))).toEqual([]);
   });
 
-  it("lets only a group manager move someone who can sign in to another role", async () => {
+  it("lets only an admin move someone who can sign in to another role", async () => {
     const [{ id: otherRoleId }] = await db.insert(role).values({ role: "test-login-other" }).returning({ id: role.id });
     const form = (r: number) => {
       const f = new FormData();
       const fields = { name: "Test Login", cpf: String(Date.now()).slice(-11).padStart(11, "0"), rg: `r${username}`, issuingAuthority: "SSP", roleId: String(r) };
+      // An admin's form carries the login fields: keep the access (a blank password keeps the current one)
+      if (caller.user.role === "admin") Object.assign(fields, { access: "on", username });
       for (const [k, v] of Object.entries(fields)) f.set(k, v);
       return f;
     };
     const save = (r: number) => saveEmployee(employeeId, {}, form(r)).catch((e: Error) => e.message);
     try {
       caller.user = { id: "someone-else", role: "user" };
-      caller.managesGroups = false;
-      expect(await save(otherRoleId)).toMatchObject({ errors: { roleId: [expect.stringContaining("gerencia grupos")] } });
+      expect(await save(otherRoleId)).toMatchObject({ errors: { roleId: [expect.stringContaining("Somente administradores")] } });
       // Other fields still save when the role stays
       expect(await save(roleId)).toBe("REDIRECT /employees?msg=updated");
 
-      caller.managesGroups = true;
+      caller.user = { id: "an-admin", role: "admin" };
       expect(await save(otherRoleId)).toBe("REDIRECT /employees?msg=updated");
       expect(await save(roleId)).toBe("REDIRECT /employees?msg=updated");
     } finally {
-      caller.managesGroups = false;
+      caller.user = { id: "someone-else", role: "user" };
       await db.update(employee).set({ roleId }).where(eq(employee.id, employeeId));
       await db.delete(role).where(eq(role.id, otherRoleId));
     }

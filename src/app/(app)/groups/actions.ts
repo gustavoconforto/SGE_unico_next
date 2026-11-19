@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
 import { accessGroup as group, accessGroupPermissions as groupPermission, accessGroupRoles as groupRole } from "@/db/schema/app";
-import { requirePermission } from "@/lib/access";
+import { requireAdmin } from "@/lib/access";
 import { deleteAndRedirect } from "@/lib/crud";
 import { FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import { type FormState, INVALID_CHOICE, formIds, parseForm, requiredText } from "@/lib/form";
@@ -14,7 +14,7 @@ import { isPermission } from "@/lib/permissions";
 const groupSchema = z.object({ name: requiredText(150) });
 
 export async function saveGroup(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("groups.manage");
+  await requireAdmin();
   const roleIds = formIds(formData, "roles");
   // Only codes the system knows: a tampered or outdated form can't store anything else
   const codes = [...new Set(formData.getAll("permissions").map(String).filter(isPermission))];
@@ -43,7 +43,7 @@ export async function saveGroup(id: number | null, _prev: FormState, formData: F
 }
 
 export async function deleteGroup(id: number) {
-  await requirePermission("groups.manage");
+  await requireAdmin();
   // Role and permission links cascade with the group
   await deleteAndRedirect(() => db.delete(group).where(eq(group.id, id)), "/groups");
 }
