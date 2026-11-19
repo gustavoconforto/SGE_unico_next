@@ -166,10 +166,13 @@ A neutral gray office with a single navy for action and a small state vocabulary
 - **Title** (600, 1.125rem): section headings on detail pages. Form fieldset legends are one step down (600, 1rem), so a long form doesn't shout.
 - **Body** (400, 0.875rem/1.25rem): table cells, inputs, buttons, most UI text. Names in a list's first column use 500.
 - **Label** (700, 0.75rem, uppercase): table header cells (Flowbite's head style).
-- **Caption** (400, 0.75rem): field labels above values in summaries, help text, record counts.
+- **Caption** (400, 0.75rem): help text, record counts, badges.
+- **Detail value** (500, 1rem) under a **Detail label** (400, 0.875rem, `ink-muted`): the label/value pairs on read-only detail pages (the student profile) and the summaries above forms. Tables and inputs stay at Body (0.875rem).
 
 ### Named Rules
 **The Tabular Numbers Rule.** Any column or input of grades, money, dates or CPF uses `tabular-nums` so digits line up.
+
+**The Reading Page Rule.** A page people open to read a record (a profile, not a list or a form) reads at 16px: values 16px/500, labels 14px, section Titles 18px. The data must outweigh the chrome around it (the 16px sidebar, the buttons). Phone numbers on these pages are 16px/600 `tel:` links with a gray `call` icon and a 44px tall target.
 
 **The pt-BR Rule.** Everything shown is Brazilian Portuguese: comma decimals (2,50), R$ with a thousands dot, dd/mm/aaaa dates, formatted CPF/CEP.
 
@@ -180,6 +183,7 @@ A neutral gray office with a single navy for action and a small state vocabulary
 - **Lists** (`<ListPage>`): headline and the primary button on one row, a search box and record count under it, then the table. Below `sm`, the table header hides and each row reflows into a wrapped card-like block with a bottom hairline.
 - **Wide grids** (the grades table): scroll sideways inside the panel, with the identifying column sticky on the left.
 - **Forms:** fieldsets of label-above-input fields, in a responsive grid. Inputs keep a 5rem scroll margin so a focused field clears the mobile top bar.
+- **Detail pages** (the student profile): no max-width either. Sections stack on phones and pair up two-wide from `xl`, with long lists (enrollments) spanning both columns. Prose inside them (observations) keeps `max-w-prose`.
 - **Print** pages (`src/app/(print)/`) drop the shell and use the school letterhead.
 
 ## Elevation & Depth
@@ -211,7 +215,8 @@ Gently rounded and uniform: 8px (`rounded.lg`) on buttons, inputs, panels and na
 
 ### Cards / Containers
 - **Data panel:** white, 8px radius, panel-lift shadow, no border, no internal padding (the table fills it).
-- No decorative cards and no nested cards. Summaries above a table are an inline label/value list (caption label over a 500-weight value), not a card.
+- **Detail section:** a data panel with padding (20px, 24px from `sm`) and an 18px Title, for one part of a record on a detail page. Same white surface and panel-lift shadow (`drop-shadow-md`), never a border.
+- No decorative cards and no nested cards. Summaries above a table are an inline label/value list (Detail label over a Detail value), not a card.
 
 ### Inputs / Fields
 - **Style:** Paper fill, 1px field border, 8px radius, 10px padding, 14px text. Label above the field; "(opcional)" marks optional fields.

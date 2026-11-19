@@ -47,14 +47,14 @@ export default async function EditStudentPage({ params }: PageProps<"/students/[
         </LinkButton>
       </div>
       {/* Who this is at a glance: the registration and every enrollment, each a link (not a select that navigates on change) */}
-      <dl className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
+      <dl className="flex flex-wrap gap-x-8 gap-y-4">
         <div>
-          <dt className="text-xs text-gray-600">Matrícula</dt>
-          <dd className="font-medium tabular-nums">{row.registration}</dd>
+          <dt className="text-sm text-gray-600">Matrícula</dt>
+          <dd className="mt-0.5 font-medium tabular-nums">{row.registration}</dd>
         </div>
         <div>
-          <dt className="text-xs text-gray-600">Matrículas em cursos</dt>
-          <dd>
+          <dt className="text-sm text-gray-600">Matrículas em cursos</dt>
+          <dd className="mt-0.5">
             {enrollments.length ? (
               <ul className="flex flex-col gap-1">
                 {enrollments.map((e) => (
