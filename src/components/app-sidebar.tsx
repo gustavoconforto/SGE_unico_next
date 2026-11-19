@@ -80,6 +80,15 @@ export const NAV: NavGroup[] = [
     ],
   },
   {
+    label: "Liberações",
+    icon: "logout",
+    items: [
+      { href: "/releases", label: "Liberações", icon: "logout" },
+      { href: "/releases/batch", label: "Liberação em lote", icon: "checklist" },
+      { href: "/releases/reasons", label: "Motivos", icon: "list_alt" },
+    ],
+  },
+  {
     label: "Recursos humanos",
     icon: "badge",
     items: [

@@ -15,6 +15,7 @@ export const AREAS = [
   ["employees", "Funcionários e cargos"],
   ["enrollmentSetup", "Configuração de matrícula"],
   ["academicSetup", "Cadastros acadêmicos"],
+  ["releases", "Liberações"],
 ] as const;
 
 /** Permissions beyond view/edit. */
@@ -75,6 +76,8 @@ const ROUTES: [string, Needed][] = [
   ["/grades/level-subjects", "academicSetup.view"],
   ["/grades/exam-types", "academicSetup.view"],
   ["/incidents/types", "academicSetup.view"],
+  ["/releases", "releases.view"],
+  ["/releases/batch", "releases.edit"],
   ["/groups", ADMIN],
 ];
 

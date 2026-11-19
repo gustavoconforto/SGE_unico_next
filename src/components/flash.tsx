@@ -26,6 +26,8 @@ const MESSAGES = {
   student_created: { text: "Aluno cadastrado. Para matriculá-lo, use “Matricular” no topo da página.", ok: true },
   enrollment_created: { text: "Matrícula criada, com a conta e as parcelas. Confira os vencimentos nesta página.", ok: true },
   incident_type_protected: { text: "Este tipo de ocorrência possui ocorrências e não pode ser excluído.", ok: false },
+  reason_protected: { text: "Este motivo possui liberações e não pode ser excluído.", ok: false },
+  releases_created: { text: "Liberações registradas com sucesso", ok: true },
 } as const;
 
 export type FlashKey = keyof typeof MESSAGES;

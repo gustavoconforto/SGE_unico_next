@@ -23,6 +23,8 @@ describe("routePermission", () => {
     expect(routePermission("/classes/detail")).toBe("enrollments.view");
     expect(routePermission("/classes/4/edit")).toBe("academicSetup.edit");
     expect(routePermission("/grades/locks")).toBe("grades.manage");
+    expect(routePermission("/releases/reasons/new")).toBe("releases.edit");
+    expect(routePermission("/releases/batch")).toBe("releases.edit");
   });
 
   it("doesn't match a prefix inside a word, and denies paths no rule covers", () => {

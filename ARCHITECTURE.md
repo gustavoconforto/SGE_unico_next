@@ -175,6 +175,20 @@ The forms share `ActiveEnrollmentFormMixin` (`incidents/forms.py`): the
 enrollment select lists only active enrollments, plus the record's current one
 when editing. The lists search by student name and show the class.
 
+### Early exits (`releases_*`, not in Django)
+
+A student let out before the end of the day (Liberações, `src/app/(app)/releases/`). Like the incident models
+it points at an **enrollment**, and its forms list only active enrollments.
+
+| Table | Key fields and rules |
+|---|---|
+| `releases_exitreason` | `reason` unique, edited on `/releases/reasons` |
+| `releases_earlyexit` | enrollment, reason (protected), `exit_date`; unique (enrollment, `exit_date`, reason) |
+
+`/releases/batch` picks date, school year and motive in the URL, then lists that year's active students
+(name filter, check several) and saves one exit each; one already recorded is skipped (`onConflictDoNothing`).
+Permission area `releases`.
+
 ### Q&A session model (`q_and_a/models.py`)
 
 `QandA` (plantão) records that a student attended a subject's Q&A session:
