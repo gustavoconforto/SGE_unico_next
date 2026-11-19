@@ -501,6 +501,8 @@ Not in Django (its groups held users and were never checked). Better Auth's acce
 - Checked in three places: `src/proxy.ts` (every page, rewrites to `/forbidden`), every Server Action
   (`requirePermission`; a test fails when one doesn't), and the sidebar / home page (hide what can't be opened).
 
+Every function and the order they run in for one request: [docs/permissions.md](docs/permissions.md).
+
 ### Lists, search and filters
 
 - `<ListPage>` + `<ListRow>` (`src/components/list-page.tsx`): heading, main
