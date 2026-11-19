@@ -2,7 +2,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { NAV } from "@/components/app-sidebar";
-import { canOpen, isPermission, routePermission } from "./permissions";
+import { PERMISSIONS, canOpen, isPermission, routePermission } from "./permissions";
 
 describe("routePermission", () => {
   it("lets any signed-in user open home, password, forbidden and media", () => {
@@ -53,6 +53,15 @@ describe("canOpen", () => {
     expect(canOpen("/billing", viewer)).toBe(false);
   });
 
+  it("keeps groups for admins, whatever a group grants", () => {
+    const everything = new Set<string>([...PERMISSIONS.map(([code]) => code), "groups.manage", "admin"]);
+    for (const path of ["/groups", "/groups/new", "/groups/3/edit"]) {
+      expect(canOpen(path, everything)).toBe(false);
+      expect(canOpen(path, new Set(), true)).toBe(true);
+    }
+    expect(isPermission("groups.manage")).toBe(false);
+  });
+
   it("knows its own codes", () => {
     expect(isPermission("students.view")).toBe(true);
     expect(isPermission("students.delete")).toBe(false);
@@ -96,7 +105,7 @@ describe("coverage", () => {
       readFileSync(file, "utf8")
         .split(/^export async function /m)
         .slice(1)
-        .filter((body) => !/requirePermission\(|hasPermission\(/.test(body.split("\n").slice(0, 3).join("\n")))
+        .filter((body) => !/requirePermission\(|hasPermission\(|requireAdmin\(/.test(body.split("\n").slice(0, 3).join("\n")))
         .map((body) => `${file}: ${body.slice(0, body.indexOf("("))}`),
     );
     // Changing your own password needs only the session

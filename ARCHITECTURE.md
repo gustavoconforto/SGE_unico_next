@@ -490,12 +490,13 @@ Not in Django (its groups held users and were never checked). Better Auth's acce
 (`admin` plugin) or needs organizations (`organization` plugin), so permissions live in our own tables:
 
 - `src/lib/permissions.ts` (pure): the permission codes, `<area>.view` / `<area>.edit` per area plus
-  `grades.manage` (lock bimesters, edit locked and C / EX / A grades) and `groups.manage`; and `ROUTES`, the path
+  `grades.manage` (lock bimesters, edit locked and C / EX / A grades); and `ROUTES`, the path
   prefix each page needs (longest prefix wins, form pages `…/new`, `…/edit` need `.edit`, **unlisted paths are
   denied**; a test fails when a page has no rule).
 - `access_group` → `access_group_roles` (employee roles) and `access_group_permissions` (codes): an employee gets
   the codes of every group holding their role. Admins (`user.role = "admin"`) hold all; a login with no employee
-  holds none. Edited on `/groups`.
+  holds none. Edited on `/groups`, admins only (`ADMIN` in `ROUTES`, `requireAdmin()`): no group can grant it,
+  and only admins change the role of an employee who can sign in.
 - `src/lib/access.ts`: `userAccess(user)` (one query, cached per request), `hasPermission`, `requirePermission`.
 - Checked in three places: `src/proxy.ts` (every page, rewrites to `/forbidden`), every Server Action
   (`requirePermission`; a test fails when one doesn't), and the sidebar / home page (hide what can't be opened).

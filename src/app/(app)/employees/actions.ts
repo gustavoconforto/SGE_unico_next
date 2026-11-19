@@ -14,7 +14,7 @@ import { deleteAndRedirect } from "@/lib/crud";
 import { applyLoginPlan, employeeLogin, type LoginInput, loginPlan, usernameTaken } from "@/lib/employee-login";
 import { checkbox, type FormState, foreignKey, parseForm } from "@/lib/form";
 import { personFields, personUniqueError } from "@/lib/person";
-import { hasPermission, requirePermission } from "@/lib/access";
+import { requirePermission } from "@/lib/access";
 
 const employeeSchema = z.object({ ...personFields, roleId: foreignKey });
 const loginSchema = z.object({
@@ -37,11 +37,11 @@ export async function saveEmployee(id: number | null, _prev: FormState, formData
     loginErrors.username = ["Este usuário já está em uso."];
 
   const errors = { ...state?.errors, ...loginErrors };
-  // A role grants its groups' permissions: moving someone who can sign in to another role is for group managers only,
+  // A role grants its groups' permissions: moving someone who can sign in to another role is for admins only,
   // or anyone editing employees could give themselves (or a colleague) more access
-  if (data && id !== null && !(await hasPermission(session.user, "groups.manage"))) {
+  if (data && id !== null && session.user.role !== "admin") {
     const [saved] = await db.select({ roleId: employeesEmployee.roleId }).from(employeesEmployee).where(eq(employeesEmployee.id, id));
-    if (saved && saved.roleId !== data.roleId && (await employeeLogin(id))) errors.roleId = ["Somente quem gerencia grupos pode mudar o cargo de quem tem acesso ao sistema."];
+    if (saved && saved.roleId !== data.roleId && (await employeeLogin(id))) errors.roleId = ["Somente administradores podem mudar o cargo de quem tem acesso ao sistema."];
   }
   if (!data || Object.keys(errors).length) return { errors, values };
 

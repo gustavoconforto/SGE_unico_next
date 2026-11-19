@@ -62,7 +62,7 @@ describe.skipIf(!local)("userAccess", () => {
   });
 
   it("gives admins everything", async () => {
-    expect(await hasPermission({ role: "admin", employeeId: clerkId }, "groups.manage")).toBe(true);
+    expect(await hasPermission({ role: "admin", employeeId: clerkId }, "grades.manage")).toBe(true);
   });
 
   it("drops a role's links when its group goes", async () => {
