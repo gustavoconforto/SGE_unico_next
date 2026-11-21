@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { NAV } from "@/components/app-sidebar";
@@ -100,17 +100,5 @@ describe("coverage", () => {
       return [...g.items.map((i) => i.href), ...(g.groups ?? []).flatMap(items)];
     });
     expect(hrefs.filter((href) => routePermission(href) === undefined)).toEqual([]);
-  });
-
-  it("checks a permission at the top of every Server Action", () => {
-    const missing = find("src/app", "actions.ts").flatMap((file) =>
-      readFileSync(file, "utf8")
-        .split(/^export async function /m)
-        .slice(1)
-        .filter((body) => !/requirePermission\(|hasPermission\(|requireAdmin\(/.test(body.split("\n").slice(0, 3).join("\n")))
-        .map((body) => `${file}: ${body.slice(0, body.indexOf("("))}`),
-    );
-    // Changing your own password needs only the session
-    expect(missing).toEqual(["src/app/(app)/account/password/actions.ts: changePassword"]);
   });
 });

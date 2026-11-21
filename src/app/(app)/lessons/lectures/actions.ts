@@ -10,8 +10,8 @@ import { UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import { type FormErrors, type FormState, foreignKey, formValues, intField, parseForm, requiredDate, requiredText } from "@/lib/form";
 import { isoWeekday } from "@/lib/dates";
 import { lectureDateError, periodError, weekdayPeriods } from "@/lib/lessons";
-import { requirePermission } from "@/lib/access";
 import { type SeriesClass, lectureTeacherIds, levelSubjects, seriesClass } from "../data";
+import { requireSession } from "@/lib/session";
 
 const PERIOD_TAKEN = "Já existe uma aula desta turma nesta data e horário.";
 // Two people saved the same class and day at once (unique_lecture)
@@ -33,7 +33,7 @@ async function lectureErrors(c: SeriesClass, date: string, period: number, subje
 
 /** The class's lectures on a date (LectureDayForm): rows with a topic are kept, clearing it deletes the lecture. */
 export async function saveLectureDay(classId: number, date: string, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("lessons.edit");
+  await requireSession();
   const c = await seriesClass(classId);
   if (!c || lectureDateError(date, c.begins, c.ends)) redirect(`/lessons/lectures/day?school_class=${classId}&date=${date}`);
   const values = formValues(formData);
@@ -78,7 +78,7 @@ const lectureSchema = z.object({ date: requiredDate, period: intField(1, 12), su
 
 /** One lecture; the class stays (new lectures come from the day sheet). */
 export async function updateLecture(id: number, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("lessons.edit");
+  await requireSession();
   const [current] = await db.select().from(lecture).where(eq(lecture.id, id));
   if (!current) redirect("/lessons/lectures");
   const { data, values, state } = parseForm(lectureSchema, formData);
@@ -101,6 +101,6 @@ export async function updateLecture(id: number, _prev: FormState, formData: Form
 }
 
 export async function deleteLecture(id: number) {
-  await requirePermission("lessons.edit");
+  await requireSession();
   await deleteAndRedirect(() => db.delete(lecture).where(eq(lecture.id, id)), "/lessons/lectures");
 }

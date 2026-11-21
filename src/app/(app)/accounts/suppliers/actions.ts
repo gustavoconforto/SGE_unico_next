@@ -8,7 +8,7 @@ import { accountsSupplier as supplier } from "@/db/schema/app";
 import { deleteAndRedirect } from "@/lib/crud";
 import { UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import { type FormState, optionalText, parseForm, requiredText } from "@/lib/form";
-import { requirePermission } from "@/lib/access";
+import { requireSession } from "@/lib/session";
 
 const supplierSchema = z.object({
   name: requiredText(200),
@@ -24,7 +24,7 @@ const supplierSchema = z.object({
 });
 
 export async function saveSupplier(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("finance.edit");
+  await requireSession();
   const { data, values, state } = parseForm(supplierSchema, formData);
   if (!data) return state;
   try {
@@ -38,6 +38,6 @@ export async function saveSupplier(id: number | null, _prev: FormState, formData
 }
 
 export async function deleteSupplier(id: number) {
-  await requirePermission("finance.edit");
+  await requireSession();
   await deleteAndRedirect(() => db.delete(supplier).where(eq(supplier.id, id)), "/accounts/suppliers", "supplier_protected");
 }

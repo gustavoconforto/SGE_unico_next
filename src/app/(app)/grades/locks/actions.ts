@@ -4,7 +4,7 @@ import { and, eq, or } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { gradesGradelock as lock } from "@/db/schema/app";
-import { requirePermission } from "@/lib/access";
+import { requireSession } from "@/lib/session";
 
 /** The "subjectId:bimester" keys posted under `name`. */
 const keys = (formData: FormData, name: string) => new Set(formData.getAll(name).map(String).filter((v) => /^\d+:[1-5]$/.test(v)));
@@ -18,7 +18,7 @@ const row = (key: string) => {
  * someone else saved meanwhile.
  */
 export async function saveGradeLocks(formData: FormData) {
-  await requirePermission("grades.manage");
+  await requireSession();
   const shown = keys(formData, "shown");
   const checked = keys(formData, "lock");
   const removed = [...shown].filter((k) => !checked.has(k)).map(row);

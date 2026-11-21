@@ -14,7 +14,7 @@ import { deleteAndRedirect } from "@/lib/crud";
 import { applyLoginPlan, employeeLogin, type LoginInput, loginPlan, usernameTaken } from "@/lib/employee-login";
 import { checkbox, type FormState, foreignKey, parseForm } from "@/lib/form";
 import { personFields, personUniqueError } from "@/lib/person";
-import { requirePermission } from "@/lib/access";
+import { requireSession } from "@/lib/session";
 
 const employeeSchema = z.object({ ...personFields, roleId: foreignKey });
 const loginSchema = z.object({
@@ -25,7 +25,7 @@ const loginSchema = z.object({
 });
 
 export async function saveEmployee(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  const session = await requirePermission("employees.edit");
+  const session = await requireSession();
   const { data, values, state } = parseForm(employeeSchema, formData);
   const login: LoginInput | null = session.user.role === "admin" ? loginSchema.parse(values) : null;
   delete values.password; // never echo a typed password back to the browser
@@ -73,7 +73,7 @@ export async function saveEmployee(id: number | null, _prev: FormState, formData
 }
 
 export async function deleteEmployee(id: number) {
-  const session = await requirePermission("employees.edit");
+  const session = await requireSession();
   // Deleting the employee deletes their login (FK cascade): only an admin may, and never their own
   const login = await employeeLogin(id);
   if (login && (session.user.role !== "admin" || login.id === session.user.id)) redirect("/employees?msg=employee_has_login");

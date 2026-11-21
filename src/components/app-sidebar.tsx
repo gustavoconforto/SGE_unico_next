@@ -6,7 +6,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { authClient } from "@/lib/auth-client";
-import { canOpen } from "@/lib/permissions";
 
 type NavItem = { href: string; label: string; icon: string };
 type NavGroup = {
@@ -129,12 +128,6 @@ function isActive(pathname: string, href: string): boolean {
   return !NAV.flatMap(allItems).some((i) => i.href.length > href.length && matches(i.href));
 }
 
-/** The menu without the items this access can't open, nor the groups left empty. */
-function visibleNav(granted: ReadonlySet<string>, all: boolean, groups = NAV): NavGroup[] {
-  return groups
-    .map((g) => ({ ...g, items: g.items.filter((i) => canOpen(i.href, granted, all)), groups: g.groups && visibleNav(granted, all, g.groups) }))
-    .filter((g) => g.items.length || g.groups?.length);
-}
 
 function allItems(group: NavGroup): NavItem[] {
   return [...group.items, ...(group.groups ?? []).flatMap(allItems)];
@@ -177,8 +170,7 @@ function NavCollapse({ group, pathname, onNavigate, depth = 0 }: { group: NavGro
   );
 }
 
-/** Only the menu items the user may open; `all`, `granted`: their access (userAccess(), computed on the server). */
-export function AppSidebar({ all, granted }: { all: boolean; granted: string[] }) {
+export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -254,7 +246,7 @@ export function AppSidebar({ all, granted }: { all: boolean; granted: string[] }
                   Início
                 </span>
               </SidebarItem>
-              {visibleNav(new Set(granted), all).map((group) => (
+              {NAV.map((group) => (
                 <NavCollapse key={group.label} group={group} pathname={pathname} onNavigate={() => setOpen(false)} />
               ))}
             </SidebarItemGroup>

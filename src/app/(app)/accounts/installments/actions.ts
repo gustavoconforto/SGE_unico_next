@@ -8,12 +8,12 @@ import { accountsInstallment as installment } from "@/db/schema/app";
 import { FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import { initialStatus } from "@/lib/finance";
 import { type FormState, INVALID_CHOICE, decimalField, foreignKey, optionalSmallInt, parseForm, requiredDate } from "@/lib/form";
-import { requirePermission } from "@/lib/access";
+import { requireSession } from "@/lib/session";
 
 const installmentSchema = z.object({ accountId: foreignKey, number: optionalSmallInt, dueDate: requiredDate, amount: decimalField({ min: 0 }) });
 
 export async function createInstallment(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("finance.edit");
+  await requireSession();
   const { data, values, state } = parseForm(installmentSchema, formData);
   if (!data) return state;
   try {

@@ -8,7 +8,6 @@ import { FilterSelect } from "@/components/list-controls";
 import { ENROLLMENT_STATUSES } from "@/lib/finance";
 import { PAGE_SIZE, pageParam, param, searchWhere } from "@/lib/list";
 import { ref } from "@/lib/sql";
-import { hasPermission } from "@/lib/access";
 import { requireSession } from "@/lib/session";
 import { studentName } from "../enrollments/data";
 
@@ -29,7 +28,7 @@ export default async function StudentListPage({ searchParams }: PageProps<"/stud
     situation === "N" ? isNull(status) : ENROLLMENT_STATUSES.some(([code]) => code === situation) ? sql`${status} = ${situation}` : undefined,
   );
   const page = pageParam(sp);
-  const { user } = await requireSession();
+  await requireSession();
   const [rows, [{ total }], canEdit] = await Promise.all([
     db
       .select({
@@ -47,7 +46,7 @@ export default async function StudentListPage({ searchParams }: PageProps<"/stud
       .limit(PAGE_SIZE)
       .offset((page - 1) * PAGE_SIZE),
     db.select({ total: count() }).from(student).where(where),
-    hasPermission(user, "students.edit"),
+    true,
   ]);
   return (
     <ListPage

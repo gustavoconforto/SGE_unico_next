@@ -10,8 +10,8 @@ import { applyLoginPlan, employeeLogin } from "@/lib/employee-login";
 import { deleteEmployee, saveEmployee } from "./actions";
 
 const caller = vi.hoisted(() => ({ user: { id: "", role: "user" } }));
-// A caller holding employees.edit: the login and role rules are under test
-vi.mock("@/lib/access", () => ({ requirePermission: async () => caller }));
+// The signed-in caller: the login and role rules are under test
+vi.mock("@/lib/session", () => ({ requireSession: async () => caller }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT ${url}`);

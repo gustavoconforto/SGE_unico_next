@@ -8,8 +8,6 @@ import { db } from "@/db";
 import { accountsAccount as account, accountsInstallment as installment, enrollmentsEnrollment as enrollment } from "@/db/schema/app";
 import { Direction, PENDING_STATUSES, formatMoney, today } from "@/lib/finance";
 import { outstandingSql } from "@/lib/finance-db";
-import { userAccess } from "@/lib/access";
-import { canOpen } from "@/lib/permissions";
 import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Início" };
@@ -27,9 +25,9 @@ function receivable(where: SQL) {
 export default async function HomePage() {
   await connection(); // depends on today's date: never prerender it
   const on = today();
-  const { all, granted } = await userAccess((await requireSession()).user);
-  // Only what this user's groups allow: links they can open, totals of the areas they can see
-  const can = (href: string) => canOpen(href.split("?")[0], granted, all);
+  await requireSession();
+  // No permission checks for now: every signed-in user sees every link and total
+  const can = (_href: string) => true;
   // Totals only for the areas this user can open: nothing is computed just to be hidden
   const none = [{ n: 0, total: "0" }];
   const [[overdue], [dueToday], [enrolled]] = await Promise.all([

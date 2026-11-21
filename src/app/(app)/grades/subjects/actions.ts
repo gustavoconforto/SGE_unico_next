@@ -8,12 +8,12 @@ import { gradesSubject as subject } from "@/db/schema/app";
 import { deleteAndRedirect } from "@/lib/crud";
 import { UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import { type FormState, optionalForeignKey, parseForm, requiredText } from "@/lib/form";
-import { requirePermission } from "@/lib/access";
+import { requireSession } from "@/lib/session";
 
 const subjectSchema = z.object({ name: requiredText(50), departmentId: optionalForeignKey });
 
 export async function saveSubject(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("academicSetup.edit");
+  await requireSession();
   const { data, values, state } = parseForm(subjectSchema, formData);
   if (!data) return state;
   try {
@@ -27,6 +27,6 @@ export async function saveSubject(id: number | null, _prev: FormState, formData:
 }
 
 export async function deleteSubject(id: number) {
-  await requirePermission("academicSetup.edit");
+  await requireSession();
   await deleteAndRedirect(() => db.delete(subject).where(eq(subject.id, id)), "/grades/subjects");
 }

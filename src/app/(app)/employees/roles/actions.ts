@@ -7,12 +7,12 @@ import { db } from "@/db";
 import { employeesEmployeeroletype } from "@/db/schema/app";
 import { deleteAndRedirect } from "@/lib/crud";
 import { type FormState, parseForm, requiredText } from "@/lib/form";
-import { requirePermission } from "@/lib/access";
+import { requireSession } from "@/lib/session";
 
 const roleSchema = z.object({ role: requiredText(20) });
 
 export async function saveRole(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("employees.edit");
+  await requireSession();
   const { data, state } = parseForm(roleSchema, formData);
   if (!data) return state;
   if (id === null) await db.insert(employeesEmployeeroletype).values(data);
@@ -21,6 +21,6 @@ export async function saveRole(id: number | null, _prev: FormState, formData: Fo
 }
 
 export async function deleteRole(id: number) {
-  await requirePermission("employees.edit");
+  await requireSession();
   await deleteAndRedirect(() => db.delete(employeesEmployeeroletype).where(eq(employeesEmployeeroletype.id, id)), "/employees/roles");
 }

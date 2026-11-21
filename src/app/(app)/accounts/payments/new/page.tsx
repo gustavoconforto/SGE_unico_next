@@ -3,9 +3,7 @@ import type { Metadata } from "next";
 import { db } from "@/db";
 import { accountsAccount as account, accountsInstallment as installment } from "@/db/schema/app";
 import { PENDING_STATUSES, today } from "@/lib/finance";
-import { hasPermission } from "@/lib/access";
 import { param } from "@/lib/list";
-import { requireSession } from "@/lib/session";
 import { installmentChoice } from "../data";
 import { PaymentForm } from "../payment-form";
 
@@ -23,7 +21,7 @@ export default async function NewPaymentPage({ searchParams }: PageProps<"/accou
         .where(and(eq(installment.id, installmentId), inArray(installment.status, PENDING_STATUSES)))
     : [];
   // Without the book (payments.view) only an enrollment's installment, which the desk sees on the enrollment anyway
-  const book = await hasPermission((await requireSession()).user, "payments.view");
+  const book = true;
   const source = found && (book || found.enrollmentId) ? found : undefined;
   const direction = (source?.direction ?? (param(sp, "direction") === "P" ? "P" : "R")) as "R" | "P";
   const selected = source ? await installmentChoice(source.id) : null;

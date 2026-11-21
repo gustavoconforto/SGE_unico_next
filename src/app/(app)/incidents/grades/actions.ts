@@ -5,11 +5,9 @@ import { db } from "@/db";
 import { enrollmentsEnrollment as enrollment, enrollmentsEnrollmenttype as enrollmentType, gradesExamtype as examType, studentsStudent as student } from "@/db/schema/app";
 import { bimesterRange, conceptGrades, currentSchoolYear, saveSeriesGrades } from "@/lib/concept-db";
 import { today } from "@/lib/finance";
-import { STAFF_ONLY } from "@/lib/grade-lock";
 import { CONCEPT_CODE } from "@/lib/incidents";
 import { EXTRA_CODE } from "@/lib/pathways";
 import { extraGrades } from "@/lib/pathways-db";
-import { hasPermission } from "@/lib/access";
 import { requireSession } from "@/lib/session";
 
 export type ConceptResult = { ok?: string; error?: string; warning?: string };
@@ -30,7 +28,7 @@ async function kindExamType(kind: GradeKind) {
 const computeGrades = (kind: GradeKind, ids: number[], bimester: number, maxScore: string) => (kind === "extra" ? extraGrades(ids, bimester, maxScore) : conceptGrades(ids, bimester));
 
 export async function computeIndividual(kind: GradeKind, enrollmentId: number, bimester: number): Promise<ConceptResult> {
-  if (!(await hasPermission((await requireSession()).user, "grades.manage"))) return { error: STAFF_ONLY };
+  await requireSession();
   const t = await kindExamType(kind);
   if (!t) return { error: KIND[kind].missing };
   const [e] = await db.select({ status: enrollment.status }).from(enrollment).where(eq(enrollment.id, enrollmentId));
@@ -40,7 +38,7 @@ export async function computeIndividual(kind: GradeKind, enrollmentId: number, b
 }
 
 export async function computeAll(kind: GradeKind, bimester: number): Promise<ConceptResult> {
-  if (!(await hasPermission((await requireSession()).user, "grades.manage"))) return { error: STAFF_ONLY };
+  await requireSession();
   if (![1, 2, 3, 4].includes(bimester)) return { error: "Selecione um bimestre." };
   const t = await kindExamType(kind);
   if (!t) return { error: KIND[kind].missing };
