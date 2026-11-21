@@ -1,5 +1,4 @@
-// What a group can grant, and which permission each page needs. Not in Django: its permissions were never checked.
-// Pure (no db) so the proxy, the sidebar and tests share it; who holds what is in access.ts.
+// What a group can grant, and which permission each page needs.
 
 /** Areas of the system, each with a view and an edit permission ("students.view", "students.edit"). */
 export const AREAS = [
