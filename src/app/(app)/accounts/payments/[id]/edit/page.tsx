@@ -3,16 +3,16 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
 import { accountsAccount as account, accountsInstallment as installment, accountsPayment as payment } from "@/db/schema/app";
+import { requirePermission } from "@/lib/authorization";
 import { idParam } from "@/lib/list";
 import { installmentChoice } from "../../data";
 import { PaymentForm } from "../../payment-form";
-import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Editar baixa" };
 
 export default async function EditPaymentPage({ params }: PageProps<"/accounts/payments/[id]/edit">) {
   // Any payment by id is the book: the proxy only asked payments.edit
-  await requireSession();
+  await requirePermission("payments", "view");
   const id = await idParam(params);
   const [row] = await db
     .select({ p: payment, direction: account.direction })

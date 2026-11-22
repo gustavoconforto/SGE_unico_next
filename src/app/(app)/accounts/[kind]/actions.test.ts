@@ -14,7 +14,7 @@ import {
 } from "@/db/schema/app";
 import { createAccount } from "./actions";
 
-vi.mock("@/lib/session", () => ({ requireSession: async () => ({ user: { role: "admin" } }) }));
+vi.mock("@/lib/authorization", () => ({ requirePermission: async () => ({ user: { role: "admin" } }), hasPermission: async () => true }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT ${url}`);

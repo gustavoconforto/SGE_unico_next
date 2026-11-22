@@ -9,7 +9,7 @@ import { SHEET_CHANGED, shownName, takenCell } from "../score";
 import { saveGradeSheet } from "./actions";
 import { cellName, loadSheet } from "./sheet";
 
-vi.mock("@/lib/session", () => ({ requireSession: async () => ({ user: { role: "admin" } }) }));
+vi.mock("@/lib/authorization", () => ({ requirePermission: async () => ({ user: { role: "admin" } }), hasPermission: async () => true }));
 vi.mock("next/cache", () => ({ refresh: () => {} }));
 // Runs once right after the action loads the sheet: another person saving in between
 let afterLoad: (() => Promise<unknown>) | null = null;

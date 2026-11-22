@@ -6,13 +6,13 @@ import { db } from "@/db";
 import { pathwaysPathwaygrade as pathwayGrade } from "@/db/schema/app";
 import { UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import { type FormErrors, type FormState, formValues } from "@/lib/form";
+import { requirePermission } from "@/lib/authorization";
 import { SHEET_TAKEN, editedCell, parseScore } from "../../grades/score";
 import { loadPathwaySheet } from "./sheet";
-import { requireSession } from "@/lib/session";
 
 /** Saves the whole sheet: blank cells delete the grade; any invalid cell saves nothing. */
 export async function savePathwaySheet(sel: { query: string; offeringId: number; bimester: number }, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSession();
+  await requirePermission("pathways", "edit");
   const sheet = await loadPathwaySheet(sel.offeringId, sel.bimester);
   if (!sheet) redirect(`/pathways/grades?${sel.query}`);
   const values = formValues(formData);

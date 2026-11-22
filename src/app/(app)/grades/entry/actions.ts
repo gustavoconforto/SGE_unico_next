@@ -9,9 +9,9 @@ import { UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import type { FormErrors, FormState } from "@/lib/form";
 import { allLocks, gradeEditError } from "@/lib/grade-lock";
 import { formValues } from "@/lib/form";
+import { hasPermission, requirePermission } from "@/lib/authorization";
 import { SHEET_CHANGED, editedCell, parseScore, takenCell } from "../score";
 import { cellName, loadSheet } from "./sheet";
-import { requireSession } from "@/lib/session";
 
 /** `saved`: when the last save went through, so the sheet can drop its edits and say so; `count`: the grades it wrote or removed. */
 export type SheetState = FormState & { saved?: number; count?: number };
@@ -21,8 +21,8 @@ export type SheetState = FormState & { saved?: number; count?: number };
  * place (no redirect) so a conflict can keep what the user typed next to the grades saved meanwhile.
  */
 export async function saveGradeSheet(selection: { query: string; classId: number; subjectId: number; period: number }, _prev: SheetState, formData: FormData): Promise<SheetState> {
-  await requireSession();
-  const [sheet, staff, locks] = await Promise.all([loadSheet(selection.classId, selection.subjectId, selection.period), true, allLocks()]);
+  await requirePermission("grades", "edit");
+  const [sheet, staff, locks] = await Promise.all([loadSheet(selection.classId, selection.subjectId, selection.period), hasPermission("grades", "manage"), allLocks()]);
   if (!sheet) redirect(`/grades/entry?${selection.query}`);
   const values = formValues(formData);
   const errors: FormErrors = {};

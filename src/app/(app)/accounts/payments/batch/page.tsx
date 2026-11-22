@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { accountsAccount as account, accountsInstallment as installment } from "@/db/schema/app";
 import { PENDING_STATUSES, money } from "@/lib/finance";
 import { outstandingSql } from "@/lib/finance-db";
+import { hasPermission } from "@/lib/authorization";
 import { param } from "@/lib/list";
 import { BatchPaymentForm } from "../batch-payment-form";
 
@@ -16,7 +17,7 @@ export default async function BatchPaymentPage({ searchParams }: PageProps<"/acc
   const ids = [sp.installment ?? []].flat().map(Number).filter(Number.isSafeInteger);
   const enrollment = Number(param(sp, "enrollment")) || null;
   // Without the book (payments.view) only enrollment accounts, like saveBatchPayment
-  const book = true;
+  const book = await hasPermission("payments", "view");
   const rows = ids.length
     ? await db
         .select({ id: installment.id, number: installment.number, dueDate: installment.dueDate, balance: outstandingSql, accountId: account.id, description: account.description, enrollmentId: account.enrollmentId })

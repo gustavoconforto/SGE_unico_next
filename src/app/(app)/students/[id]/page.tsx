@@ -16,11 +16,11 @@ import {
   studentsGuardianassociation as link,
   studentsStudent as student,
 } from "@/db/schema/app";
+import { hasPermission, requirePermission } from "@/lib/authorization";
 import { formatDate, label, today } from "@/lib/finance";
 import { idParam } from "@/lib/list";
 import { studentPhotoUrl } from "@/lib/media";
 import { formatPhone } from "@/lib/person";
-import { requireSession } from "@/lib/session";
 import {
   BLOOD_TYPES,
   RELATIONSHIPS,
@@ -48,7 +48,7 @@ export default async function StudentPage({
   params,
 }: PageProps<"/students/[id]">) {
   const id = await idParam(params);
-  await requireSession();
+  await requirePermission("students", "view");
   const [[row], guardians, enrollments, canEdit, canEnroll] = await Promise.all(
     [
       db.select().from(student).where(eq(student.id, id)),
@@ -89,8 +89,8 @@ export default async function StudentPage({
         .leftJoin(klass, eq(enrollment.schoolClassId, klass.id))
         .where(eq(enrollment.studentId, id))
         .orderBy(desc(enrollment.enrolledAt), desc(enrollment.id)),
-      true,
-      true,
+      hasPermission("students", "edit"),
+      hasPermission("enrollments", "edit"),
     ],
   );
   if (!row) notFound();

@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { InstallmentActions } from "@/components/installment-table";
+import { hasPermission } from "@/lib/authorization";
 import { LinkButton } from "@/components/link-button";
 import { ACTIONS_CELL, PHONE_CARDS, PRIMARY_CELL } from "@/components/list-page";
 import { db } from "@/db";
@@ -59,7 +60,7 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
   await syncDocuments(db, id);
 
   const on = today();
-  const canPay = true;
+  const canPay = await hasPermission("payments", "edit");
   const [types, classes, discounts, documents, [contract], receivables, [payer], parents] = await Promise.all([
     enrollmentTypeOptions(),
     classOptions(),

@@ -7,14 +7,14 @@ import { db } from "@/db";
 import { incidentsBathroompermission as t } from "@/db/schema/app";
 import { deleteAndRedirect } from "@/lib/crud";
 import { REQUIRED, type FormState, parseForm, anotherUrl } from "@/lib/form";
+import { requirePermission } from "@/lib/authorization";
 import { enrollmentAllowed } from "@/app/(app)/enrollments/data";
 import { INVALID_ENROLLMENT, recordFields } from "@/app/(app)/incidents/records";
-import { requireSession } from "@/lib/session";
 
 const schema = z.object({ ...recordFields, classPeriod: z.coerce.number({ error: REQUIRED }).int("Informe um número inteiro.").min(1, "O horário deve ser maior que zero.").max(32767) });
 
 export async function saveRecord(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSession();
+  await requirePermission("incidents", "edit");
   const { data, values, state } = parseForm(schema, formData);
   if (!data) return state;
   const [current] = id ? await db.select({ enrollmentId: t.enrollmentId }).from(t).where(eq(t.id, id)) : [];
@@ -29,6 +29,6 @@ export async function saveRecord(id: number | null, _prev: FormState, formData: 
 }
 
 export async function deleteRecord(id: number) {
-  await requireSession();
+  await requirePermission("incidents", "edit");
   await deleteAndRedirect(() => db.delete(t).where(eq(t.id, id)), "/incidents/bathroom");
 }

@@ -8,12 +8,12 @@ import { releasesExitreason as reason } from "@/db/schema/app";
 import { deleteAndRedirect } from "@/lib/crud";
 import { UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import { type FormState, parseForm, requiredText } from "@/lib/form";
-import { requireSession } from "@/lib/session";
+import { requirePermission } from "@/lib/authorization";
 
 const schema = z.object({ reason: requiredText(100) });
 
 export async function saveReason(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSession();
+  await requirePermission("releases", "edit");
   const { data, values, state } = parseForm(schema, formData);
   if (!data) return state;
   try {
@@ -27,6 +27,6 @@ export async function saveReason(id: number | null, _prev: FormState, formData: 
 }
 
 export async function deleteReason(id: number) {
-  await requireSession();
+  await requirePermission("releases", "edit");
   await deleteAndRedirect(() => db.delete(reason).where(eq(reason.id, id)), "/releases/reasons", "reason_protected");
 }

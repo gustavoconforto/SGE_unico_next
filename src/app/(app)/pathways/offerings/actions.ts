@@ -8,7 +8,7 @@ import { pathwaysPathwayoffering as offering, pathwaysPathwayofferingTeachers as
 import { deleteAndRedirect } from "@/lib/crud";
 import { FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import { type FormState, INVALID_CHOICE, foreignKey, formIds, optionalText, parseForm } from "@/lib/form";
-import { requireSession } from "@/lib/session";
+import { requirePermission } from "@/lib/authorization";
 
 const schema = z.object({
   pathwayId: foreignKey,
@@ -30,7 +30,7 @@ const schema = z.object({
 });
 
 export async function saveOffering(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSession();
+  await requirePermission("pathways", "edit");
   const teacherIds = formIds(formData, "teachers");
   // PathwayOffering.clean(): Monday (1) to Saturday (6), sorted
   const weekdays = formIds(formData, "weekdays").sort((a, b) => a - b);
@@ -57,7 +57,7 @@ export async function saveOffering(id: number | null, _prev: FormState, formData
 }
 
 export async function deleteOffering(id: number) {
-  await requireSession();
+  await requirePermission("pathways", "edit");
   await deleteAndRedirect(
     () =>
       db.transaction(async (tx) => {

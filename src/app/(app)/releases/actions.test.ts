@@ -7,7 +7,7 @@ import { db } from "@/db";
 import { enrollmentsEnrollment as enrollment, enrollmentsEnrollmenttype as enrollmentType, releasesEarlyexit as exit, releasesExitreason as reason } from "@/db/schema/app";
 import { saveBatchExits } from "./actions";
 
-vi.mock("@/lib/session", () => ({ requireSession: async () => ({ user: { role: "admin" } }) }));
+vi.mock("@/lib/authorization", () => ({ requirePermission: async () => ({ user: { role: "admin" } }), hasPermission: async () => true }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT ${url}`);

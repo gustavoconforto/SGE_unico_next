@@ -8,12 +8,12 @@ import { departmentsDepartment as department, departmentsDepartmentTeachers as d
 import { deleteAndRedirect } from "@/lib/crud";
 import { FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import { type FormState, INVALID_CHOICE, formIds, parseForm, requiredText } from "@/lib/form";
-import { requireSession } from "@/lib/session";
+import { requirePermission } from "@/lib/authorization";
 
 const departmentSchema = z.object({ name: requiredText(50) });
 
 export async function saveDepartment(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSession();
+  await requirePermission("academicSetup", "edit");
   const teacherIds = formIds(formData, "teachers");
   const { data, values, state } = parseForm(departmentSchema, formData);
   values.teachers = teacherIds.join(",");
@@ -37,7 +37,7 @@ export async function saveDepartment(id: number | null, _prev: FormState, formDa
 }
 
 export async function deleteDepartment(id: number) {
-  await requireSession();
+  await requirePermission("academicSetup", "edit");
   // Teacher links go with it (Django clears M2M rows); subjects are PROTECT
   await deleteAndRedirect(
     () =>

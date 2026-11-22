@@ -7,7 +7,16 @@ import { db } from "@/db";
 import { accountsAccount as account, accountsAccounttype as accountType, accountsInstallment as installment, accountsPayment as payment } from "@/db/schema/app";
 import { deletePayment, saveBatchPayment, savePayment } from "./actions";
 
-vi.mock("@/lib/session", () => ({ requireSession: async () => ({ user: {} }) }));
+// `book`: holds payments.view; every other permission is granted
+const access = vi.hoisted(() => ({ book: true }));
+vi.mock("@/lib/authorization", () => ({
+  hasPermission: async (resource: string, action: string) => `${resource}.${action}` !== "payments.view" || access.book,
+  requirePermission: async (resource: string, action: string) => {
+    const code = `${resource}.${action}`;
+    if (code === "payments.view" && !access.book) throw new Error("REDIRECT /forbidden");
+    return { user: {} };
+  },
+}));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT ${url}`);
@@ -69,6 +78,20 @@ describe.skipIf(!local)("savePayment / deletePayment", () => {
     expect(await status()).toBe("A");
   });
 
+  it("without payments.view, only takes new payments of enrollment installments", async () => {
+    expect(await save(null, "10,00")).toMatch(/^REDIRECT/);
+    const [{ id }] = await db.select({ id: payment.id }).from(payment).where(eq(payment.installmentId, installmentId));
+    access.book = false;
+    try {
+      // This account has no enrollment: a typed-in installment id is refused, balance not revealed
+      expect(await save(null, "10,00")).toMatchObject({ errors: { installmentId: [expect.any(String)] } });
+      expect(await save(id, "20,00")).toBe("REDIRECT /forbidden");
+      await expect(deletePayment(id)).rejects.toThrow("REDIRECT /forbidden");
+    } finally {
+      access.book = true;
+    }
+    expect(await db.select({ amount: payment.amount }).from(payment).where(eq(payment.installmentId, installmentId))).toEqual([{ amount: "10.00" }]);
+  });
 });
 
 describe.skipIf(!local)("saveBatchPayment", () => {
