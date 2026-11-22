@@ -5,9 +5,8 @@ vi.mock("./auth", () => ({ auth: {} }));
 
 const { loginPlan } = await import("./employee-login");
 
-const input = (over: Partial<{ access: boolean; admin: boolean; username: string; password: string }> = {}) => ({
+const input = (over: Partial<{ access: boolean; username: string; password: string }> = {}) => ({
   access: true,
-  admin: false,
   username: "maria.silva",
   password: "segredo123",
   ...over,
@@ -35,9 +34,8 @@ describe("loginPlan", () => {
     expect(loginPlan(input({ username: "ab" }), false).errors?.username).toBeDefined();
     expect(loginPlan(input({ username: "joão" }), false).errors?.username).toBeDefined();
   });
-  it("keeps an admin from removing their own access or admin role", () => {
+  it("keeps an admin from removing their own access", () => {
     expect(loginPlan(input({ access: false }), true, true).errors?.access).toBeDefined();
-    expect(loginPlan(input({ admin: false }), true, true).errors?.admin).toBeDefined();
-    expect(loginPlan(input({ admin: true }), true, true)).toEqual({ plan: "update" });
+    expect(loginPlan(input(), true, true)).toEqual({ plan: "update" });
   });
 });

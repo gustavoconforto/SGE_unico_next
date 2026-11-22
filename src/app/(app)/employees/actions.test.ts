@@ -6,12 +6,14 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { db } from "@/db";
 import { employeesEmployee as employee, employeesEmployeeroletype as role } from "@/db/schema/app";
 import { session as sessionTable, user } from "@/db/schema/auth";
+import { auth } from "@/lib/auth";
 import { applyLoginPlan, employeeLogin } from "@/lib/employee-login";
-import { deleteEmployee, saveEmployee } from "./actions";
+import { deleteEmployee, setUserRoles } from "./actions";
 
-const caller = vi.hoisted(() => ({ user: { id: "", role: "user" } }));
-// A caller holding employees.edit: the login and role rules are under test
-vi.mock("@/lib/authorization", () => ({ requirePermission: async () => caller }));
+const caller = vi.hoisted(() => ({ user: { id: "", role: "admin" } }));
+// An admin caller: the login rules are under test
+vi.mock("@/lib/authorization", () => ({ requireAdmin: async () => caller }));
+vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT ${url}`);
@@ -25,7 +27,7 @@ describe.skipIf(!local)("employee logins", () => {
   let roleId: number;
   let employeeId: number;
   const username = `t${Date.now()}`;
-  const input = { access: true, admin: false, username, password: "senha-inicial" };
+  const input = { access: true, username, password: "senha-inicial" };
   const del = () => deleteEmployee(employeeId).catch((e: Error) => e.message);
 
   beforeAll(async () => {
@@ -51,46 +53,18 @@ describe.skipIf(!local)("employee logins", () => {
     expect(login).toMatchObject({ username, role: "user" });
     expect(await flag(login.id)).toBe(true);
 
-    // The employee changed the password and has a session; then an admin resets it
-    await db.update(user).set({ mustChangePassword: false }).where(eq(user.id, login.id));
+    // The employee changed the password and has a session; then an admin resets it (the roles picked on the list stay)
+    await db.update(user).set({ mustChangePassword: false, role: "admin,secretaria" }).where(eq(user.id, login.id));
     await db.insert(sessionTable).values({ id: `s-${username}`, token: `t-${username}`, userId: login.id, expiresAt: new Date(Date.now() + 3600_000), updatedAt: new Date() });
     await applyLoginPlan("update", { id: employeeId, name: "Test Login" }, { ...input, password: "senha-nova-123" }, login);
     expect(await flag(login.id)).toBe(true);
     expect(await db.select().from(sessionTable).where(eq(sessionTable.userId, login.id))).toEqual([]);
-  });
-
-  it("lets only an admin move someone who can sign in to another role", async () => {
-    const [{ id: otherRoleId }] = await db.insert(role).values({ role: "test-login-other" }).returning({ id: role.id });
-    const form = (r: number) => {
-      const f = new FormData();
-      const fields = { name: "Test Login", cpf: String(Date.now()).slice(-11).padStart(11, "0"), rg: `r${username}`, issuingAuthority: "SSP", roleId: String(r) };
-      // An admin's form carries the login fields: keep the access (a blank password keeps the current one)
-      if (caller.user.role === "admin") Object.assign(fields, { access: "on", username });
-      for (const [k, v] of Object.entries(fields)) f.set(k, v);
-      return f;
-    };
-    const save = (r: number) => saveEmployee(employeeId, {}, form(r)).catch((e: Error) => e.message);
-    try {
-      caller.user = { id: "someone-else", role: "user" };
-      expect(await save(otherRoleId)).toMatchObject({ errors: { roleId: [expect.stringContaining("Somente administradores")] } });
-      // Other fields still save when the role stays
-      expect(await save(roleId)).toBe("REDIRECT /employees?msg=updated");
-
-      caller.user = { id: "an-admin", role: "admin" };
-      expect(await save(otherRoleId)).toBe("REDIRECT /employees?msg=updated");
-      expect(await save(roleId)).toBe("REDIRECT /employees?msg=updated");
-    } finally {
-      caller.user = { id: "someone-else", role: "user" };
-      await db.update(employee).set({ roleId }).where(eq(employee.id, employeeId));
-      await db.delete(role).where(eq(role.id, otherRoleId));
-    }
+    expect((await employeeLogin(employeeId))!.role).toBe("admin,secretaria");
   });
 
   it("lets only another admin delete an employee who has a login", async () => {
     const login = (await employeeLogin(employeeId))!;
 
-    caller.user = { id: "someone-else", role: "user" };
-    expect(await del()).toBe("REDIRECT /employees?msg=employee_has_login");
     // An admin can't delete their own record
     caller.user = { id: login.id, role: "admin" };
     expect(await del()).toBe("REDIRECT /employees?msg=employee_has_login");
@@ -99,5 +73,33 @@ describe.skipIf(!local)("employee logins", () => {
     caller.user = { id: "another-admin", role: "admin" };
     expect(await del()).toBe("REDIRECT /employees?msg=deleted");
     expect(await employeeLogin(employeeId)).toBeUndefined();
+  });
+});
+
+describe("setUserRoles", () => {
+  const form = (...roles: string[]) => {
+    const f = new FormData();
+    for (const r of roles) f.append("role", r);
+    return f;
+  };
+  const run = (userId: string, f: FormData) => setUserRoles(userId, f).catch((e: Error) => e.message);
+
+  it("saves only known roles, and an admin can't drop their own admin role", async () => {
+    const setRole = vi.spyOn(auth.api, "setRole").mockResolvedValue({} as never);
+    caller.user = { id: "an-admin", role: "admin" };
+    try {
+      // A crafted form can't save a role that doesn't exist (nor an Object prototype key)
+      expect(await run("other", form("secretaria", "superuser", "toString"))).toBe("REDIRECT /employees?msg=updated");
+      expect(setRole).toHaveBeenLastCalledWith(expect.objectContaining({ body: { userId: "other", role: ["secretaria"] } }));
+      expect(await run("other", form())).toBe("REDIRECT /employees?msg=updated");
+      expect(setRole).toHaveBeenLastCalledWith(expect.objectContaining({ body: { userId: "other", role: "user" } }));
+
+      setRole.mockClear();
+      expect(await run("an-admin", form("secretaria"))).toBe("REDIRECT /employees?msg=own_admin");
+      expect(setRole).not.toHaveBeenCalled();
+    } finally {
+      setRole.mockRestore();
+      caller.user = { id: "", role: "admin" };
+    }
   });
 });

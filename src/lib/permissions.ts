@@ -4,6 +4,8 @@ import { createAccessControl } from "better-auth/plugins/access";
 import { defaultStatements } from "better-auth/plugins/admin/access";
 
 const VIEW_EDIT = ["view", "edit"] as const;
+const VIEW = ["view"] as const;
+const VIEW_EDIT_MANAGE = ["view", "edit", "manage"];
 
 /** Every resource and its actions: the Admin plugin's own (user, session) plus one per area of the system. */
 export const statement = {
@@ -12,7 +14,7 @@ export const statement = {
   enrollments: VIEW_EDIT,
   finance: VIEW_EDIT,
   payments: VIEW_EDIT,
-  grades: ["view", "edit", "manage"], // manage: lock bimesters, enter concept / extra / adjustment grades
+  grades: VIEW_EDIT_MANAGE, // manage: lock bimesters, enter concept / extra / adjustment grades
   lessons: VIEW_EDIT, // timetable, class diary, Q&A sessions
   pathways: VIEW_EDIT,
   incidents: VIEW_EDIT, // incidents, delays, bathroom permissions
@@ -20,11 +22,11 @@ export const statement = {
   enrollmentSetup: VIEW_EDIT,
   academicSetup: VIEW_EDIT,
   releases: VIEW_EDIT,
+  programs: VIEW_EDIT,
+  qAndA: VIEW_EDIT,
 } as const;
 
 export const ac = createAccessControl(statement);
-
-const view = ["view"] as const;
 
 export const roles = {
   admin: ac.newRole(statement),
@@ -34,19 +36,18 @@ export const roles = {
     enrollments: VIEW_EDIT,
     finance: VIEW_EDIT,
     payments: VIEW_EDIT,
-    grades: view,
-    lessons: view,
-    pathways: view,
+    grades: VIEW,
+    lessons: VIEW,
+    pathways: VIEW,
     incidents: VIEW_EDIT,
-    employees: VIEW_EDIT,
     enrollmentSetup: VIEW_EDIT,
     academicSetup: VIEW_EDIT,
     releases: VIEW_EDIT,
   }),
   coordenacao: ac.newRole({
-    students: view,
-    enrollments: view,
-    grades: ["view", "edit", "manage"],
+    students: VIEW,
+    enrollments: VIEW,
+    grades: VIEW_EDIT_MANAGE,
     lessons: VIEW_EDIT,
     pathways: VIEW_EDIT,
     incidents: VIEW_EDIT,
@@ -54,7 +55,7 @@ export const roles = {
     releases: VIEW_EDIT,
   }),
   professor: ac.newRole({
-    students: view,
+    students: VIEW,
     grades: VIEW_EDIT,
     lessons: VIEW_EDIT,
     pathways: VIEW_EDIT,
@@ -63,3 +64,19 @@ export const roles = {
 };
 
 export type RoleName = keyof typeof roles;
+
+/** The roles an admin picks on /employees ("user" is what a login holds when none is picked). */
+export const ROLE_LABELS = {
+  admin: "Administrador",
+  secretaria: "Secretaria",
+  coordenacao: "Coordenação",
+  professor: "Professor",
+} satisfies Partial<Record<RoleName, string>>;
+export type AssignableRole = keyof typeof ROLE_LABELS;
+
+/** The roles in a `user.role` string ("admin,secretaria"). */
+export const roleList = (role: string | null | undefined) =>
+  (role ?? "")
+    .split(",")
+    .map((r) => r.trim())
+    .filter(Boolean);

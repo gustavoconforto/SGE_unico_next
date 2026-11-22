@@ -15,6 +15,7 @@ const MESSAGES = {
   department_protected: { text: "Este departamento possui matérias e não pode ser excluído.", ok: false },
   supplier_protected: { text: "Este fornecedor possui contas e não pode ser excluído.", ok: false },
   category_protected: { text: "Esta categoria possui contas e não pode ser excluída.", ok: false },
+  own_admin: { text: "Você não pode remover o seu próprio perfil de administrador.", ok: false },
   employee_has_login: { text: "Este funcionário tem acesso ao sistema: só outro administrador pode excluí-lo.", ok: false },
   account_has_payments: { text: "Esta conta possui baixas registradas. Exclua as baixas antes.", ok: false },
   account_in_use: { text: "Esta conta possui parcelas em uso (ex.: boletos) e não pode ser excluída.", ok: false },
