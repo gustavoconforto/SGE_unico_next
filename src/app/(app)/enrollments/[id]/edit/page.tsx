@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { Badge, Button, Checkbox, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow } from "flowbite-react";
 import type { Metadata } from "next";
@@ -53,6 +54,7 @@ function PhoneLabel({ children }: { children: React.ReactNode }) {
 }
 
 export default async function EditEnrollmentPage({ params }: PageProps<"/enrollments/[id]/edit">) {
+  await requirePermission("enrollments", "edit");
   const id = await idParam(params);
   const row = await getEnrollment(id);
   if (!row) notFound();

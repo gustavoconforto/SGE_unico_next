@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -9,6 +10,7 @@ import { PathwayForm } from "../../pathway-form";
 export const metadata: Metadata = { title: "Editar itinerário" };
 
 export default async function EditPathwayPage({ params }: PageProps<"/pathways/[id]/edit">) {
+  await requirePermission("pathways", "edit");
   const id = await idParam(params);
   const [row] = await db.select().from(pathway).where(eq(pathway.id, id));
   if (!row) notFound();

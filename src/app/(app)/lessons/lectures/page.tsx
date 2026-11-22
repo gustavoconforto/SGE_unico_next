@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, asc, count, desc, eq, gte, lte } from "drizzle-orm";
 import type { Metadata } from "next";
 import { FilterDate, FilterSelect } from "@/components/list-controls";
@@ -17,6 +18,7 @@ export const metadata: Metadata = { title: "Diário de classe" };
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export default async function LectureListPage({ searchParams }: PageProps<"/lessons/lectures">) {
+  await requirePermission("lessons", "view");
   const sp = await searchParams;
   const n = (k: string) => Number(param(sp, k)) || null;
   const where = and(

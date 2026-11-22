@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, eq, inArray } from "drizzle-orm";
 import type { Metadata } from "next";
 import { db } from "@/db";
@@ -11,6 +12,7 @@ import { PaymentForm } from "../payment-form";
 export const metadata: Metadata = { title: "Nova baixa" };
 
 export default async function NewPaymentPage({ searchParams }: PageProps<"/accounts/payments/new">) {
+  await requirePermission("payments", "edit");
   const sp = await searchParams;
   const installmentId = Number(param(sp, "installment")) || null;
   // "Baixar" on an account or enrollment page: ?installment=<id> prefills it with its balance (only a pending one)

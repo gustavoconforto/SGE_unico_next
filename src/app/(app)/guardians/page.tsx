@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { asc, count } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ListPage, ListRow } from "@/components/list-page";
@@ -8,6 +9,7 @@ import { PAGE_SIZE, pageParam, param, searchWhere } from "@/lib/list";
 export const metadata: Metadata = { title: "Responsáveis" };
 
 export default async function GuardianListPage({ searchParams }: PageProps<"/guardians">) {
+  await requirePermission("students", "view");
   const sp = await searchParams;
   const where = searchWhere(param(sp, "q"), [guardian.name, guardian.cpf]);
   const page = pageParam(sp);

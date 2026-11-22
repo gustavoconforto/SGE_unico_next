@@ -13,7 +13,7 @@ import { requirePermission } from "@/lib/authorization";
 const programSchema = z.object({ name: requiredText(50) });
 
 export async function saveProgram(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("enrollmentSetup", "edit");
+  await requirePermission("programs", "edit");
   const { data, values, state } = parseForm(programSchema, formData);
   if (!data) return state;
 
@@ -28,6 +28,6 @@ export async function saveProgram(id: number | null, _prev: FormState, formData:
 }
 
 export async function deleteProgram(id: number) {
-  await requirePermission("enrollmentSetup", "edit");
+  await requirePermission("programs", "edit");
   await deleteAndRedirect(() => db.delete(programsProgram).where(eq(programsProgram.id, id)), "/programs");
 }

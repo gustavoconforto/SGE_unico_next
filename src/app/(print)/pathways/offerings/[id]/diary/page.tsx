@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { asc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -19,6 +20,7 @@ export const metadata: Metadata = { title: "Diário de itinerário" };
 const WEEKDAY = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 export default async function DiaryPage({ params, searchParams }: PageProps<"/pathways/offerings/[id]/diary">) {
+  await requirePermission("pathways", "view");
   const id = await idParam(params);
   const o = await getOffering(id);
   if (!o) notFound();

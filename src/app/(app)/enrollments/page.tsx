@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, count, desc, asc, eq } from "drizzle-orm";
 import { EnrollmentStatusBadge } from "@/components/enrollment-status-badge";
 import type { Metadata } from "next";
@@ -19,6 +20,7 @@ import { enrollmentTypeLabel, studentName, yearOf } from "./data";
 export const metadata: Metadata = { title: "Matrículas" };
 
 export default async function EnrollmentListPage({ searchParams }: PageProps<"/enrollments">) {
+  await requirePermission("enrollments", "view");
   const sp = await searchParams;
   const yearId = Number(param(sp, "school_year")) || null;
   const where = and(searchWhere(param(sp, "q"), [student.name, student.socialName, student.registration, klass.name, program.name]), yearId ? eq(enrollmentType.schoolYearId, yearId) : undefined);

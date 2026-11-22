@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { asc, count } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ListPage, ListRow } from "@/components/list-page";
@@ -11,6 +12,7 @@ import { deleteExamType } from "./actions";
 export const metadata: Metadata = { title: "Tipos de avaliação" };
 
 export default async function ExamTypeListPage({ searchParams }: PageProps<"/grades/exam-types">) {
+  await requirePermission("academicSetup", "view");
   const sp = await searchParams;
   const where = searchWhere(param(sp, "q"), [examType.name, examType.code]);
   const page = pageParam(sp);

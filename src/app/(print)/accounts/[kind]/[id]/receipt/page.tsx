@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, asc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -23,6 +24,7 @@ export const metadata: Metadata = { title: "Comprovante de pagamento" };
 const cell = "border border-gray-900 px-1.5 py-0.5";
 
 export default async function ReceiptPage({ params, searchParams }: PageProps<"/accounts/[kind]/[id]/receipt">) {
+  await requirePermission("finance", "view");
   const kind = await kindParam(params);
   const id = await idParam(params);
   const [row] = await db

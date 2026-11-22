@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import type { Metadata } from "next";
 import { today } from "@/lib/finance";
 import { param } from "@/lib/list";
@@ -10,6 +11,7 @@ import { QandAForm } from "../q-and-a-form";
 export const metadata: Metadata = { title: "Novo plantão" };
 
 export default async function NewQandAPage({ searchParams }: PageProps<"/q-and-a/new">) {
+  await requirePermission("qAndA", "edit");
   const [enrollments, subjects] = await Promise.all([activeEnrollmentOptions(null, (await currentSchoolYear())?.id ?? null), subjectOptions()]);
   // After "Registrar e começar outra": the shared fields come back, and a new key clears the rest
   const sp = await searchParams;

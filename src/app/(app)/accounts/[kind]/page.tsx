@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, asc, count, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { Badge } from "flowbite-react";
 import type { Metadata } from "next";
@@ -27,6 +28,7 @@ const STATUS_CHOICES = [
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export default async function AccountListPage({ params, searchParams }: PageProps<"/accounts/[kind]">) {
+  await requirePermission("finance", "view");
   const kind = await kindParam(params);
   const k = KINDS[kind];
   const sp = await searchParams;

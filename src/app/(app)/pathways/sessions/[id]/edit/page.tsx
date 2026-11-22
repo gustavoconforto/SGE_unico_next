@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -10,6 +11,7 @@ import { SessionForm } from "../../session-form";
 export const metadata: Metadata = { title: "Editar aula" };
 
 export default async function EditSessionPage({ params }: PageProps<"/pathways/sessions/[id]/edit">) {
+  await requirePermission("pathways", "edit");
   const id = await idParam(params);
   const [[row], offerings] = await Promise.all([db.select().from(session).where(eq(session.id, id)), offeringOptions()]);
   if (!row) notFound();

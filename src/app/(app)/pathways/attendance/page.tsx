@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, asc, eq, gte, inArray, lte, or, isNull, sql } from "drizzle-orm";
 import { Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow } from "flowbite-react";
 import type { Metadata } from "next";
@@ -27,6 +28,7 @@ import { BIMESTER_OPTIONS, UrlPicker } from "../picker";
 export const metadata: Metadata = { title: "Frequência do aluno" };
 
 export default async function StudentAttendancePage({ searchParams }: PageProps<"/pathways/attendance">) {
+  await requirePermission("pathways", "view");
   const sp = await searchParams;
   const enrollments = await activeEnrollmentOptions();
   const enrollmentId = enrollments.find(([id]) => id === Number(param(sp, "enrollment")))?.[0] ?? null;

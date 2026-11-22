@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { param } from "@/lib/list";
@@ -9,6 +10,7 @@ import { WorkloadTable } from "./table";
 export const metadata: Metadata = { title: "Carga horária do aluno" };
 
 export default async function StudentWorkloadPage({ searchParams }: PageProps<"/pathways/workload">) {
+  await requirePermission("pathways", "view");
   const sp = await searchParams;
   const enrollments = await activeEnrollmentOptions();
   const enrollmentId = enrollments.find(([id]) => id === Number(param(sp, "enrollment")))?.[0] ?? null;

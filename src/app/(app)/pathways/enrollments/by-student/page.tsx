@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { db } from "@/db";
@@ -10,6 +11,7 @@ import { StudentPathwaysForm, StudentPicker } from "./pathways-form";
 export const metadata: Metadata = { title: "Inscrever aluno" };
 
 export default async function StudentPathwaysPage({ searchParams }: PageProps<"/pathways/enrollments/by-student">) {
+  await requirePermission("pathways", "edit");
   const enrollments = await activeEnrollmentOptions();
   const id = Number(param(await searchParams, "enrollment")) || null;
   const active = id && enrollments.some(([x]) => x === id) ? id : null;

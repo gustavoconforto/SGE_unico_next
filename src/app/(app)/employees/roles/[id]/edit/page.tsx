@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -9,6 +10,7 @@ import { RoleForm } from "../../role-form";
 export const metadata: Metadata = { title: "Editar cargo" };
 
 export default async function EditRolePage({ params }: PageProps<"/employees/roles/[id]/edit">) {
+  await requirePermission("employees", "edit");
   const id = await idParam(params);
   const [role] = await db.select().from(employeesEmployeeroletype).where(eq(employeesEmployeeroletype.id, id));
   if (!role) notFound();

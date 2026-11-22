@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, asc, eq, inArray, isNotNull } from "drizzle-orm";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -13,6 +14,7 @@ export const metadata: Metadata = { title: "Baixa de várias parcelas" };
 
 /** ?installment=1&installment=2… from the enrollment page: the pending receivable installments of one account. */
 export default async function BatchPaymentPage({ searchParams }: PageProps<"/accounts/payments/batch">) {
+  await requirePermission("payments", "edit");
   const sp = await searchParams;
   const ids = [sp.installment ?? []].flat().map(Number).filter(Number.isSafeInteger);
   const enrollment = Number(param(sp, "enrollment")) || null;

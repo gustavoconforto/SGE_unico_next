@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -34,6 +35,7 @@ function missingChoices(selected: { year: number | null; klass: number | null; s
 }
 
 export default async function GradeEntryPage({ searchParams }: PageProps<"/grades/entry">) {
+  await requirePermission("grades", "edit");
   const sp = await searchParams;
   if (!Object.keys(sp).length) {
     const start = await startingQuery();

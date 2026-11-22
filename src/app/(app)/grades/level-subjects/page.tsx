@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, asc, count, eq, exists, ilike, inArray, or } from "drizzle-orm";
 import type { Metadata } from "next";
 import { FilterSelect } from "@/components/list-controls";
@@ -18,6 +19,7 @@ import { deleteLevelSubject } from "./actions";
 export const metadata: Metadata = { title: "Matérias por série" };
 
 export default async function LevelSubjectListPage({ searchParams }: PageProps<"/grades/level-subjects">) {
+  await requirePermission("academicSetup", "view");
   const sp = await searchParams;
   const q = param(sp, "q");
   const level = Number(param(sp, "grade_level"));

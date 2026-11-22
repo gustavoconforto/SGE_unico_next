@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, count, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ListPage, ListRow } from "@/components/list-page";
@@ -12,6 +13,7 @@ import { deleteRecord } from "./actions";
 export const metadata: Metadata = { title: "Saídas para banheiro" };
 
 export default async function RecordListPage({ searchParams }: PageProps<"/incidents/bathroom">) {
+  await requirePermission("incidents", "view");
   const sp = await searchParams;
   const where = and(searchWhere(param(sp, "q"), [student.name, student.socialName]));
   const page = pageParam(sp);

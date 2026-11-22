@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, eq } from "drizzle-orm";
 import { Alert } from "flowbite-react";
 import type { Metadata } from "next";
@@ -13,6 +14,7 @@ import { DaySheet } from "../day-sheet";
 export const metadata: Metadata = { title: "Lançamento do dia" };
 
 export default async function LectureDayPage({ searchParams }: PageProps<"/lessons/lectures/day">) {
+  await requirePermission("lessons", "edit");
   const [classes, sp] = await Promise.all([seriesClasses(), searchParams]);
   const c = classes.find((x) => x.id === Number(param(sp, "school_class"))) ?? null;
   const date = /^\d{4}-\d{2}-\d{2}$/.test(param(sp, "date")) ? param(sp, "date") : "";

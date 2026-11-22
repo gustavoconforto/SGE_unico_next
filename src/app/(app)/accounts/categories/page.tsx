@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, asc, count, eq, sql } from "drizzle-orm";
 import type { Metadata } from "next";
 import { FilterSelect } from "@/components/list-controls";
@@ -12,6 +13,7 @@ import { deleteCategory } from "./actions";
 export const metadata: Metadata = { title: "Categorias financeiras" };
 
 export default async function CategoryListPage({ searchParams }: PageProps<"/accounts/categories">) {
+  await requirePermission("finance", "view");
   const sp = await searchParams;
   const direction = param(sp, "direction");
   const where = and(searchWhere(param(sp, "q"), [accountType.name]), ["R", "P"].includes(direction) ? eq(accountType.direction, direction) : undefined);

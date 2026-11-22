@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -10,6 +11,7 @@ import { offeringFormOptions } from "../../options";
 export const metadata: Metadata = { title: "Editar turma de itinerário" };
 
 export default async function EditOfferingPage({ params }: PageProps<"/pathways/offerings/[id]/edit">) {
+  await requirePermission("pathways", "edit");
   const id = await idParam(params);
   const [[row], links, options] = await Promise.all([
     db.select().from(offering).where(eq(offering.id, id)),

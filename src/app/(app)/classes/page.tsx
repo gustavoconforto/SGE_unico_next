@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { asc, count, desc, eq, sql } from "drizzle-orm";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -12,6 +13,7 @@ import { yearLabel } from "./options";
 export const metadata: Metadata = { title: "Turmas" };
 
 export default async function ClassListPage({ searchParams }: PageProps<"/classes">) {
+  await requirePermission("academicSetup", "view");
   const sp = await searchParams;
   const where = searchWhere(param(sp, "q"), [klass.name, program.name, sql`${year.begins}::text`]);
   const page = pageParam(sp);

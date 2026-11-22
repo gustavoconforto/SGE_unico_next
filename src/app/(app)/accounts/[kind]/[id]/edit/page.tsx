@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, asc, eq } from "drizzle-orm";
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow } from "flowbite-react";
 import type { Metadata } from "next";
@@ -18,6 +19,7 @@ import { accountFormOptions } from "../../options";
 export const metadata: Metadata = { title: "Editar conta" };
 
 export default async function EditAccountPage({ params }: PageProps<"/accounts/[kind]/[id]/edit">) {
+  await requirePermission("finance", "edit");
   const kind = await kindParam(params);
   const id = await idParam(params);
   const [row] = await db

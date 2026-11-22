@@ -43,6 +43,7 @@ export const roles = {
     enrollmentSetup: VIEW_EDIT,
     academicSetup: VIEW_EDIT,
     releases: VIEW_EDIT,
+    programs: VIEW_EDIT,
   }),
   coordenacao: ac.newRole({
     students: VIEW,
@@ -53,6 +54,7 @@ export const roles = {
     incidents: VIEW_EDIT,
     academicSetup: VIEW_EDIT,
     releases: VIEW_EDIT,
+    qAndA: VIEW_EDIT,
   }),
   professor: ac.newRole({
     students: VIEW,
@@ -60,6 +62,7 @@ export const roles = {
     lessons: VIEW_EDIT,
     pathways: VIEW_EDIT,
     incidents: VIEW_EDIT,
+    qAndA: VIEW_EDIT,
   }),
 };
 

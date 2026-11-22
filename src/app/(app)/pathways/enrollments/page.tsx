@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, asc, count, eq, isNotNull, isNull } from "drizzle-orm";
 import type { Metadata } from "next";
 import { FilterSelect } from "@/components/list-controls";
@@ -21,6 +22,7 @@ import { deleteMember } from "./actions";
 export const metadata: Metadata = { title: "Inscrições em itinerários" };
 
 export default async function MemberListPage({ searchParams }: PageProps<"/pathways/enrollments">) {
+  await requirePermission("pathways", "view");
   const sp = await searchParams;
   const offeringId = Number(param(sp, "offering")) || null;
   const status = param(sp, "status");

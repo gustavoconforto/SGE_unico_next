@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, count, desc, eq, gte, lte } from "drizzle-orm";
 import type { Metadata } from "next";
 import { FilterDate, FilterSelect } from "@/components/list-controls";
@@ -15,6 +16,7 @@ export const metadata: Metadata = { title: "Liberações" };
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export default async function ExitListPage({ searchParams }: PageProps<"/releases">) {
+  await requirePermission("releases", "view");
   const sp = await searchParams;
   const reasonId = Number(param(sp, "reason"));
   const where = and(

@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { asc, count } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ListPage, ListRow } from "@/components/list-page";
@@ -9,6 +10,7 @@ import { deleteProgram } from "./actions";
 export const metadata: Metadata = { title: "Cursos oferecidos" };
 
 export default async function ProgramListPage({ searchParams }: PageProps<"/programs">) {
+  await requirePermission("programs", "view");
   const sp = await searchParams;
   const where = searchWhere(param(sp, "q"), [programsProgram.name]);
   const page = pageParam(sp);

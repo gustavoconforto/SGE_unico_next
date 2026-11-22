@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { asc, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { db } from "@/db";
@@ -9,6 +10,7 @@ import { InstallmentForm } from "../installment-form";
 export const metadata: Metadata = { title: "Nova parcela" };
 
 export default async function NewInstallmentPage({ searchParams }: PageProps<"/accounts/installments/new">) {
+  await requirePermission("finance", "edit");
   const rows = await db
     .select({ id: account.id, direction: account.direction, description: account.description, guardian: guardian.name, supplier: supplier.name })
     .from(account)

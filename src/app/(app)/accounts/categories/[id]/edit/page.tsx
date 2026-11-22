@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -10,6 +11,7 @@ import { CategoryForm } from "../../category-form";
 export const metadata: Metadata = { title: "Editar categoria" };
 
 export default async function EditCategoryPage({ params }: PageProps<"/accounts/categories/[id]/edit">) {
+  await requirePermission("finance", "edit");
   const id = await idParam(params);
   const [[row], inUse] = await Promise.all([db.select().from(accountType).where(eq(accountType.id, id)), accountsInCategory(id)]);
   if (!row) notFound();

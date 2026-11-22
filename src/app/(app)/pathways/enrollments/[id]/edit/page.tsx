@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -10,6 +11,7 @@ import { MemberForm } from "../../member-form";
 export const metadata: Metadata = { title: "Editar inscrição" };
 
 export default async function EditMemberPage({ params }: PageProps<"/pathways/enrollments/[id]/edit">) {
+  await requirePermission("pathways", "edit");
   const id = await idParam(params);
   const [row] = await db.select().from(member).where(eq(member.id, id));
   if (!row) notFound();

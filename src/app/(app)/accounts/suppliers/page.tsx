@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { asc, count } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ListPage, ListRow } from "@/components/list-page";
@@ -11,6 +12,7 @@ import { deleteSupplier } from "./actions";
 export const metadata: Metadata = { title: "Fornecedores" };
 
 export default async function SupplierListPage({ searchParams }: PageProps<"/accounts/suppliers">) {
+  await requirePermission("finance", "view");
   const sp = await searchParams;
   const where = searchWhere(param(sp, "q"), [supplier.name, supplier.document, supplier.phone, supplier.email, supplier.notes]);
   const page = pageParam(sp);

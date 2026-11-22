@@ -15,7 +15,7 @@ import { INVALID_ENROLLMENT } from "../incidents/records";
 const schema = z.object({ enrollmentId: foreignKey, subjectId: foreignKey, qAndADate: requiredDate });
 
 export async function saveQandA(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("lessons", "edit");
+  await requirePermission("qAndA", "edit");
   const { data, values, state } = parseForm(schema, formData);
   if (!data) return state;
   const [current] = id ? await db.select({ enrollmentId: qa.enrollmentId }).from(qa).where(eq(qa.id, id)) : [];
@@ -30,6 +30,6 @@ export async function saveQandA(id: number | null, _prev: FormState, formData: F
 }
 
 export async function deleteQandA(id: number) {
-  await requirePermission("lessons", "edit");
+  await requirePermission("qAndA", "edit");
   await deleteAndRedirect(() => db.delete(qa).where(eq(qa.id, id)), "/q-and-a");
 }

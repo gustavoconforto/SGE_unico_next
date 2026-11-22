@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { asc, count, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ListPage, ListRow } from "@/components/list-page";
@@ -9,6 +10,7 @@ import { deleteSubject } from "./actions";
 export const metadata: Metadata = { title: "Matérias" };
 
 export default async function SubjectListPage({ searchParams }: PageProps<"/grades/subjects">) {
+  await requirePermission("academicSetup", "view");
   const sp = await searchParams;
   const where = searchWhere(param(sp, "q"), [subject.name, department.name]);
   const page = pageParam(sp);

@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -9,6 +10,7 @@ import { ProgramForm } from "../../program-form";
 export const metadata: Metadata = { title: "Editar curso" };
 
 export default async function EditProgramPage({ params }: PageProps<"/programs/[id]/edit">) {
+  await requirePermission("programs", "edit");
   const id = await idParam(params);
   const [program] = await db.select().from(programsProgram).where(eq(programsProgram.id, id));
   if (!program) notFound();
