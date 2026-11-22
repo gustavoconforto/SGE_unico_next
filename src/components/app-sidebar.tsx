@@ -93,7 +93,6 @@ export const NAV: NavGroup[] = [
     items: [
       { href: "/employees", label: "Funcionários", icon: "badge" },
       { href: "/employees/roles", label: "Cargos", icon: "work" },
-      { href: "/groups", label: "Grupos e permissões", icon: "admin_panel_settings" },
     ],
   },
   {

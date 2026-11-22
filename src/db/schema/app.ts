@@ -1107,8 +1107,7 @@ export const pathwaysPathway = pgTable("pathways_pathway", {
 	check("pathway_workload_hours_only_when_fixed", sql`((workload_hours > (0)::numeric) AND ((workload_type)::text = 'F'::text)) OR ((NOT ((workload_type)::text = 'F'::text)) AND (workload_hours = (0)::numeric))`),
 ]);
 
-// Not in Django (its auth groups held users and were never checked): a group gives its permission codes
-// (src/lib/permissions.ts) to every employee whose role is in the group (src/lib/access.ts).
+// Unused since roles moved to Better Auth (src/lib/permissions.ts); drop in a migration once production roles are set.
 export const accessGroup = pgTable("access_group", {
 	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
 	name: varchar({ length: 150 }).notNull(),

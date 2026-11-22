@@ -11,7 +11,7 @@ Implement role-based access control for a **single school** using Next.js App Ro
 - A user can have multiple roles; permissions are accumulated from their assigned roles.
 - An administrator can assign or remove groups using Better Auth's role-management API.
 - Permission definitions are fixed in TypeScript. The Admin plugin does **not** provide native per-user permission overrides or a ready-made admin dashboard.
-- To edit the permissions *inside* groups at runtime, evaluate the Organization plugin's dynamic access control instead.
+- To edit the permissions _inside_ groups at runtime, evaluate the Organization plugin's dynamic access control instead.
 - Backend authorization must also be enforced in Django Ninja if its API is directly accessible.
 
 ## File structure
@@ -39,42 +39,42 @@ src/
 
 ## Permission matrix
 
-| Resource/action | Secretaria | Coordenação | Professor |
-|---|---|---|---|
-| `alunos.read` | Yes | Yes | Yes |
-| `alunos.create` | Yes | No | No |
-| `alunos.update` | Yes | Yes | No |
-| `notas.create` | No | No | Yes |
-| `notas.update` | No | Yes | Yes |
-| `matriculas.create` | Yes | No | No |
-| `financeiro.read` | Yes | No | No |
-| `relatorios.export` | No | Yes | No |
+| Resource/action     | Secretaria | Coordenação | Professor |
+| ------------------- | ---------- | ----------- | --------- |
+| `alunos.read`       | Yes        | Yes         | Yes       |
+| `alunos.create`     | Yes        | No          | No        |
+| `alunos.update`     | Yes        | Yes         | No        |
+| `notas.create`      | No         | No          | Yes       |
+| `notas.update`      | No         | Yes         | Yes       |
+| `matriculas.create` | Yes        | No          | No        |
+| `financeiro.read`   | Yes        | No          | No        |
+| `relatorios.export` | No         | Yes         | No        |
 
 The `admin` role receives the necessary system-management permissions and all school resource permissions. The base `user` role has no school-resource permissions until a department group is assigned.
 
 ## Phase 1 — Authentication foundation
 
-- [ ] Install Better Auth and configure its database adapter.
-- [ ] Configure authentication secrets and environment variables.
-- [ ] Enable email/password or the school's preferred sign-in mechanism.
-- [ ] Enable the Better Auth Admin plugin.
-- [ ] Configure `src/app/api/auth/[...all]/route.ts` using `toNextJsHandler(auth)`.
-- [ ] Create `src/lib/auth-client.ts` with `adminClient`.
-- [ ] Run the required database migrations.
-- [ ] Verify login, logout, session retrieval and unauthorized redirects.
+- [x] Install Better Auth and configure its database adapter.
+- [x] Configure authentication secrets and environment variables.
+- [x] Enable email/password or the school's preferred sign-in mechanism.
+- [x] Enable the Better Auth Admin plugin.
+- [x] Configure `src/app/api/auth/[...all]/route.ts` using `toNextJsHandler(auth)`.
+- [x] Create `src/lib/auth-client.ts` with `adminClient`.
+- [x] Run the required database migrations.
+- [x] Verify login, logout, session retrieval and unauthorized redirects.
 
 **Acceptance:** Users can sign in and the server can retrieve a validated session.
 
 ## Phase 2 — Define fixed roles and permissions
 
-- [ ] Create `src/lib/permissions.ts`.
-- [ ] Import `createAccessControl` and the Admin plugin's default statements.
-- [ ] Define resources: `alunos`, `notas`, `matriculas`, `financeiro`, `relatorios`.
-- [ ] Define allowed actions per resource, such as `create`, `read`, `update`, `delete`, `export`.
-- [ ] Create `admin`, `user`, `secretaria`, `coordenacao`, `professor` roles using `ac.newRole()`.
-- [ ] Preserve Better Auth's built-in admin/user/session permissions where appropriate.
-- [ ] Configure the Admin plugin with `ac`, `roles`, `defaultRole: "user"`, and `adminRoles: ["admin"]`.
-- [ ] Verify multiple-role assignment and the resulting combined permissions.
+- [x] Create `src/lib/permissions.ts`.
+- [x] Import `createAccessControl` and the Admin plugin's default statements.
+- [x] Define resources: `alunos`, `notas`, `matriculas`, `financeiro`, `relatorios`.
+- [x] Define allowed actions per resource, such as `create`, `read`, `update`, `delete`, `export`.
+- [x] Create `admin`, `user`, `secretaria`, `coordenacao`, `professor` roles using `ac.newRole()`.
+- [x] Preserve Better Auth's built-in admin/user/session permissions where appropriate.
+- [x] Configure the Admin plugin with `ac`, `roles`, `defaultRole: "user"`, and `adminRoles: ["admin"]`.
+- [x] Verify multiple-role assignment and the resulting combined permissions.
 
 **Acceptance:** A user with `user,secretaria,professor` receives the appropriate permissions from both department groups, without receiving global admin access.
 
@@ -131,13 +131,13 @@ Create `src/app/(protected)/admin/usuarios/`:
 Example desired assignment:
 
 ```ts
-["user", "secretaria", "professor"]
+["user", "secretaria", "professor"];
 ```
 
 After removing the professor group:
 
 ```ts
-["user", "secretaria"]
+["user", "secretaria"];
 ```
 
 **Acceptance:** An administrator can add/remove departmental groups and the permission changes are enforced on subsequent server requests.
