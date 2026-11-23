@@ -57,12 +57,7 @@ export const roles = {
     qAndA: VIEW_EDIT,
   }),
   professor: ac.newRole({
-    students: VIEW,
     grades: VIEW_EDIT,
-    lessons: VIEW_EDIT,
-    pathways: VIEW_EDIT,
-    incidents: VIEW_EDIT,
-    qAndA: VIEW_EDIT,
   }),
 };
 
