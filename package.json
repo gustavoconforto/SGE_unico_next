@@ -16,6 +16,7 @@
     "db:migrate": "tsx scripts/migrate.mts",
     "predb:reset": "tsx scripts/start-db.mts",
     "db:reset": "tsx scripts/reset-db.mts",
+    "db:wipe": "tsx scripts/wipe-db.mts",
     "create-admin": "tsx scripts/create-admin.mts"
   },
   "dependencies": {
