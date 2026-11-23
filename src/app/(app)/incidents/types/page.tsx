@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { asc, count } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ListPage, ListRow } from "@/components/list-page";
@@ -9,6 +10,7 @@ import { deleteIncidentType } from "./actions";
 export const metadata: Metadata = { title: "Tipos de ocorrência" };
 
 export default async function IncidentTypeListPage({ searchParams }: PageProps<"/incidents/types">) {
+  await requirePermission("academicSetup", "view");
   const sp = await searchParams;
   const where = searchWhere(param(sp, "q"), [incidentType.type]);
   const page = pageParam(sp);

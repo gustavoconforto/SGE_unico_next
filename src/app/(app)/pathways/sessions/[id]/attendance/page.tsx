@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { asc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -12,6 +13,7 @@ import { AttendanceForm } from "./attendance-form";
 export const metadata: Metadata = { title: "Chamada" };
 
 export default async function AttendancePage({ params }: PageProps<"/pathways/sessions/[id]/attendance">) {
+  await requirePermission("pathways", "edit");
   const id = await idParam(params);
   const [s] = await db.select().from(session).where(eq(session.id, id));
   if (!s) notFound();

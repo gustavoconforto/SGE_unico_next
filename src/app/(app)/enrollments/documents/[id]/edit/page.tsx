@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -9,6 +10,7 @@ import { DocumentTypeForm } from "../../document-form";
 export const metadata: Metadata = { title: "Editar documento" };
 
 export default async function EditDocumentTypePage({ params }: PageProps<"/enrollments/documents/[id]/edit">) {
+  await requirePermission("enrollmentSetup", "edit");
   const id = await idParam(params);
   const [row] = await db.select().from(documentType).where(eq(documentType.id, id));
   if (!row) notFound();

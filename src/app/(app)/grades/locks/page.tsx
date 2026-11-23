@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { asc } from "drizzle-orm";
 import { Button, Checkbox, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow } from "flowbite-react";
 import type { Metadata } from "next";
@@ -10,6 +11,7 @@ import { saveGradeLocks } from "./actions";
 export const metadata: Metadata = { title: "Bloqueio de notas" };
 
 export default async function GradeLocksPage() {
+  await requirePermission("grades", "manage");
   const [subjects, locks] = await Promise.all([db.select({ id: subject.id, name: subject.name }).from(subject).orderBy(asc(subject.name)), allLocks()]);
   return (
     <form action={saveGradeLocks} className="flex flex-col gap-4">

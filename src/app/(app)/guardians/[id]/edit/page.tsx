@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -9,6 +10,7 @@ import { GuardianForm } from "../../guardian-form";
 export const metadata: Metadata = { title: "Editar responsável" };
 
 export default async function EditGuardianPage({ params }: PageProps<"/guardians/[id]/edit">) {
+  await requirePermission("students", "edit");
   const id = await idParam(params);
   const [row] = await db.select().from(studentsGuardian).where(eq(studentsGuardian.id, id));
   if (!row) notFound();

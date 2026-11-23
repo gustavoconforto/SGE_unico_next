@@ -6,7 +6,7 @@ import { db } from "@/db";
 import { gradesExamtype as examType, gradesGrade as grade } from "@/db/schema/app";
 import { saveExamType } from "./actions";
 
-vi.mock("@/lib/session", () => ({ requireSession: async () => ({ user: { role: "admin" } }) }));
+vi.mock("@/lib/authorization", () => ({ requirePermission: async () => ({ user: { role: "admin" } }), hasPermission: async () => true }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT ${url}`);

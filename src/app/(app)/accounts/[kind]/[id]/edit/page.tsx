@@ -1,10 +1,10 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, asc, eq } from "drizzle-orm";
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow } from "flowbite-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { InstallmentActions } from "@/components/installment-table";
-import { hasPermission } from "@/lib/access";
-import { requireSession } from "@/lib/session";
+import { hasPermission } from "@/lib/authorization";
 import { LinkButton } from "@/components/link-button";
 import { db } from "@/db";
 import { accountsAccount as account, accountsInstallment as installment } from "@/db/schema/app";
@@ -19,6 +19,7 @@ import { accountFormOptions } from "../../options";
 export const metadata: Metadata = { title: "Editar conta" };
 
 export default async function EditAccountPage({ params }: PageProps<"/accounts/[kind]/[id]/edit">) {
+  await requirePermission("finance", "edit");
   const kind = await kindParam(params);
   const id = await idParam(params);
   const [row] = await db
@@ -35,7 +36,7 @@ export default async function EditAccountPage({ params }: PageProps<"/accounts/[
       .where(eq(installment.accountId, id))
       .orderBy(asc(installment.dueDate), asc(installment.number)),
     row.enrollmentId ? getEnrollment(row.enrollmentId) : null,
-    requireSession().then((s) => hasPermission(s.user, "payments.edit")),
+    hasPermission("payments", "edit"),
   ]);
 
   return (

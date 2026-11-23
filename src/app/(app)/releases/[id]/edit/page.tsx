@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -11,6 +12,7 @@ import { ExitForm } from "../../record-form";
 export const metadata: Metadata = { title: "Editar liberação" };
 
 export default async function EditExitPage({ params }: PageProps<"/releases/[id]/edit">) {
+  await requirePermission("releases", "edit");
   const id = await idParam(params);
   const [row] = await db.select().from(t).where(eq(t.id, id));
   if (!row) notFound();

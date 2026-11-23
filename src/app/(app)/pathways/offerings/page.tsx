@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, asc, count, desc, eq, exists, ilike, inArray, or, sql } from "drizzle-orm";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -23,6 +24,7 @@ export const metadata: Metadata = { title: "Turmas de itinerário" };
 const link = "text-sm text-primary-600 hover:underline dark:text-primary-400";
 
 export default async function OfferingListPage({ searchParams }: PageProps<"/pathways/offerings">) {
+  await requirePermission("pathways", "view");
   const sp = await searchParams;
   const q = param(sp, "q");
   const p = likePattern(q);

@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -9,6 +10,7 @@ import { ReasonForm } from "../../reason-form";
 export const metadata: Metadata = { title: "Editar motivo" };
 
 export default async function EditReasonPage({ params }: PageProps<"/releases/reasons/[id]/edit">) {
+  await requirePermission("releases", "edit");
   const id = await idParam(params);
   const [row] = await db.select().from(reason).where(eq(reason.id, id));
   if (!row) notFound();

@@ -1,6 +1,7 @@
 "use server";
 
 import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
@@ -11,38 +12,34 @@ import {
   pathwaysPathwayofferingTeachers,
 } from "@/db/schema/app";
 import { deleteAndRedirect } from "@/lib/crud";
-import { applyLoginPlan, employeeLogin, type LoginInput, loginPlan, usernameTaken } from "@/lib/employee-login";
+import { applyLoginPlan, employeeLogin, loginPlan, usernameTaken } from "@/lib/employee-login";
 import { checkbox, type FormState, foreignKey, parseForm } from "@/lib/form";
 import { personFields, personUniqueError } from "@/lib/person";
-import { requirePermission } from "@/lib/access";
+import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/authorization";
+import { type AssignableRole, ROLE_LABELS } from "@/lib/permissions";
 
 const employeeSchema = z.object({ ...personFields, roleId: foreignKey });
 const loginSchema = z.object({
   access: checkbox,
-  admin: checkbox,
   username: z.string().trim().toLowerCase().default(""),
   password: z.string().default(""),
 });
 
+// Admins only, not requirePermission("employees", ...): this form creates logins and resets passwords, so
+// anyone else holding it could take over an admin's account
 export async function saveEmployee(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  const session = await requirePermission("employees.edit");
+  const session = await requireAdmin();
   const { data, values, state } = parseForm(employeeSchema, formData);
-  const login: LoginInput | null = session.user.role === "admin" ? loginSchema.parse(values) : null;
+  const login = loginSchema.parse(values);
   delete values.password; // never echo a typed password back to the browser
 
-  // Only admins grant dashboard access; anyone else's form has no login fields and leaves the login alone
-  const current = login && id !== null ? await employeeLogin(id) : undefined;
-  const { plan, errors: loginErrors = {} } = login ? loginPlan(login, !!current, current?.id === session.user.id) : { plan: "none" as const };
-  if (login && (plan === "create" || plan === "update") && (await usernameTaken(login.username, current?.id)))
+  const current = id !== null ? await employeeLogin(id) : undefined;
+  const { plan, errors: loginErrors = {} } = loginPlan(login, !!current, current?.id === session.user.id);
+  if ((plan === "create" || plan === "update") && (await usernameTaken(login.username, current?.id)))
     loginErrors.username = ["Este usuário já está em uso."];
 
   const errors = { ...state?.errors, ...loginErrors };
-  // A role grants its groups' permissions: moving someone who can sign in to another role is for admins only,
-  // or anyone editing employees could give themselves (or a colleague) more access
-  if (data && id !== null && session.user.role !== "admin") {
-    const [saved] = await db.select({ roleId: employeesEmployee.roleId }).from(employeesEmployee).where(eq(employeesEmployee.id, id));
-    if (saved && saved.roleId !== data.roleId && (await employeeLogin(id))) errors.roleId = ["Somente administradores podem mudar o cargo de quem tem acesso ao sistema."];
-  }
   if (!data || Object.keys(errors).length) return { errors, values };
 
   let employeeId = id;
@@ -60,7 +57,7 @@ export async function saveEmployee(id: number | null, _prev: FormState, formData
     throw error;
   }
 
-  if (login && plan !== "none") {
+  if (plan !== "none") {
     try {
       await applyLoginPlan(plan, { id: employeeId!, name: data.name }, login, current);
     } catch (error) {
@@ -73,10 +70,9 @@ export async function saveEmployee(id: number | null, _prev: FormState, formData
 }
 
 export async function deleteEmployee(id: number) {
-  const session = await requirePermission("employees.edit");
-  // Deleting the employee deletes their login (FK cascade): only an admin may, and never their own
-  const login = await employeeLogin(id);
-  if (login && (session.user.role !== "admin" || login.id === session.user.id)) redirect("/employees?msg=employee_has_login");
+  const session = await requireAdmin();
+  // Deleting the employee deletes their login (FK cascade): an admin can't delete their own
+  if ((await employeeLogin(id))?.id === session.user.id) redirect("/employees?msg=employee_has_login");
   // Django drops the employee's M2M teacher links with it; any other reference (PROTECT) still blocks the delete
   await deleteAndRedirect(
     () =>
@@ -88,4 +84,13 @@ export async function deleteEmployee(id: number) {
       }),
     "/employees",
   );
+}
+
+/** The roles picked on the list's multiselect replace the login's roles; none picked leaves it plain "user". */
+export async function setUserRoles(userId: string, formData: FormData) {
+  const session = await requireAdmin();
+  const picked = formData.getAll("role").filter((r): r is AssignableRole => typeof r === "string" && Object.hasOwn(ROLE_LABELS, r));
+  if (userId === session.user.id && !picked.includes("admin")) redirect("/employees?msg=own_admin");
+  await auth.api.setRole({ body: { userId, role: picked.length ? picked : "user" }, headers: await headers() });
+  redirect("/employees?msg=updated");
 }

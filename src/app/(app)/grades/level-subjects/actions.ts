@@ -12,7 +12,7 @@ import {
 } from "@/db/schema/app";
 import { deleteAndRedirect } from "@/lib/crud";
 import { INVALID_CHOICE, REQUIRED, type FormState, decimalField, foreignKey, formIds, parseForm } from "@/lib/form";
-import { requirePermission } from "@/lib/access";
+import { requirePermission } from "@/lib/authorization";
 
 const levelSubjectSchema = z.object({
   gradeLevel: z.coerce.number({ error: REQUIRED }).int().min(1, REQUIRED).max(3, REQUIRED),
@@ -21,7 +21,7 @@ const levelSubjectSchema = z.object({
 });
 
 export async function saveLevelSubject(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("academicSetup.edit");
+  await requirePermission("academicSetup", "edit");
   const teacherIds = formIds(formData, "teachers");
   const { data, values, state } = parseForm(levelSubjectSchema, formData);
   values.teachers = teacherIds.join(",");
@@ -50,7 +50,7 @@ export async function saveLevelSubject(id: number | null, _prev: FormState, form
 }
 
 export async function deleteLevelSubject(id: number) {
-  await requirePermission("academicSetup.edit");
+  await requirePermission("academicSetup", "edit");
   // The teacher links go with it (Django clears M2M rows); grades keep the subject, not this row
   await deleteAndRedirect(
     () =>

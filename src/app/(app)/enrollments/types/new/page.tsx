@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import type { Metadata } from "next";
 import { programOptions, yearOptions } from "../../../classes/options";
 import { EnrollmentTypeForm } from "../enrollment-type-form";
@@ -5,6 +6,7 @@ import { EnrollmentTypeForm } from "../enrollment-type-form";
 export const metadata: Metadata = { title: "Novo contrato" };
 
 export default async function NewEnrollmentTypePage() {
+  await requirePermission("enrollmentSetup", "edit");
   const [programs, years] = await Promise.all([programOptions(), yearOptions()]);
   return (
     <div className="flex flex-col gap-4">

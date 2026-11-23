@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -13,6 +14,7 @@ import { PrintToolbar } from "../../../../print-toolbar";
 export const metadata: Metadata = { title: "Carga horária" };
 
 export default async function WorkloadPrintPage({ params }: PageProps<"/pathways/workload/[id]/print">) {
+  await requirePermission("pathways", "view");
   const id = await idParam(params);
   const [[e], rows] = await Promise.all([
     db

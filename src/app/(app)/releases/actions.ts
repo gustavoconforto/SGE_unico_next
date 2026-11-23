@@ -8,7 +8,7 @@ import { enrollmentsEnrollment as enrollment, enrollmentsEnrollmenttype as enrol
 import { deleteAndRedirect } from "@/lib/crud";
 import { FOREIGN_KEY_VIOLATION, UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import { INVALID_CHOICE, type FormState, anotherUrl, foreignKey, formIds, formValues, parseForm, requiredDate } from "@/lib/form";
-import { requirePermission } from "@/lib/access";
+import { requirePermission } from "@/lib/authorization";
 import { enrollmentAllowed } from "@/app/(app)/enrollments/data";
 import { INVALID_ENROLLMENT } from "@/app/(app)/incidents/records";
 
@@ -16,7 +16,7 @@ const schema = z.object({ enrollmentId: foreignKey, exitDate: requiredDate, reas
 const DUPLICATE = "Este aluno já tem uma liberação com este motivo nesta data.";
 
 export async function saveExit(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("releases.edit");
+  await requirePermission("releases", "edit");
   const { data, values, state } = parseForm(schema, formData);
   if (!data) return state;
   const [current] = id ? await db.select({ enrollmentId: t.enrollmentId }).from(t).where(eq(t.id, id)) : [];
@@ -43,7 +43,7 @@ const batchSchema = z.object({ exitDate: requiredDate, schoolYearId: foreignKey,
 
 /** One exit per checked student; ones already recorded (same student, date and motive) are skipped. */
 export async function saveBatchExits(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("releases.edit");
+  await requirePermission("releases", "edit");
   // The three come from hidden fields set by the page, so a failure here is a stale or tampered form
   const { data } = parseForm(batchSchema, formData);
   if (!data) return { formError: "Escolha a data, o ano letivo e o motivo novamente." };
@@ -69,6 +69,6 @@ export async function saveBatchExits(_prev: FormState, formData: FormData): Prom
 }
 
 export async function deleteExit(id: number) {
-  await requirePermission("releases.edit");
+  await requirePermission("releases", "edit");
   await deleteAndRedirect(() => db.delete(t).where(eq(t.id, id)), "/releases");
 }

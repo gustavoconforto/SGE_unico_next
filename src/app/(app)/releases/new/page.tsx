@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import type { Metadata } from "next";
 import { today } from "@/lib/finance";
 import { param } from "@/lib/list";
@@ -9,6 +10,7 @@ import { ExitForm } from "../record-form";
 export const metadata: Metadata = { title: "Nova liberação" };
 
 export default async function NewExitPage({ searchParams }: PageProps<"/releases/new">) {
+  await requirePermission("releases", "edit");
   // After "Registrar e começar outra": the shared fields come back, and a new key clears the rest
   const sp = await searchParams;
   const saved = param(sp, "saved");

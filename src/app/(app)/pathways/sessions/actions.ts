@@ -7,14 +7,14 @@ import { db } from "@/db";
 import { pathwaysPathwayattendance as attendance, pathwaysPathwayenrollment as member, pathwaysPathwaysession as session } from "@/db/schema/app";
 import { UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import { type FormState, INVALID_CHOICE, foreignKey, optionalText, parseForm, requiredDate } from "@/lib/form";
-import { requirePermission } from "@/lib/access";
+import { requirePermission } from "@/lib/authorization";
 import { getOffering, membersBetween } from "../data";
 
 const schema = z.object({ offeringId: foreignKey, date: requiredDate, topic: optionalText(200) });
 
 /** "Nova aula" saves the lesson and opens its roll call; a lesson's offering can't change. */
 export async function saveSession(id: number | null, back: string, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("pathways.edit");
+  await requirePermission("pathways", "edit");
   const [current] = id ? await db.select().from(session).where(eq(session.id, id)) : [];
   if (current) formData.set("offeringId", String(current.offeringId));
   const { data, values, state } = parseForm(schema, formData);
@@ -41,7 +41,7 @@ export async function saveSession(id: number | null, back: string, _prev: FormSt
 
 /** The attendance is part of its lesson: deleting a lesson deletes its roll call. */
 export async function deleteSession(id: number) {
-  await requirePermission("pathways.edit");
+  await requirePermission("pathways", "edit");
   await db.transaction(async (tx) => {
     await tx.delete(attendance).where(eq(attendance.sessionId, id));
     await tx.delete(session).where(eq(session.id, id));
@@ -51,7 +51,7 @@ export async function deleteSession(id: number) {
 
 /** AttendanceSheetForm: one status per student in the pathway on the lesson's date. */
 export async function saveAttendance(sessionId: number, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("pathways.edit");
+  await requirePermission("pathways", "edit");
   const [s] = await db.select().from(session).where(eq(session.id, sessionId));
   if (!s) redirect("/pathways/sessions");
   const members = await db.select({ id: member.id }).from(member).where(membersBetween(s.offeringId, s.date, s.date));

@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, asc, count, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { Badge, TableCell, TableRow } from "flowbite-react";
 import type { Metadata } from "next";
@@ -27,6 +28,7 @@ const STATUS_CHOICES = [["pending", "Pendentes"], ["overdue", "Vencidas"], ...IN
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export default async function InstallmentListPage({ searchParams }: PageProps<"/accounts/installments">) {
+  await requirePermission("finance", "view");
   const sp = await searchParams;
   await connection(); // depends on today's date: never prerender it
   const on = today();

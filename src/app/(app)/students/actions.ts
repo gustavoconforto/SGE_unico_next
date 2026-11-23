@@ -10,7 +10,7 @@ import { today } from "@/lib/finance";
 import { type FormState, REQUIRED, anotherUrl, checkbox, optionalText, parseForm } from "@/lib/form";
 import { readPhoto, saveStudentPhoto } from "@/lib/media";
 import { personFields, personUniqueError, phoneDigits } from "@/lib/person";
-import { requirePermission } from "@/lib/access";
+import { requirePermission } from "@/lib/authorization";
 import { foldSql, stripAccents } from "@/lib/list";
 import { BLOOD_TYPES, type GuardianRow, guardianRowSchema, guardianRowsError, nextRegistration } from "@/lib/students";
 
@@ -63,7 +63,7 @@ async function saveGuardianLinks(tx: Parameters<Parameters<typeof db.transaction
 }
 
 export async function saveStudent(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("students.edit");
+  await requirePermission("students", "edit");
   const { data, values, state } = parseForm(studentSchema, formData);
   const guardians = parseGuardianRows(values.guardians);
   const guardianError = "error" in guardians ? guardians.error : guardianRowsError(guardians.rows, values.isSelfFinancial === "on");

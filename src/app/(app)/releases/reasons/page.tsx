@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { asc, count } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ListPage, ListRow } from "@/components/list-page";
@@ -9,6 +10,7 @@ import { deleteReason } from "./actions";
 export const metadata: Metadata = { title: "Motivos de liberação" };
 
 export default async function ReasonListPage({ searchParams }: PageProps<"/releases/reasons">) {
+  await requirePermission("releases", "view");
   const sp = await searchParams;
   const where = searchWhere(param(sp, "q"), [reason.reason]);
   const page = pageParam(sp);

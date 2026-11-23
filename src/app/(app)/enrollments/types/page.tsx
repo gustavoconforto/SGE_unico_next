@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { asc, count, desc, eq, sql } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ListPage, ListRow } from "@/components/list-page";
@@ -10,6 +11,7 @@ import { deleteEnrollmentType } from "./actions";
 export const metadata: Metadata = { title: "Contratos" };
 
 export default async function EnrollmentTypeListPage({ searchParams }: PageProps<"/enrollments/types">) {
+  await requirePermission("enrollmentSetup", "view");
   const sp = await searchParams;
   const where = searchWhere(param(sp, "q"), [program.name, enrollmentType.description, sql`${year.begins}::text`]);
   const page = pageParam(sp);

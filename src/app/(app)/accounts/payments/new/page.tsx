@@ -1,17 +1,18 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, eq, inArray } from "drizzle-orm";
 import type { Metadata } from "next";
 import { db } from "@/db";
 import { accountsAccount as account, accountsInstallment as installment } from "@/db/schema/app";
 import { PENDING_STATUSES, today } from "@/lib/finance";
-import { hasPermission } from "@/lib/access";
+import { hasPermission } from "@/lib/authorization";
 import { param } from "@/lib/list";
-import { requireSession } from "@/lib/session";
 import { installmentChoice } from "../data";
 import { PaymentForm } from "../payment-form";
 
 export const metadata: Metadata = { title: "Nova baixa" };
 
 export default async function NewPaymentPage({ searchParams }: PageProps<"/accounts/payments/new">) {
+  await requirePermission("payments", "edit");
   const sp = await searchParams;
   const installmentId = Number(param(sp, "installment")) || null;
   // "Baixar" on an account or enrollment page: ?installment=<id> prefills it with its balance (only a pending one)
@@ -23,7 +24,7 @@ export default async function NewPaymentPage({ searchParams }: PageProps<"/accou
         .where(and(eq(installment.id, installmentId), inArray(installment.status, PENDING_STATUSES)))
     : [];
   // Without the book (payments.view) only an enrollment's installment, which the desk sees on the enrollment anyway
-  const book = await hasPermission((await requireSession()).user, "payments.view");
+  const book = await hasPermission("payments", "view");
   const source = found && (book || found.enrollmentId) ? found : undefined;
   const direction = (source?.direction ?? (param(sp, "direction") === "P" ? "P" : "R")) as "R" | "P";
   const selected = source ? await installmentChoice(source.id) : null;

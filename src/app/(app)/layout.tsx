@@ -3,10 +3,7 @@ import { Suspense } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Flash } from "@/components/flash";
 import { FreshOnNavigate } from "@/components/fresh-on-navigate";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
-import { userAccess } from "@/lib/access";
-import { Authenticated } from "@/lib/session";
+import { Authenticated, requireSession } from "@/lib/session";
 
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
@@ -32,9 +29,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
   );
 }
 
-/** The menu, without the screens the signed-in user's groups don't allow. */
 async function Sidebar() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const access = session ? await userAccess(session.user) : { all: false, granted: new Set<string>() };
-  return <AppSidebar all={access.all} granted={[...access.granted]} />;
+  const { user } = await requireSession();
+  return <AppSidebar name={user.name} role={user.role ?? "user"} />;
 }

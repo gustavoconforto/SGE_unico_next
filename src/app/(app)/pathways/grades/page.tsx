@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { param } from "@/lib/list";
@@ -11,6 +12,7 @@ import { loadPathwaySheet } from "./sheet";
 export const metadata: Metadata = { title: "Notas de itinerário" };
 
 export default async function PathwayGradesPage({ searchParams }: PageProps<"/pathways/grades">) {
+  await requirePermission("pathways", "edit");
   const sp = await searchParams;
   const years = await yearOptions();
   const yearId = years.find(([id]) => id === Number(param(sp, "school_year")))?.[0] ?? null;

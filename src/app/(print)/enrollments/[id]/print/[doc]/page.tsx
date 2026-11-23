@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LinkButton } from "@/components/link-button";
@@ -38,6 +39,7 @@ function Missing({ id, studentId, message }: { id: number; studentId: number; me
 }
 
 export default async function EnrollmentPrintPage({ params }: PageProps<"/enrollments/[id]/print/[doc]">) {
+  await requirePermission("enrollments", "view");
   const { doc } = await params;
   if (!(doc in DOCUMENTS)) notFound();
   const id = await idParam(params);

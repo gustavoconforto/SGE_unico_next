@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -9,6 +10,7 @@ import { ExamTypeForm } from "../../exam-type-form";
 export const metadata: Metadata = { title: "Editar tipo de avaliação" };
 
 export default async function EditExamTypePage({ params }: PageProps<"/grades/exam-types/[id]/edit">) {
+  await requirePermission("academicSetup", "edit");
   const id = await idParam(params);
   const [row] = await db.select().from(examType).where(eq(examType.id, id));
   if (!row) notFound();

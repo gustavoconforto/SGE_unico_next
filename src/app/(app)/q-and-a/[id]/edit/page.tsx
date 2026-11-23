@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -12,6 +13,7 @@ import { QandAForm } from "../../q-and-a-form";
 export const metadata: Metadata = { title: "Editar plantão" };
 
 export default async function EditQandAPage({ params }: PageProps<"/q-and-a/[id]/edit">) {
+  await requirePermission("qAndA", "edit");
   const id = await idParam(params);
   const [[row], year, subjects] = await Promise.all([db.select().from(qa).where(eq(qa.id, id)), currentSchoolYear(), subjectOptions()]);
   if (!row) notFound();

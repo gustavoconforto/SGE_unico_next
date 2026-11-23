@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow } from "flowbite-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -9,6 +10,7 @@ import { loadReportCard, situation } from "../../report";
 export const metadata: Metadata = { title: "Boletim" };
 
 export default async function ReportCardPage({ params }: PageProps<"/grades/report-card/[id]">) {
+  await requirePermission("grades", "view");
   const card = await loadReportCard(await idParam(params));
   if (!card) notFound();
   const e = card.enrollment;

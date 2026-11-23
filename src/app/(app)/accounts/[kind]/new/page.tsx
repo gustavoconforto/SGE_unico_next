@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { db } from "@/db";
@@ -13,6 +14,7 @@ export async function generateMetadata({ params }: PageProps<"/accounts/[kind]/n
 }
 
 export default async function NewAccountPage({ params, searchParams }: PageProps<"/accounts/[kind]/new">) {
+  await requirePermission("finance", "edit");
   const kind = await kindParam(params);
   const optionsPromise = accountFormOptions(kind); // runs alongside the prefill lookups below
   // "Nova conta a receber" on the enrollment page: ?enrollment=<id> prefills the student and payer

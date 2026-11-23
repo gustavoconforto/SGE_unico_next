@@ -9,7 +9,7 @@ import { deleteAndRedirect } from "@/lib/crud";
 import { UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import { today } from "@/lib/finance";
 import { type FormState, foreignKey, optionalDate, parseForm, requiredDate } from "@/lib/form";
-import { requirePermission } from "@/lib/access";
+import { requirePermission } from "@/lib/authorization";
 import { enrollmentAllowed } from "../../enrollments/data";
 import { INVALID_ENROLLMENT } from "../../incidents/records";
 import { offeringOptions } from "../data";
@@ -18,7 +18,7 @@ import { membershipErrors } from "../membership";
 const schema = z.object({ offeringId: foreignKey, enrollmentId: foreignKey, joinedAt: requiredDate, leftAt: optionalDate });
 
 export async function saveMember(id: number | null, back: string, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("pathways.edit");
+  await requirePermission("pathways", "edit");
   const { data, values, state } = parseForm(schema, formData);
   if (!data) return state;
   const [current] = id ? await db.select().from(member).where(eq(member.id, id)) : [];
@@ -38,14 +38,14 @@ export async function saveMember(id: number | null, back: string, _prev: FormSta
 }
 
 export async function deleteMember(id: number) {
-  await requirePermission("pathways.edit");
+  await requirePermission("pathways", "edit");
   // Members with attendance or grades are kept (PROTECT): record the leaving date instead
   await deleteAndRedirect(() => db.delete(member).where(eq(member.id, id)), "/pathways/enrollments");
 }
 
 /** StudentPathwaysForm: tick the year's offerings; unticking sets the leaving date, ticking a left one reopens it. */
 export async function saveStudentPathways(enrollmentId: number, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("pathways.edit");
+  await requirePermission("pathways", "edit");
   if (!(await enrollmentAllowed(enrollmentId))) return { formError: "Selecione um aluno." };
   const { yearOfferings, existing } = await studentPathways(enrollmentId);
   const on = today();

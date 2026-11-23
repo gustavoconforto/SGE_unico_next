@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { asc, count } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ListPage, ListRow } from "@/components/list-page";
@@ -9,6 +10,7 @@ import { deleteDocumentType } from "./actions";
 export const metadata: Metadata = { title: "Documentos" };
 
 export default async function DocumentTypeListPage({ searchParams }: PageProps<"/enrollments/documents">) {
+  await requirePermission("enrollmentSetup", "view");
   const sp = await searchParams;
   const where = searchWhere(param(sp, "q"), [documentType.description]);
   const page = pageParam(sp);

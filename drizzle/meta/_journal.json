@@ -64,6 +64,13 @@
       "when": 1795096784679,
       "tag": "0008_releases",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795427288065,
+      "tag": "0009_drop_access_groups",
+      "breakpoints": true
     }
   ]
 }

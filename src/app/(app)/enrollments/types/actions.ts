@@ -7,7 +7,7 @@ import { db } from "@/db";
 import { enrollmentsEnrollmenttype as enrollmentType, enrollmentsSchoolyear as schoolYear } from "@/db/schema/app";
 import { deleteAndRedirect } from "@/lib/crud";
 import { type FormState, decimalField, foreignKey, parseForm } from "@/lib/form";
-import { requirePermission } from "@/lib/access";
+import { requirePermission } from "@/lib/authorization";
 
 const enrollmentTypeSchema = z.object({
   programId: foreignKey,
@@ -19,7 +19,7 @@ const enrollmentTypeSchema = z.object({
 });
 
 export async function saveEnrollmentType(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("enrollmentSetup.edit");
+  await requirePermission("enrollmentSetup", "edit");
   const { data, values, state } = parseForm(enrollmentTypeSchema, formData);
   if (!data) return state;
   if (id === null) {
@@ -34,6 +34,6 @@ export async function saveEnrollmentType(id: number | null, _prev: FormState, fo
 }
 
 export async function deleteEnrollmentType(id: number) {
-  await requirePermission("enrollmentSetup.edit");
+  await requirePermission("enrollmentSetup", "edit");
   await deleteAndRedirect(() => db.delete(enrollmentType).where(eq(enrollmentType.id, id)), "/enrollments/types");
 }

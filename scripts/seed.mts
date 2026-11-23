@@ -10,13 +10,13 @@ import { addDays } from "../src/lib/dates";
 import { LEVELS, accountInstallments, contractValues, initialStatus, label, money, today, toDb } from "../src/lib/finance";
 import { createEnrollmentAccount, refreshInstallmentStatus, syncDocuments } from "../src/lib/finance-db";
 import { lessonDays } from "../src/lib/pathways";
-import { PERMISSIONS } from "../src/lib/permissions";
+import type { RoleName } from "../src/lib/permissions";
 import { nextRegistration } from "../src/lib/students";
 
 export const SEED_PASSWORD = process.env.SEED_PASSWORD ?? "senha1234";
-const USERS = [
-  { username: "admin", name: "Administrador", role: "admin" },
-  { username: "secretaria", name: "Secretaria Escolar", role: "user" },
+const USERS: { username: string; name: string; role: RoleName[] }[] = [
+  { username: "admin", name: "Administrador", role: ["admin"] },
+  { username: "secretaria", name: "Secretaria Escolar", role: ["user", "secretaria"] },
 ];
 
 const FIRST = ["Ana", "Bruno", "Carla", "Daniel", "Eduarda", "Felipe", "Gabriela", "Henrique", "Isabela", "João", "Larissa", "Mateus", "Natália", "Otávio", "Paula", "Rafael", "Sofia", "Tiago", "Valentina", "Lucas"];
@@ -64,7 +64,7 @@ export async function seed() {
 
   for (const u of USERS)
     await auth.api.createUser({
-      body: { email: `${u.username}@example.com`, password: SEED_PASSWORD, name: u.name, role: u.role as "admin" | "user", data: { username: u.username, displayUsername: u.username } },
+      body: { email: `${u.username}@example.com`, password: SEED_PASSWORD, name: u.name, role: u.role, data: { username: u.username, displayUsername: u.username } },
     });
 
   // --- reference data -------------------------------------------------------------
@@ -98,18 +98,9 @@ export async function seed() {
   const exams = Object.fromEntries((await db.select().from(t.gradesExamtype)).map((e) => [e.code, e]));
   const incidentTypes = await db.insert(t.incidentsIncidenttype).values([["Conversa excessiva", "0.10"], ["Uso de celular em sala", "0.20"], ["Cola em avaliação", "0.50"]].map(([type, penalty]) => ({ type, penalty }))).returning();
   const [teacherRole, , secretaryRole] = await db.insert(t.employeesEmployeeroletype).values([{ role: "Professor" }, { role: "Coordenação" }, { role: "Secretaria" }]).returning();
-  // Access groups: the secretaria login is a Secretaria employee; groups stay with admins
+  // The secretaria login is a Secretaria employee
   const [secretary] = await db.insert(t.employeesEmployee).values({ ...person("Secretaria Escolar", "F", 1985), roleId: secretaryRole.id, canAccessSuga: false, passwordSuga: "" }).returning();
   await db.update(user).set({ employeeId: secretary.id }).where(eq(user.username, "secretaria"));
-  const TEACHER_PERMISSIONS = ["students.view", "grades.view", "grades.edit", "lessons.view", "lessons.edit", "pathways.view", "pathways.edit", "incidents.view", "incidents.edit"];
-  for (const [name, roleId, codes] of [
-    ["Secretaria", secretaryRole.id, PERMISSIONS.map(([code]) => code)],
-    ["Professores", teacherRole.id, TEACHER_PERMISSIONS],
-  ] as const) {
-    const [g] = await db.insert(t.accessGroup).values({ name }).returning();
-    await db.insert(t.accessGroupRoles).values({ groupId: g.id, roleId });
-    await db.insert(t.accessGroupPermissions).values(codes.map((codename) => ({ groupId: g.id, codename })));
-  }
   await db.insert(t.accountsAccounttype).values([{ name: "Mensalidade", direction: "R" }, { name: "Material didático", direction: "R" }, { name: "Energia elétrica", direction: "P" }, { name: "Manutenção", direction: "P" }]);
   const categories = Object.fromEntries((await db.select().from(t.accountsAccounttype)).map((c) => [c.name, c.id]));
 

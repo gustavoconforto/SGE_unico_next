@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, asc, count, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { TableCell, TableRow } from "flowbite-react";
 import { CellLabel } from "@/components/list-labels";
@@ -20,6 +21,7 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const counted = (status: string) => sql<number>`(select count(*) from pathways_pathwayattendance a where a.session_id = ${ref(session.id)} and a.status = ${status})::int`;
 
 export default async function SessionListPage({ searchParams }: PageProps<"/pathways/sessions">) {
+  await requirePermission("pathways", "view");
   const sp = await searchParams;
   const offeringId = Number(param(sp, "offering")) || null;
   const where = and(

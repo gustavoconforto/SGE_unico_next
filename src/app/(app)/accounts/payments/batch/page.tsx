@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, asc, eq, inArray, isNotNull } from "drizzle-orm";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -5,20 +6,20 @@ import { db } from "@/db";
 import { accountsAccount as account, accountsInstallment as installment } from "@/db/schema/app";
 import { PENDING_STATUSES, money } from "@/lib/finance";
 import { outstandingSql } from "@/lib/finance-db";
-import { hasPermission } from "@/lib/access";
+import { hasPermission } from "@/lib/authorization";
 import { param } from "@/lib/list";
-import { requireSession } from "@/lib/session";
 import { BatchPaymentForm } from "../batch-payment-form";
 
 export const metadata: Metadata = { title: "Baixa de várias parcelas" };
 
 /** ?installment=1&installment=2… from the enrollment page: the pending receivable installments of one account. */
 export default async function BatchPaymentPage({ searchParams }: PageProps<"/accounts/payments/batch">) {
+  await requirePermission("payments", "edit");
   const sp = await searchParams;
   const ids = [sp.installment ?? []].flat().map(Number).filter(Number.isSafeInteger);
   const enrollment = Number(param(sp, "enrollment")) || null;
   // Without the book (payments.view) only enrollment accounts, like saveBatchPayment
-  const book = await hasPermission((await requireSession()).user, "payments.view");
+  const book = await hasPermission("payments", "view");
   const rows = ids.length
     ? await db
         .select({ id: installment.id, number: installment.number, dueDate: installment.dueDate, balance: outstandingSql, accountId: account.id, description: account.description, enrollmentId: account.enrollmentId })

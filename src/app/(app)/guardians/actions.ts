@@ -7,7 +7,7 @@ import { db } from "@/db";
 import { studentsGuardian } from "@/db/schema/app";
 import { type FormState, parseForm } from "@/lib/form";
 import { personFields, personUniqueError, phoneDigits } from "@/lib/person";
-import { requirePermission } from "@/lib/access";
+import { requirePermission } from "@/lib/authorization";
 import { MARITAL_STATUS } from "@/lib/students";
 
 const guardianSchema = z.object({
@@ -19,7 +19,7 @@ const guardianSchema = z.object({
 
 // Django has no guardian delete screen; guardians are PROTECT-linked to students.
 export async function saveGuardian(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("students.edit");
+  await requirePermission("students", "edit");
   const { data, values, state } = parseForm(guardianSchema, formData);
   if (!data) return state;
   try {

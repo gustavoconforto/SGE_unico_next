@@ -9,9 +9,10 @@ import { deletePayment, saveBatchPayment, savePayment } from "./actions";
 
 // `book`: holds payments.view; every other permission is granted
 const access = vi.hoisted(() => ({ book: true }));
-vi.mock("@/lib/access", () => ({
-  hasPermission: async (_user: unknown, code: string) => code !== "payments.view" || access.book,
-  requirePermission: async (code: string) => {
+vi.mock("@/lib/authorization", () => ({
+  hasPermission: async (resource: string, action: string) => `${resource}.${action}` !== "payments.view" || access.book,
+  requirePermission: async (resource: string, action: string) => {
+    const code = `${resource}.${action}`;
     if (code === "payments.view" && !access.book) throw new Error("REDIRECT /forbidden");
     return { user: {} };
   },

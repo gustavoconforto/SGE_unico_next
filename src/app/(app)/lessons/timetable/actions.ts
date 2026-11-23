@@ -8,12 +8,12 @@ import { UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import type { FormErrors, FormState } from "@/lib/form";
 import { INVALID_CHOICE, formValues } from "@/lib/form";
 import { WEEKDAYS, periodError, weekdayPeriods } from "@/lib/lessons";
-import { requirePermission } from "@/lib/access";
+import { requirePermission } from "@/lib/authorization";
 import { classSlots, levelSubjects, seriesClass, teacherClash } from "../data";
 
 /** The class's whole timetable (TimetableForm): "subject-teacher" per weekday and period; blank = no lesson. */
 export async function saveTimetable(classId: number, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("lessons.edit");
+  await requirePermission("lessons", "edit");
   const c = await seriesClass(classId);
   if (!c) redirect("/lessons/timetable");
   const [subjects, existing] = await Promise.all([levelSubjects(c.gradeLevel), classSlots(classId)]);

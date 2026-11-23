@@ -10,7 +10,7 @@ import { PAYMENT_METHODS, PENDING_STATUSES, formatMoney, installmentBalance, mon
 import { lockInstallment, outstandingSql, refreshInstallmentStatus } from "@/lib/finance-db";
 import { type FormErrors, type FormState, INVALID_CHOICE, REQUIRED, decimalField, foreignKey, formIds, parseForm, requiredDate } from "@/lib/form";
 import { foldSql, likePattern, stripAccents } from "@/lib/list";
-import { hasPermission, requirePermission } from "@/lib/access";
+import { hasPermission, requirePermission } from "@/lib/authorization";
 import { type InstallmentChoice, toChoice } from "./data";
 
 const paymentSchema = z.object({
@@ -28,9 +28,9 @@ const paymentSchema = z.object({
 
 /** The installment search box: pending installments of one direction (ReceivableInstallmentLookupView). */
 export async function searchInstallments(direction: "R" | "P", q: string): Promise<InstallmentChoice[]> {
-  const { user } = await requirePermission("payments.edit");
+  await requirePermission("payments", "edit");
   // Searching every pending installment is reading the book: edit-only staff pay the installment they came with
-  if (!(await hasPermission(user, "payments.view"))) return [];
+  if (!(await hasPermission("payments", "view"))) return [];
   const p = likePattern(stripAccents(q.trim()));
   const rows = await db
     .select({
@@ -69,9 +69,9 @@ function orIlike(columns: AnyPgColumn[], pattern: string) {
  * installment's balance, checked again with the installment row locked so a double submit can't pass twice.
  */
 export async function savePayment(id: number | null, direction: "R" | "P", returnTo: "account" | "enrollment" | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  const { user } = await requirePermission("payments.edit");
+  await requirePermission("payments", "edit");
   // Without the book (payments.view) only new payments of enrollment installments: the desk at signing
-  const book = await hasPermission(user, "payments.view");
+  const book = await hasPermission("payments", "view");
   if (id && !book) redirect("/forbidden");
   const { data, values, state } = parseForm(paymentSchema, formData);
   if (!data) return state;
@@ -79,11 +79,13 @@ export async function savePayment(id: number | null, direction: "R" | "P", retur
   const paid = principal(fields);
   if (paid.lte(0)) return { errors: { amount: ["O valor pago mais o desconto deve ser maior que a soma de multa, juros e correção."] }, values };
 
-  const [previous] = id ? await db.select().from(payment).where(eq(payment.id, id)) : [];
-  if (id && !previous) redirect("/accounts/payments");
+  if (id && !(await db.select({ id: payment.id }).from(payment).where(eq(payment.id, id))).length) redirect("/accounts/payments");
 
   const result = await db.transaction(async (tx) => {
     const target = await lockInstallment(tx, data.installmentId);
+    // Read under the lock, not before it: an edit of this payment committed meanwhile changed what goes back into the balance
+    const [previous] = id ? await tx.select().from(payment).where(eq(payment.id, id)).for("update") : [];
+    if (id && !previous) return { errors: { installmentId: ["Este pagamento acabou de ser excluído por outra pessoa."] } };
     const [acc] = target ? await tx.select({ direction: account.direction, enrollmentId: account.enrollmentId }).from(account).where(eq(account.id, target.accountId)) : [];
     // Only installments of this direction that still accept payments, plus the current one on edit
     const sameAsBefore = previous?.installmentId === data.installmentId;
@@ -98,11 +100,8 @@ export async function savePayment(id: number | null, direction: "R" | "P", retur
     // Moving the payment changes the old installment's balance too
     // shortcut: two edits moving payments between the same two installments in opposite directions deadlock; Postgres aborts one and the user resubmits
     if (previous && !sameAsBefore) await lockInstallment(tx, previous.installmentId);
-    if (id) {
-      // Deleted by someone else since `previous` was read: report it instead of a "saved" that changed nothing
-      const updated = await tx.update(payment).set(fields).where(eq(payment.id, id)).returning({ id: payment.id });
-      if (!updated.length) return { errors: { installmentId: ["Este pagamento acabou de ser excluído por outra pessoa."] } };
-    } else await tx.insert(payment).values(fields);
+    if (id) await tx.update(payment).set(fields).where(eq(payment.id, id));
+    else await tx.insert(payment).values(fields);
     await refreshInstallmentStatus(tx, data.installmentId);
     if (previous && !sameAsBefore) await refreshInstallmentStatus(tx, previous.installmentId);
     return { accountId: target.accountId, enrollmentId: acc.enrollmentId };
@@ -126,8 +125,8 @@ const ROW_FIELDS = ["penalty", "interest", "discount"] as const;
  * `balance_<id>` is the balance the screen showed, so a payment saved meanwhile can't change what the guardian pays.
  */
 export async function saveBatchPayment(_prev: FormState, formData: FormData): Promise<FormState> {
-  const { user } = await requirePermission("payments.edit");
-  const book = await hasPermission(user, "payments.view");
+  await requirePermission("payments", "edit");
+  const book = await hasPermission("payments", "view");
   const { data, values, state } = parseForm(batchSchema, formData);
   // Ascending, so two batches over the same installments lock them in the same order and can't deadlock
   const ids = formIds(formData, "installment").sort((a, b) => a - b);
@@ -185,8 +184,8 @@ export async function saveBatchPayment(_prev: FormState, formData: FormData): Pr
 }
 
 export async function deletePayment(id: number) {
-  await requirePermission("payments.edit");
-  await requirePermission("payments.view"); // deleting starts from the book's list
+  await requirePermission("payments", "edit");
+  await requirePermission("payments", "view"); // deleting starts from the book's list
   await db.transaction(async (tx) => {
     const [row] = await tx.select({ installmentId: payment.installmentId }).from(payment).where(eq(payment.id, id));
     if (!row) return;

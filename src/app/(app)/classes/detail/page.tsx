@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, asc, countDistinct, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ListPage, ListRow } from "@/components/list-page";
@@ -24,6 +25,7 @@ const classLabel = (c: { gradeLevel: number | null; name: string }) =>
 export default async function ClassDetailPage({
   searchParams,
 }: PageProps<"/classes/detail">) {
+  await requirePermission("academicSetup", "view");
   const sp = await searchParams;
   const urlYearId = intParam(param(sp, "school_year"));
   const classId = intParam(param(sp, "school_class"));

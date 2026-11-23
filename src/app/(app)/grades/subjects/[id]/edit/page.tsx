@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -10,6 +11,7 @@ import { SubjectForm } from "../../subject-form";
 export const metadata: Metadata = { title: "Editar matéria" };
 
 export default async function EditSubjectPage({ params }: PageProps<"/grades/subjects/[id]/edit">) {
+  await requirePermission("academicSetup", "edit");
   const id = await idParam(params);
   const [[row], departments] = await Promise.all([db.select().from(subject).where(eq(subject.id, id)), departmentOptions()]);
   if (!row) notFound();

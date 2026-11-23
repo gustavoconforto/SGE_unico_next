@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, count, desc, eq, gte, lte } from "drizzle-orm";
 import type { Metadata } from "next";
 import { FilterDate, FilterSelect } from "@/components/list-controls";
@@ -15,6 +16,7 @@ export const metadata: Metadata = { title: "Plantões" };
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export default async function QandAListPage({ searchParams }: PageProps<"/q-and-a">) {
+  await requirePermission("qAndA", "view");
   const sp = await searchParams;
   const subjectId = Number(param(sp, "subject")) || null;
   const where = and(

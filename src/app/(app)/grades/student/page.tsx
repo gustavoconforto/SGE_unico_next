@@ -1,10 +1,9 @@
 import { Table, TableBody, TableHead, TableHeadCell, TableRow } from "flowbite-react";
 import type { Metadata } from "next";
 import { LinkButton } from "@/components/link-button";
-import { hasPermission } from "@/lib/access";
+import { hasPermission, requirePermission } from "@/lib/authorization";
 import { allLocks, gradeEditError } from "@/lib/grade-lock";
 import { FINAL_RECOVERY } from "@/lib/grades";
-import { requireSession } from "@/lib/session";
 import { param } from "@/lib/list";
 import { activeEnrollmentOptions } from "../../enrollments/data";
 import { loadReportCard, situation } from "../report";
@@ -18,8 +17,8 @@ export default async function StudentGradesPage({ searchParams }: PageProps<"/gr
   const id = Number(param(await searchParams, "enrollment")) || null;
   const [options, card] = await Promise.all([activeEnrollmentOptions(), id ? loadReportCard(id) : null]);
   const active = card && card.enrollment.status === "A" ? card : null;
-  const user = (await requireSession()).user;
-  const [staff, canEdit, locks] = active ? await Promise.all([hasPermission(user, "grades.manage"), hasPermission(user, "grades.edit"), allLocks()]) : [true, true, new Set<string>()];
+  await requirePermission("grades", "view");
+  const [staff, canEdit, locks] = active ? await Promise.all([hasPermission("grades", "manage"), hasPermission("grades", "edit"), allLocks()]) : [true, true, new Set<string>()];
   // The score inputs this user can't edit in a subject's row (view-only user, locked bimester or staff-only exam)
   const readOnly = (subjectId: number) =>
     [...[1, 2, 3, 4].map((b) => [b, active!.examTypes] as const), [FINAL_RECOVERY, active!.recoveryTypes] as const].flatMap(([b, types]) =>

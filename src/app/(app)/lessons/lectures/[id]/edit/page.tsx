@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -10,6 +11,7 @@ import { LectureForm } from "../../lecture-form";
 export const metadata: Metadata = { title: "Editar aula" };
 
 export default async function EditLecturePage({ params }: PageProps<"/lessons/lectures/[id]/edit">) {
+  await requirePermission("lessons", "edit");
   const id = await idParam(params);
   const [row] = await db.select().from(lecture).where(eq(lecture.id, id));
   const c = row ? await seriesClass(row.schoolClassId) : null;

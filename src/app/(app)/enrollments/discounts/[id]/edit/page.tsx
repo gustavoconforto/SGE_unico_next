@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -9,6 +10,7 @@ import { DiscountTypeForm } from "../../discount-form";
 export const metadata: Metadata = { title: "Editar desconto" };
 
 export default async function EditDiscountTypePage({ params }: PageProps<"/enrollments/discounts/[id]/edit">) {
+  await requirePermission("enrollmentSetup", "edit");
   const id = await idParam(params);
   const [row] = await db.select().from(discountType).where(eq(discountType.id, id));
   if (!row) notFound();

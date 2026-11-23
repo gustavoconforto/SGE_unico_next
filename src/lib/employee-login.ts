@@ -5,7 +5,7 @@ import { user } from "@/db/schema/auth";
 import { auth } from "./auth";
 import { type FormErrors, REQUIRED } from "./form";
 
-export type LoginInput = { access: boolean; admin: boolean; username: string; password: string };
+export type LoginInput = { access: boolean; username: string; password: string };
 export type LoginPlan = "create" | "update" | "delete" | "none";
 
 const USERNAME_RE = /^[a-z0-9_.]{3,30}$/; // Better Auth's username plugin rule, lowercased
@@ -19,7 +19,6 @@ export function loginPlan(input: LoginInput, hasLogin: boolean, isSelf = false):
   if (isSelf && !input.access) return { plan: "none", errors: { access: ["Você não pode remover o seu próprio acesso."] } };
   if (!input.access) return { plan: hasLogin ? "delete" : "none" };
   const errors: FormErrors = {};
-  if (isSelf && !input.admin) errors.admin = ["Você não pode remover o seu próprio perfil de administrador."];
   if (!input.username) errors.username = [REQUIRED];
   else if (!USERNAME_RE.test(input.username)) errors.username = ["Use de 3 a 30 letras sem acento, números, ponto ou _."];
   // On edit a blank password keeps the current one
@@ -58,7 +57,7 @@ export async function applyLoginPlan(
         email,
         password: input.password,
         name: employee.name,
-        role: input.admin ? "admin" : "user",
+        role: "user", // roles are picked on the /employees list (setUserRoles)
         // The admin picked this password: the employee replaces it at first sign-in
         data: { username: input.username, displayUsername: input.username, employeeId: employee.id, mustChangePassword: true },
       },
@@ -66,7 +65,7 @@ export async function applyLoginPlan(
   } else if (plan === "update" && loginId) {
     // Better Auth's username hook rejects a user's own unchanged username as "taken": send it only when it changes
     const renamed = input.username !== login!.username ? { email, username: input.username, displayUsername: input.username } : {};
-    await ctx.internalAdapter.updateUser(loginId, { name: employee.name, role: input.admin ? "admin" : "user", ...renamed });
+    await ctx.internalAdapter.updateUser(loginId, { name: employee.name, ...renamed });
     if (input.password) {
       // A reset works like a first access: whoever held the old password is signed out, and the new one must be replaced
       await ctx.internalAdapter.updatePassword(loginId, await ctx.password.hash(input.password));

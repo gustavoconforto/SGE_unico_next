@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { asc, count } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ListPage, ListRow } from "@/components/list-page";
@@ -10,6 +11,7 @@ import { deleteDiscountType } from "./actions";
 export const metadata: Metadata = { title: "Descontos" };
 
 export default async function DiscountTypeListPage({ searchParams }: PageProps<"/enrollments/discounts">) {
+  await requirePermission("enrollmentSetup", "view");
   const sp = await searchParams;
   const where = searchWhere(param(sp, "q"), [discountType.description]);
   const page = pageParam(sp);

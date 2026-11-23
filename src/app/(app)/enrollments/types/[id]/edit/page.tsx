@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -10,6 +11,7 @@ import { EnrollmentTypeForm } from "../../enrollment-type-form";
 export const metadata: Metadata = { title: "Editar contrato" };
 
 export default async function EditEnrollmentTypePage({ params }: PageProps<"/enrollments/types/[id]/edit">) {
+  await requirePermission("enrollmentSetup", "edit");
   const id = await idParam(params);
   const [[row], programs, years] = await Promise.all([db.select().from(enrollmentType).where(eq(enrollmentType.id, id)), programOptions(), yearOptions()]);
   if (!row) notFound();

@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow } from "flowbite-react";
 import type { Metadata } from "next";
@@ -13,6 +14,7 @@ import { levelSubjects, seriesClasses } from "../data";
 export const metadata: Metadata = { title: "Grade horária" };
 
 export default async function TimetablePage({ searchParams }: PageProps<"/lessons/timetable">) {
+  await requirePermission("lessons", "view");
   const [classes, sp] = await Promise.all([seriesClasses(), searchParams]);
   const c = classes.find((x) => x.id === Number(param(sp, "school_class"))) ?? null;
   const [subjects, slots] = c

@@ -4,6 +4,7 @@ import { nextCookies } from "better-auth/next-js";
 import { admin, username } from "better-auth/plugins";
 import { db } from "@/db";
 import * as authSchema from "@/db/schema/auth";
+import { ac, roles } from "@/lib/permissions";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg", schema: authSchema }),
@@ -16,12 +17,26 @@ export const auth = betterAuth({
   user: {
     additionalFields: {
       employeeId: { type: "number", required: false, input: false },
-      mustChangePassword: { type: "boolean", required: false, defaultValue: false, input: false },
+      mustChangePassword: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
+        input: false,
+      },
     },
   },
   rateLimit: { storage: "database" },
   // The proxy, the layout and each action all read the session: a signed cookie spares those Postgres lookups.
   // shortcut: a revoked session or banned user keeps access for up to maxAge seconds; lower it if that matters
   session: { cookieCache: { enabled: true, maxAge: 60 } },
-  plugins: [username(), admin(), nextCookies()],
+  plugins: [
+    username(),
+    admin({
+      ac,
+      roles,
+      defaultRole: "user",
+      adminRoles: ["admin"],
+    }),
+    nextCookies(),
+  ],
 });

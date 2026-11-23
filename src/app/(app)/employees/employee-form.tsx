@@ -11,8 +11,6 @@ export function EmployeeForm(props: {
   id?: number | null;
   defaults?: Record<string, unknown>;
   roles: [number, string][];
-  /** Admins only: the dashboard login section */
-  canManageLogin?: boolean;
 }) {
   const [state, action, pending] = useActionState(saveEmployee.bind(null, props.id ?? null), {});
   const hasLogin = props.defaults?.access === true;
@@ -35,15 +33,13 @@ export function EmployeeForm(props: {
           // Saved employees only, like students and guardians; it follows the number as it is edited
           mobileAction={props.id ? <WhatsAppLink field="mobile" phone={props.defaults?.mobile as string} /> : undefined}
         />
-        {props.canManageLogin && (
-          <Fieldset legend="Acesso ao sistema">
+        <Fieldset legend="Acesso ao sistema">
             <div className="sm:col-span-2" onChange={onAccessChange}>
               <CheckboxField name="access" label="Pode acessar o sistema" help="Desmarcar apaga o login do funcionário." />
             </div>
             {access && (
               <>
                 <TextField name="username" label="Usuário" maxLength={30} autoComplete="off" />
-                <CheckboxField name="admin" label="Administrador" help="Pode cadastrar funcionários e dar acesso ao sistema." />
                 <TextField
                   name="password"
                   label="Senha"
@@ -59,7 +55,6 @@ export function EmployeeForm(props: {
               </>
             )}
           </Fieldset>
-        )}
       </FormFields>
       <FormButtons pending={pending} cancelHref="/employees" />
     </form>

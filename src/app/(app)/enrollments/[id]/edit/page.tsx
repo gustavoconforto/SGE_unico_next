@@ -1,11 +1,11 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { Badge, Button, Checkbox, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow } from "flowbite-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { InstallmentActions } from "@/components/installment-table";
-import { hasPermission } from "@/lib/access";
-import { requireSession } from "@/lib/session";
+import { hasPermission } from "@/lib/authorization";
 import { LinkButton } from "@/components/link-button";
 import { ACTIONS_CELL, PHONE_CARDS, PRIMARY_CELL } from "@/components/list-page";
 import { db } from "@/db";
@@ -54,6 +54,7 @@ function PhoneLabel({ children }: { children: React.ReactNode }) {
 }
 
 export default async function EditEnrollmentPage({ params }: PageProps<"/enrollments/[id]/edit">) {
+  await requirePermission("enrollments", "edit");
   const id = await idParam(params);
   const row = await getEnrollment(id);
   if (!row) notFound();
@@ -61,7 +62,7 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
   await syncDocuments(db, id);
 
   const on = today();
-  const canPay = await hasPermission((await requireSession()).user, "payments.edit");
+  const canPay = await hasPermission("payments", "edit");
   const [types, classes, discounts, documents, [contract], receivables, [payer], parents] = await Promise.all([
     enrollmentTypeOptions(),
     classOptions(),

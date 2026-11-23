@@ -1,10 +1,10 @@
+import { requirePermission } from "@/lib/authorization";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { hasPermission } from "@/lib/access";
+import { hasPermission } from "@/lib/authorization";
 import { LOCKED, allLocks, gradeEditError, staffOnly } from "@/lib/grade-lock";
 import { currentSchoolYear } from "@/lib/concept-db";
-import { requireSession } from "@/lib/session";
 import { LAST_SHEET } from "../score";
 import { gradeSelection } from "../selection";
 import { GradePicker } from "./grade-picker";
@@ -35,6 +35,7 @@ function missingChoices(selected: { year: number | null; klass: number | null; s
 }
 
 export default async function GradeEntryPage({ searchParams }: PageProps<"/grades/entry">) {
+  await requirePermission("grades", "edit");
   const sp = await searchParams;
   if (!Object.keys(sp).length) {
     const start = await startingQuery();
@@ -43,7 +44,7 @@ export default async function GradeEntryPage({ searchParams }: PageProps<"/grade
   const s = await gradeSelection(sp);
   const { klass, subject, period } = s.selected;
   const sheet = klass && subject && period ? await loadSheet(klass, subject, period) : null;
-  const [staff, locks] = sheet ? await Promise.all([requireSession().then((s) => hasPermission(s.user, "grades.manage")), allLocks()]) : [true, new Set<string>()];
+  const [staff, locks] = sheet ? await Promise.all([hasPermission("grades", "manage"), allLocks()]) : [true, new Set<string>()];
   const locked = locks.has(`${subject}:${period}`);
   const query = new URLSearchParams({ school_year: String(s.selected.year), school_class: String(klass), subject: String(subject), bimester: String(period) }).toString();
   return (

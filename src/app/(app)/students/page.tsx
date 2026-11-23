@@ -8,28 +8,41 @@ import { FilterSelect } from "@/components/list-controls";
 import { ENROLLMENT_STATUSES } from "@/lib/finance";
 import { PAGE_SIZE, pageParam, param, searchWhere } from "@/lib/list";
 import { ref } from "@/lib/sql";
-import { hasPermission } from "@/lib/access";
-import { requireSession } from "@/lib/session";
 import { studentName } from "../enrollments/data";
+import { hasPermission, requirePermission } from "@/lib/authorization";
 
 export const metadata: Metadata = { title: "Alunos" };
 
 // The student's latest enrollment tells two same-name students apart: its class and situation
 const latest = (column: SQL) =>
-  sql<string | null>`(select ${column} from enrollments_enrollment e left join classes_class c on c.id = e.school_class_id
+  sql<
+    string | null
+  >`(select ${column} from enrollments_enrollment e left join classes_class c on c.id = e.school_class_id
     where e.student_id = ${ref(student.id)} order by e.enrolled_at desc, e.id desc limit 1)`;
 
-export default async function StudentListPage({ searchParams }: PageProps<"/students">) {
+export default async function StudentListPage({
+  searchParams,
+}: PageProps<"/students">) {
+  await requirePermission("students", "view");
+
   const sp = await searchParams;
   // Situação of the latest enrollment, or "N" for students never enrolled
   const situation = param(sp, "situation");
   const status = latest(sql`e.status`);
   const where = and(
-    searchWhere(param(sp, "q"), [student.name, student.socialName, student.registration, student.cpf]),
-    situation === "N" ? isNull(status) : ENROLLMENT_STATUSES.some(([code]) => code === situation) ? sql`${status} = ${situation}` : undefined,
+    searchWhere(param(sp, "q"), [
+      student.name,
+      student.socialName,
+      student.registration,
+      student.cpf,
+    ]),
+    situation === "N"
+      ? isNull(status)
+      : ENROLLMENT_STATUSES.some(([code]) => code === situation)
+        ? sql`${status} = ${situation}`
+        : undefined,
   );
   const page = pageParam(sp);
-  const { user } = await requireSession();
   const [rows, [{ total }], canEdit] = await Promise.all([
     db
       .select({
@@ -47,7 +60,7 @@ export default async function StudentListPage({ searchParams }: PageProps<"/stud
       .limit(PAGE_SIZE)
       .offset((page - 1) * PAGE_SIZE),
     db.select({ total: count() }).from(student).where(where),
-    hasPermission(user, "students.edit"),
+    hasPermission("students", "edit"),
   ]);
   return (
     <ListPage
@@ -55,7 +68,13 @@ export default async function StudentListPage({ searchParams }: PageProps<"/stud
       newHref={canEdit ? "/students/new" : undefined}
       newLabel="Novo aluno"
       searchPlaceholder="Pesquisar por nome, matrícula ou CPF..."
-      filters={<FilterSelect name="situation" label="Situação" options={[...ENROLLMENT_STATUSES, ["N", "Sem matrícula"]]} />}
+      filters={
+        <FilterSelect
+          name="situation"
+          label="Situação"
+          options={[...ENROLLMENT_STATUSES, ["N", "Sem matrícula"]]}
+        />
+      }
       headers={["Nome", "Matrícula", "Turma", "Situação"]}
       empty="Nenhum aluno encontrado. Confira a grafia, ou busque pela matrícula ou pelo CPF."
       page={page}
@@ -70,7 +89,9 @@ export default async function StudentListPage({ searchParams }: PageProps<"/stud
             ) : (
               <span key="n">
                 {s.name}
-                <span className="block text-xs font-normal text-gray-500">Nome civil: {s.civilName}</span>
+                <span className="block text-xs font-normal text-gray-500">
+                  Nome civil: {s.civilName}
+                </span>
               </span>
             ),
             s.registration,

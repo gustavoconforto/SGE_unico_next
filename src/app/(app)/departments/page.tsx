@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { and, asc, count, eq, exists, ilike, inArray, or } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ListPage, ListRow } from "@/components/list-page";
@@ -32,6 +33,7 @@ function search(q: string) {
 }
 
 export default async function DepartmentListPage({ searchParams }: PageProps<"/departments">) {
+  await requirePermission("academicSetup", "view");
   const sp = await searchParams;
   const where = search(param(sp, "q"));
   const page = pageParam(sp);

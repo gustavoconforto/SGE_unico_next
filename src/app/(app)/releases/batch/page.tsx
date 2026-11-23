@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -16,6 +17,7 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Step 1 (in the URL): date, school year and motive. Step 2: check the students and save. */
 export default async function BatchExitPage({ searchParams }: PageProps<"/releases/batch">) {
+  await requirePermission("releases", "edit");
   const sp = await searchParams;
   if (!Object.keys(sp).length) {
     const year = await currentSchoolYear();

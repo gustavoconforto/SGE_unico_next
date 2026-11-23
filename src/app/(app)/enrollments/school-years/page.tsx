@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { count, desc, sql } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ListPage, ListRow } from "@/components/list-page";
@@ -10,6 +11,7 @@ import { deleteSchoolYear } from "./actions";
 export const metadata: Metadata = { title: "Anos escolares" };
 
 export default async function SchoolYearListPage({ searchParams }: PageProps<"/enrollments/school-years">) {
+  await requirePermission("enrollmentSetup", "view");
   const sp = await searchParams;
   const where = searchWhere(param(sp, "q"), [sql`${year.begins}::text`, sql`${year.ends}::text`]);
   const page = pageParam(sp);

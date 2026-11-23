@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ExamKind, formatGrade } from "@/lib/grades";
@@ -12,6 +13,7 @@ export const metadata: Metadata = { title: "Boletim escolar" };
 const cell = "border border-gray-900 px-px py-0.5 text-center tabular-nums";
 
 export default async function ReportCardPrintPage({ params }: PageProps<"/grades/report-card/[id]/print">) {
+  await requirePermission("grades", "view");
   const card = await loadReportCard(await idParam(params));
   if (!card) notFound();
   const e = card.enrollment;

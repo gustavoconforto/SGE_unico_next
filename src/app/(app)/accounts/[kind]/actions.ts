@@ -9,7 +9,7 @@ import { FOREIGN_KEY_VIOLATION, pgConstraint, pgErrorCode } from "@/lib/db-error
 import { accountInstallments, initialStatus, money, toDb } from "@/lib/finance";
 import { financialGuardians } from "@/lib/finance-db";
 import { type FormErrors, type FormState, INVALID_CHOICE, decimalField, foreignKey, intField, optionalForeignKey, parseForm, requiredDate, requiredText } from "@/lib/form";
-import { requirePermission } from "@/lib/access";
+import { requirePermission } from "@/lib/authorization";
 import { KINDS, type Kind } from "../kinds";
 
 const baseSchema = z.object({
@@ -66,7 +66,7 @@ async function counterpartErrors(kind: Kind, data: z.infer<typeof baseSchema>, s
 }
 
 export async function createAccount(kind: Kind, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("finance.edit");
+  await requirePermission("finance", "edit");
   const { data, values, state } = parseForm(createSchema, formData);
   if (!data) return state;
   const discount = money(data.discountValue ?? "0");
@@ -104,7 +104,7 @@ export async function createAccount(kind: Kind, _prev: FormState, formData: Form
 }
 
 export async function updateAccount(kind: Kind, id: number, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("finance.edit");
+  await requirePermission("finance", "edit");
   const [current] = await db
     .select()
     .from(account)
@@ -130,7 +130,7 @@ export async function updateAccount(kind: Kind, id: number, _prev: FormState, fo
 
 /** An account with payments can't be deleted; without them its installments go with it. */
 export async function deleteAccount(kind: Kind, id: number) {
-  await requirePermission("finance.edit");
+  await requirePermission("finance", "edit");
   // Its installments go first, so check the account is of this kind before touching them
   const [acc] = await db.select({ id: account.id }).from(account).where(and(eq(account.id, id), eq(account.direction, KINDS[kind].direction)));
   if (!acc) redirect(`/accounts/${kind}`);

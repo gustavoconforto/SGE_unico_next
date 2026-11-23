@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { SavedNote } from "@/components/saved-note";
@@ -11,6 +12,7 @@ import { StudentForm } from "../student-form";
 export const metadata: Metadata = { title: "Novo aluno" };
 
 export default async function NewStudentPage({ searchParams }: PageProps<"/students/new">) {
+  await requirePermission("students", "edit");
   // After "Cadastrar e começar outro": name who was saved, and a new key clears the form
   const saved = Number(param(await searchParams, "saved")) || 0;
   const [[last], options] = await Promise.all([

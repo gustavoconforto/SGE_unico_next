@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/authorization";
 import { asc, count } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ListPage, ListRow } from "@/components/list-page";
@@ -12,6 +13,7 @@ import { deletePathway } from "./actions";
 export const metadata: Metadata = { title: "Itinerários" };
 
 export default async function PathwayListPage({ searchParams }: PageProps<"/pathways">) {
+  await requirePermission("pathways", "view");
   const sp = await searchParams;
   const where = searchWhere(param(sp, "q"), [pathway.name, pathway.description]);
   const page = pageParam(sp);

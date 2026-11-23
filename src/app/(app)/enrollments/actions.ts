@@ -19,7 +19,7 @@ import { UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import { ENDED_EARLY, ENROLLMENT_STATUSES, contractValues, enrollmentInstallments, label, lopsidedInstallment, money, today } from "@/lib/finance";
 import { type Tx, cancelFutureInstallments, createEnrollmentAccount, financialGuardians, hasOverdueDebt, syncDocuments } from "@/lib/finance-db";
 import { type FormErrors, type FormState, REQUIRED, decimalField, foreignKey, formIds, formValues, intField, optionalForeignKey } from "@/lib/form";
-import { requirePermission } from "@/lib/access";
+import { requirePermission } from "@/lib/authorization";
 import { enrollmentTypeLabel, studentName } from "./data";
 
 const statusField = z.enum(ENROLLMENT_STATUSES.map(([code]) => code) as [string, ...string[]], { error: REQUIRED });
@@ -74,7 +74,7 @@ const createSchema = z.object({
 });
 
 export async function createEnrollment(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("enrollments.edit");
+  await requirePermission("enrollments", "edit");
   const values = formValues(formData);
   const selectedTypes = Object.fromEntries(GROUPS.map(([, prefix]) => [prefix, formIds(formData, `${prefix}DiscountTypes`)])) as Record<
     "first" | "remaining",
@@ -189,7 +189,7 @@ const updateSchema = z.object({ schoolClassId: optionalForeignKey, status: statu
 
 /** Student, contract and due day are locked: the account and installments were generated from them. */
 export async function updateEnrollment(id: number, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("enrollments.edit");
+  await requirePermission("enrollments", "edit");
   const values = formValues(formData);
   const parsed = updateSchema.safeParse(values);
   const [current] = await db.select().from(enrollment).where(eq(enrollment.id, id));
