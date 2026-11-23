@@ -47,7 +47,8 @@ describe.skipIf(!local)("saveBatchExits", async () => {
   const save = (ids: number[]) => {
     const f = new FormData();
     f.set("exitDate", DATE);
-    f.set("schoolYearId", String(year));
+    // Any valid id when the dev database has no active enrollment: the empty-selection case never reads it
+    f.set("schoolYearId", String(year ?? 1));
     f.set("reasonId", String(reasonId));
     for (const id of ids) f.append("enrollmentId", String(id));
     return saveBatchExits({}, f).catch((e: Error) => e.message);

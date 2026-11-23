@@ -12,6 +12,7 @@ import {
 } from "@/db/schema/app";
 import { Direction, PENDING_STATUSES, formatMoney, today } from "@/lib/finance";
 import { outstandingSql } from "@/lib/finance-db";
+import { hasPermission } from "@/lib/authorization";
 
 export const metadata: Metadata = { title: "Início" };
 
@@ -37,8 +38,27 @@ function receivable(where: SQL) {
 export default async function HomePage() {
   await connection(); // depends on today's date: never prerender it
   const on = today();
-  // No permission checks for now: every signed-in user sees every link and total
-  const can = (_href: string) => true;
+  const [finance, enrollments, enrollmentsEdit, students, studentsEdit, paymentsEdit, paymentsView] = await Promise.all([
+    hasPermission("finance", "view"),
+    hasPermission("enrollments", "view"),
+    hasPermission("enrollments", "edit"),
+    hasPermission("students", "view"),
+    hasPermission("students", "edit"),
+    hasPermission("payments", "edit"),
+    hasPermission("payments", "view"),
+  ]);
+  // What each linked page requires (its requirePermission call)
+  const allowed: Record<string, boolean> = {
+    "/accounts/installments": finance,
+    "/enrollments": enrollments,
+    "/enrollments/new": enrollmentsEdit,
+    "/students": students,
+    "/students/new": studentsEdit,
+    "/guardians/new": studentsEdit,
+    "/accounts/payments/new": paymentsEdit,
+    "/accounts/payments": paymentsView,
+  };
+  const can = (href: string) => allowed[href.split("?")[0]] ?? false;
   // Totals only for the areas this user can open: nothing is computed just to be hidden
   const none = [{ n: 0, total: "0" }];
   const [[overdue], [dueToday], [enrolled]] = await Promise.all([

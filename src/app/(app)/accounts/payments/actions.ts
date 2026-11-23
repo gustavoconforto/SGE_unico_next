@@ -79,11 +79,13 @@ export async function savePayment(id: number | null, direction: "R" | "P", retur
   const paid = principal(fields);
   if (paid.lte(0)) return { errors: { amount: ["O valor pago mais o desconto deve ser maior que a soma de multa, juros e correção."] }, values };
 
-  const [previous] = id ? await db.select().from(payment).where(eq(payment.id, id)) : [];
-  if (id && !previous) redirect("/accounts/payments");
+  if (id && !(await db.select({ id: payment.id }).from(payment).where(eq(payment.id, id))).length) redirect("/accounts/payments");
 
   const result = await db.transaction(async (tx) => {
     const target = await lockInstallment(tx, data.installmentId);
+    // Read under the lock, not before it: an edit of this payment committed meanwhile changed what goes back into the balance
+    const [previous] = id ? await tx.select().from(payment).where(eq(payment.id, id)).for("update") : [];
+    if (id && !previous) return { errors: { installmentId: ["Este pagamento acabou de ser excluído por outra pessoa."] } };
     const [acc] = target ? await tx.select({ direction: account.direction, enrollmentId: account.enrollmentId }).from(account).where(eq(account.id, target.accountId)) : [];
     // Only installments of this direction that still accept payments, plus the current one on edit
     const sameAsBefore = previous?.installmentId === data.installmentId;
@@ -98,11 +100,8 @@ export async function savePayment(id: number | null, direction: "R" | "P", retur
     // Moving the payment changes the old installment's balance too
     // shortcut: two edits moving payments between the same two installments in opposite directions deadlock; Postgres aborts one and the user resubmits
     if (previous && !sameAsBefore) await lockInstallment(tx, previous.installmentId);
-    if (id) {
-      // Deleted by someone else since `previous` was read: report it instead of a "saved" that changed nothing
-      const updated = await tx.update(payment).set(fields).where(eq(payment.id, id)).returning({ id: payment.id });
-      if (!updated.length) return { errors: { installmentId: ["Este pagamento acabou de ser excluído por outra pessoa."] } };
-    } else await tx.insert(payment).values(fields);
+    if (id) await tx.update(payment).set(fields).where(eq(payment.id, id));
+    else await tx.insert(payment).values(fields);
     await refreshInstallmentStatus(tx, data.installmentId);
     if (previous && !sameAsBefore) await refreshInstallmentStatus(tx, previous.installmentId);
     return { accountId: target.accountId, enrollmentId: acc.enrollmentId };
