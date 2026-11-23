@@ -89,28 +89,26 @@ commands below reach Neon while `.env` keeps pointing at the local database.
 
 ### First deploy
 
-1. **Empty the database.** In Neon's SQL editor:
-   ```sql
-   DROP SCHEMA IF EXISTS drizzle CASCADE;
-   DROP SCHEMA public CASCADE;
-   CREATE SCHEMA public;
-   ```
-2. **Create the tables**, from your machine with the direct URL:
+1. **Empty the database and create the tables**, from your machine with the
+   direct URL. It drops every schema, recreates `public` and runs the
+   migrations, after you type the host to confirm. All data is lost, users
+   included. While the app is in beta, the same command (then step 2) starts
+   production over.
    ```bash
-   DATABASE_URL="<neon direct url>" npm run db:migrate
+   DATABASE_URL="<neon direct url>" npm run db:wipe
    ```
-3. **Create the first administrator** (asks for the password without showing it):
+2. **Create the first administrator** (asks for the password without showing it):
    ```bash
    DATABASE_URL="<neon direct url>" npm run create-admin -- <username> "<Full name>" [email]
    ```
-4. **Set the Vercel environment variables** (Production):
+3. **Set the Vercel environment variables** (Production):
    | Variable | Value |
    |---|---|
    | `DATABASE_URL` | Neon **pooled** URL |
    | `BETTER_AUTH_SECRET` | a new secret, `openssl rand -base64 32` (never the dev one) |
    | `BETTER_AUTH_URL` | the production address, e.g. `https://gestao.example.com` (login cookies depend on it) |
    | `MEDIA_ROOT` | `/tmp/media`: the only writable folder on Vercel (see the photo warning below) |
-5. **Deploy**, then sign in with the administrator and open a few screens.
+4. **Deploy**, then sign in with the administrator and open a few screens.
 
 ### Later deploys
 
