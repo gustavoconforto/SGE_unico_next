@@ -185,11 +185,11 @@ function NavCollapse({ group, pathname, onNavigate, depth = 0 }: { group: NavGro
   );
 }
 
-export function AppSidebar() {
+/** `name` and `role` come from the server session (layout), so the menu renders with the page instead of after a client fetch. */
+export function AppSidebar({ name, role }: { name: string; role: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const { data: session, isPending } = authClient.useSession();
   const menuButton = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
   const topBar = useRef<HTMLDivElement>(null);
@@ -261,13 +261,13 @@ export function AppSidebar() {
                   Início
                 </span>
               </SidebarItem>
-              {visibleNav(NAV, (session?.user.role ?? "user") as RoleName).map((group) => (
+              {visibleNav(NAV, role as RoleName).map((group) => (
                 <NavCollapse key={group.label} group={group} pathname={pathname} onNavigate={() => setOpen(false)} />
               ))}
             </SidebarItemGroup>
           </SidebarItems>
           <div className="border-t border-gray-200 pt-3 dark:border-gray-700">
-            {isPending ? <div className="mx-2 h-5 w-32 animate-pulse rounded bg-gray-200" aria-hidden="true" /> : <p className="truncate px-2 text-sm font-semibold">{session?.user.name}</p>}
+            <p className="truncate px-2 text-sm font-semibold">{name}</p>
             <Link
               href="/account/password"
               onClick={() => setOpen(false)}

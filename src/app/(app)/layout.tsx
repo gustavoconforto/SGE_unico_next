@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Flash } from "@/components/flash";
 import { FreshOnNavigate } from "@/components/fresh-on-navigate";
-import { Authenticated } from "@/lib/session";
+import { Authenticated, requireSession } from "@/lib/session";
 
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
@@ -13,7 +13,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
         Pular para o conteúdo
       </a>
       <Suspense>
-        <AppSidebar />
+        <Sidebar />
       </Suspense>
       <main id="main" tabIndex={-1} className="min-w-0 flex-1 p-4 pt-18 focus:outline-none lg:p-8">
         <Suspense fallback={<Spinner aria-label="Carregando" />}>
@@ -27,4 +27,9 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       </Suspense>
     </div>
   );
+}
+
+async function Sidebar() {
+  const { user } = await requireSession();
+  return <AppSidebar name={user.name} role={user.role ?? "user"} />;
 }
