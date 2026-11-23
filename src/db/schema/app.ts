@@ -1107,46 +1107,6 @@ export const pathwaysPathway = pgTable("pathways_pathway", {
 	check("pathway_workload_hours_only_when_fixed", sql`((workload_hours > (0)::numeric) AND ((workload_type)::text = 'F'::text)) OR ((NOT ((workload_type)::text = 'F'::text)) AND (workload_hours = (0)::numeric))`),
 ]);
 
-// Unused since roles moved to Better Auth (src/lib/permissions.ts); drop in a migration once production roles are set.
-export const accessGroup = pgTable("access_group", {
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
-	name: varchar({ length: 150 }).notNull(),
-}, (table) => [
-	unique("access_group_name_key").on(table.name),
-]);
-
-export const accessGroupRoles = pgTable("access_group_roles", {
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
-	groupId: bigint("group_id", { mode: "number" }).notNull(),
-	roleId: bigint("role_id", { mode: "number" }).notNull(),
-}, (table) => [
-	index("access_group_roles_role_id_idx").using("btree", table.roleId.asc().nullsLast().op("int8_ops")),
-	foreignKey({
-			columns: [table.groupId],
-			foreignColumns: [accessGroup.id],
-			name: "access_group_roles_group_id_fk_access_group_id"
-		}).onDelete("cascade"),
-	foreignKey({
-			columns: [table.roleId],
-			foreignColumns: [employeesEmployeeroletype.id],
-			name: "access_group_roles_role_id_fk_employees_employeeroletype_id"
-		}).onDelete("cascade"),
-	unique("access_group_roles_group_id_role_id_key").on(table.groupId, table.roleId),
-]);
-
-export const accessGroupPermissions = pgTable("access_group_permissions", {
-	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
-	groupId: bigint("group_id", { mode: "number" }).notNull(),
-	codename: varchar({ length: 50 }).notNull(),
-}, (table) => [
-	foreignKey({
-			columns: [table.groupId],
-			foreignColumns: [accessGroup.id],
-			name: "access_group_permissions_group_id_fk_access_group_id"
-		}).onDelete("cascade"),
-	unique("access_group_permissions_group_id_codename_key").on(table.groupId, table.codename),
-]);
-
 // Not in Django: early exits (Liberações), a motive picked from a list the staff edit
 export const releasesExitreason = pgTable("releases_exitreason", {
 	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),

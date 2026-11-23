@@ -65,8 +65,6 @@ export async function loadReportCard(enrollmentId: number) {
   return { enrollment: { ...e, schoolYear: e.schoolYear.slice(0, 4) }, rows, examTypes, recoveryTypes };
 }
 
-export type ReportCard = NonNullable<Awaited<ReturnType<typeof loadReportCard>>>;
-
 /** Situação: "Em andamento" until the year is complete, "Em recuperação" until the recovery score. */
 export function situation(row: { average: unknown; needsRecovery: boolean; passed: boolean | null }) {
   if (row.average === null) return { text: "Em andamento", color: "gray" };

@@ -474,7 +474,7 @@ overdue installments, and recent records:
   `requireSession()` (`src/lib/session.ts`) for the whole tree; edit pages
   read the id with `idParam(params)` (`src/lib/list.ts`).
 - Mutations are Server Actions in the route's `actions.ts`. Each one calls
-  `requirePermission("<area>.edit")` (`src/lib/access.ts`) first, parses the form with
+  `requirePermission(resource, "edit")` (`src/lib/authorization.ts`) first, parses the form with
   `parseForm(schema, formData)` (zod, `src/lib/form.ts`), runs multi-table
   writes in `db.transaction()`, maps a Postgres `UNIQUE_VIOLATION` to a field
   or form error, and redirects with `?msg=created|updated|deleted`.
@@ -500,20 +500,15 @@ Server Actions also call `requirePermission()`, since they are POST endpoints.
 
 ### Authorization
 
-Not in Django (its groups held users and were never checked). Better Auth's access control keeps roles in code
-(`admin` plugin) or needs organizations (`organization` plugin), so permissions live in our own tables:
+Not in Django (its groups held users and were never checked). Roles live in code with Better Auth's Admin plugin:
 
-- `src/lib/permissions.ts` (pure): the permission codes, `<area>.view` / `<area>.edit` per area plus
-  `grades.manage` (lock bimesters, edit locked and C / EX / A grades); and `ROUTES`, the path
-  prefix each page needs (longest prefix wins, form pages `…/new`, `…/edit` need `.edit`, **unlisted paths are
-  denied**; a test fails when a page has no rule).
-- `access_group` → `access_group_roles` (employee roles) and `access_group_permissions` (codes): an employee gets
-  the codes of every group holding their role. Admins (`user.role = "admin"`) hold all; a login with no employee
-  holds none. Edited on `/groups`, admins only (`ADMIN` in `ROUTES`, `requireAdmin()`): no group can grant it,
-  and only admins change the role of an employee who can sign in.
-- `src/lib/access.ts`: `userAccess(user)` (one query, cached per request), `hasPermission`, `requirePermission`.
-- Checked in three places: `src/proxy.ts` (every page, rewrites to `/forbidden`), every Server Action
-  (`requirePermission`; a test fails when one doesn't), and the sidebar / home page (hide what can't be opened).
+- `src/lib/permissions.ts` (pure): `statement` (each resource and its actions: `view` / `edit`, plus `grades.manage`
+  to lock bimesters and edit locked and C / EX / A grades) and `roles` (`admin`, `user`, `secretaria`,
+  `coordenacao`, `professor`). `user.role` holds one or more roles, comma-separated; their permissions add up.
+  Admins assign them on `/employees` (`setUserRoles()`, `auth.api.setRole`).
+- `src/lib/authorization.ts`: `hasPermission(resource, action)`, `requirePermission(resource, action)` (first line
+  of every page and Server Action) and `requireAdmin()` (employees, logins, roles).
+- The proxy checks only the session. The sidebar hides `NAV` items whose `[resource, action]` the user lacks.
 
 Every function and the order they run in for one request: [docs/permissions.md](docs/permissions.md).
 
