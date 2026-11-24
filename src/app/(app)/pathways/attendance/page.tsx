@@ -47,14 +47,23 @@ export default async function StudentAttendancePage({ searchParams }: PageProps<
           ]}
         />
       </Suspense>
-      {enrollmentId && bimester ? <Report enrollmentId={enrollmentId} bimester={bimester} /> : <p className="text-gray-500">Selecione um aluno e um bimestre para ver a frequência.</p>}
+      {enrollmentId && bimester ? (
+        <Report enrollmentId={enrollmentId} bimester={bimester} />
+      ) : (
+        <p className="text-gray-500">Selecione um aluno e um bimestre para ver a frequência.</p>
+      )}
     </div>
   );
 }
 
 async function Report({ enrollmentId, bimester }: { enrollmentId: number; bimester: number }) {
   const [[e], workload] = await Promise.all([
-    db.select({ y: year }).from(enrollment).innerJoin(enrollmentType, eq(enrollment.enrollmentTypeId, enrollmentType.id)).innerJoin(year, eq(enrollmentType.schoolYearId, year.id)).where(eq(enrollment.id, enrollmentId)),
+    db
+      .select({ y: year })
+      .from(enrollment)
+      .innerJoin(enrollmentType, eq(enrollment.enrollmentTypeId, enrollmentType.id))
+      .innerJoin(year, eq(enrollmentType.schoolYearId, year.id))
+      .where(eq(enrollment.id, enrollmentId)),
     enrollmentWorkload(enrollmentId),
   ]);
   const range = bimesterRange(e.y, bimester);
@@ -68,28 +77,58 @@ async function Report({ enrollmentId, bimester }: { enrollmentId: number; bimest
     return (
       <>
         <p className="text-gray-500">
-          O ano letivo deste aluno não tem as datas deste bimestre. <Link className="text-primary-600 hover:underline" href={`/enrollments/school-years/${e.y.id}/edit`}>Cadastre as datas do bimestre</Link>.
+          O ano letivo deste aluno não tem as datas deste bimestre.{" "}
+          <Link className="text-primary-600 hover:underline" href={`/enrollments/school-years/${e.y.id}/edit`}>
+            Cadastre as datas do bimestre
+          </Link>
+          .
         </p>
         {footer}
       </>
     );
   const [begins, ends] = range;
   const rows = await db
-    .select({ id: member.id, pathway: pathway.name, name: offering.name, year: sql<number>`(select extract(year from y.begins)::int from enrollments_schoolyear y where y.id = ${offering.schoolYearId})`, ...attendanceCounts(begins, ends) })
+    .select({
+      id: member.id,
+      pathway: pathway.name,
+      name: offering.name,
+      year: sql<number>`(select extract(year from y.begins)::int from enrollments_schoolyear y where y.id = ${offering.schoolYearId})`,
+      ...attendanceCounts(begins, ends),
+    })
     .from(member)
     .innerJoin(offering, eq(member.offeringId, offering.id))
     .innerJoin(pathway, eq(offering.pathwayId, pathway.id))
-    .where(and(eq(member.enrollmentId, enrollmentId), lte(member.joinedAt, ends), or(isNull(member.leftAt), gte(member.leftAt, begins))))
+    .where(
+      and(
+        eq(member.enrollmentId, enrollmentId),
+        lte(member.joinedAt, ends),
+        or(isNull(member.leftAt), gte(member.leftAt, begins)),
+      ),
+    )
     .orderBy(asc(pathway.name), asc(offering.name));
   const missed = rows.length
     ? await db
         .select({ id: attendance.pathwayEnrollmentId, status: attendance.status, date: session.date })
         .from(attendance)
         .innerJoin(session, eq(attendance.sessionId, session.id))
-        .where(and(inArray(attendance.pathwayEnrollmentId, rows.map((r) => r.id)), inArray(attendance.status, ["F", "J"]), gte(session.date, begins), lte(session.date, ends)))
+        .where(
+          and(
+            inArray(
+              attendance.pathwayEnrollmentId,
+              rows.map((r) => r.id),
+            ),
+            inArray(attendance.status, ["F", "J"]),
+            gte(session.date, begins),
+            lte(session.date, ends),
+          ),
+        )
         .orderBy(asc(session.date))
     : [];
-  const days = (id: number, status: string) => missed.filter((m) => m.id === id && m.status === status).map((m) => formatDate(m.date)).join(", ") || "-";
+  const days = (id: number, status: string) =>
+    missed
+      .filter((m) => m.id === id && m.status === status)
+      .map((m) => formatDate(m.date))
+      .join(", ") || "-";
   return (
     <>
       <p className="text-sm text-gray-500">

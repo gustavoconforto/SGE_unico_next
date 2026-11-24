@@ -20,7 +20,8 @@ export async function saveSubject(id: number | null, _prev: FormState, formData:
     if (id === null) await db.insert(subject).values(data);
     else await db.update(subject).set(data).where(eq(subject.id, id));
   } catch (error) {
-    if (pgErrorCode(error) === UNIQUE_VIOLATION) return { errors: { name: ["Matéria com este nome já existe."] }, values };
+    if (pgErrorCode(error) === UNIQUE_VIOLATION)
+      return { errors: { name: ["Matéria com este nome já existe."] }, values };
     throw error;
   }
   redirect(`/grades/subjects?msg=${id === null ? "created" : "updated"}`);

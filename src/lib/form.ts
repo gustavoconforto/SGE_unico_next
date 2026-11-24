@@ -11,7 +11,8 @@ export const INVALID_CHOICE = "Esta opção não está mais disponível. Escolha
 export const maxLen = (n: number) => `Use no máximo ${n} caracteres.`;
 
 /** Required text, trimmed like Django's CharField. */
-export const requiredText = (max: number) => z.string({ error: REQUIRED }).trim().min(1, REQUIRED).max(max, maxLen(max));
+export const requiredText = (max: number) =>
+  z.string({ error: REQUIRED }).trim().min(1, REQUIRED).max(max, maxLen(max));
 /** Optional text: Django stores blank CharFields as "". */
 export const optionalText = (max: number) => z.string().trim().max(max, maxLen(max)).default("");
 /** Optional <input type=number>: "" becomes null. */
@@ -36,7 +37,9 @@ export const optionalForeignKey = z
   .transform((v) => (v ? Number(v) : null))
   .refine((v) => v === null || (Number.isSafeInteger(v) && v > 0), "Selecione uma opção válida.");
 /** Ids ticked in a group of checkboxes (or a multi-select), deduplicated; anything not a number is dropped. */
-export const formIds = (formData: FormData, name: string) => [...new Set(formData.getAll(name).map(Number).filter(Number.isSafeInteger))];
+export const formIds = (formData: FormData, name: string) => [
+  ...new Set(formData.getAll(name).map(Number).filter(Number.isSafeInteger)),
+];
 /** HTML checkbox: present means checked. */
 export const checkbox = z.preprocess((v) => v === "on" || v === "true", z.boolean());
 
@@ -51,7 +54,10 @@ export function parseForm<S extends z.ZodType>(schema: S, formData: FormData) {
   const values = formValues(formData);
   const parsed = schema.safeParse(values);
   if (parsed.success) return { data: parsed.data as z.output<S>, values };
-  return { values, state: { errors: z.flattenError(parsed.error).fieldErrors as FormErrors, values } satisfies FormState };
+  return {
+    values,
+    state: { errors: z.flattenError(parsed.error).fieldErrors as FormErrors, values } satisfies FormState,
+  };
 }
 
 const DECIMAL_ERROR = "Informe um número válido.";

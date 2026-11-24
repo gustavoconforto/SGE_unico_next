@@ -19,7 +19,14 @@ export default async function ClassListPage({ searchParams }: PageProps<"/classe
   const page = pageParam(sp);
   const from = () =>
     db
-      .select({ id: klass.id, yearId: klass.yearId, name: klass.name, gradeLevel: klass.gradeLevel, program: program.name, year: yearLabel })
+      .select({
+        id: klass.id,
+        yearId: klass.yearId,
+        name: klass.name,
+        gradeLevel: klass.gradeLevel,
+        program: program.name,
+        year: yearLabel,
+      })
       .from(klass)
       .innerJoin(program, eq(klass.programId, program.id))
       .innerJoin(year, eq(klass.yearId, year.id));
@@ -39,7 +46,15 @@ export default async function ClassListPage({ searchParams }: PageProps<"/classe
 
   return (
     <div className="flex flex-col gap-4">
-      <ListPage title="Turmas" newHref="/classes/new" newLabel="Nova turma" searchPlaceholder="Pesquisar por turma, curso ou ano..." headers={["Curso", "Ano", "Série", "Nome", "Alunos"]} page={page} total={total}>
+      <ListPage
+        title="Turmas"
+        newHref="/classes/new"
+        newLabel="Nova turma"
+        searchPlaceholder="Pesquisar por turma, curso ou ano..."
+        headers={["Curso", "Ano", "Série", "Nome", "Alunos"]}
+        page={page}
+        total={total}
+      >
         {rows.map((c) => (
           <ListRow
             key={c.id}
@@ -48,7 +63,11 @@ export default async function ClassListPage({ searchParams }: PageProps<"/classe
               c.year,
               c.gradeLevel ?? "—",
               c.name,
-              <Link key="students" href={`/classes/detail?school_year=${c.yearId}&school_class=${c.id}`} className="text-primary-700 underline-offset-2 hover:underline">
+              <Link
+                key="students"
+                href={`/classes/detail?school_year=${c.yearId}&school_class=${c.id}`}
+                className="text-primary-700 underline-offset-2 hover:underline"
+              >
                 Ver alunos
               </Link>,
             ]}
@@ -59,7 +78,9 @@ export default async function ClassListPage({ searchParams }: PageProps<"/classe
         ))}
       </ListPage>
       <div>
-        <LinkButton href="/classes/detail" color="alternative">Alunos da turma</LinkButton>
+        <LinkButton href="/classes/detail" color="alternative">
+          Alunos da turma
+        </LinkButton>
       </div>
     </div>
   );

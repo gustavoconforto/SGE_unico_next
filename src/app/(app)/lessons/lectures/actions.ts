@@ -7,7 +7,16 @@ import { db } from "@/db";
 import { lessonsLecture as lecture } from "@/db/schema/app";
 import { deleteAndRedirect } from "@/lib/crud";
 import { UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
-import { type FormErrors, type FormState, foreignKey, formValues, intField, parseForm, requiredDate, requiredText } from "@/lib/form";
+import {
+  type FormErrors,
+  type FormState,
+  foreignKey,
+  formValues,
+  intField,
+  parseForm,
+  requiredDate,
+  requiredText,
+} from "@/lib/form";
 import { isoWeekday } from "@/lib/dates";
 import { lectureDateError, periodError, weekdayPeriods } from "@/lib/lessons";
 import { requirePermission } from "@/lib/authorization";
@@ -15,11 +24,19 @@ import { type LevelSubject, type SeriesClass, lectureTeacherIds, levelSubjects, 
 
 const PERIOD_TAKEN = "Já existe uma aula desta turma nesta data e horário.";
 // Two people saved the same class and day at once (unique_lecture)
-const TAKEN_BY_ANOTHER = "Outra pessoa acabou de salvar aulas desta turma neste dia. Recarregue a página e confira. Nenhuma aula foi salva.";
+const TAKEN_BY_ANOTHER =
+  "Outra pessoa acabou de salvar aulas desta turma neste dia. Recarregue a página e confira. Nenhuma aula foi salva.";
 
 /** Lecture.clean(): date in the class's year and Monday–Saturday, a period the weekday has, the series'
  * subject, and a teacher of it (or of its department, as a substitute). Field → message. */
-async function lectureErrors(c: SeriesClass, subjects: LevelSubject[], date: string, period: number, subjectId: number, teacherId: number) {
+async function lectureErrors(
+  c: SeriesClass,
+  subjects: LevelSubject[],
+  date: string,
+  period: number,
+  subjectId: number,
+  teacherId: number,
+) {
   const errors: Record<string, string> = {};
   const dateError = lectureDateError(date, c.begins, c.ends);
   if (dateError) errors.date = dateError;
@@ -27,20 +44,30 @@ async function lectureErrors(c: SeriesClass, subjects: LevelSubject[], date: str
   if (pError) errors.period = pError;
   const s = subjects.find((x) => x.id === subjectId);
   if (!s) errors.subject = "Esta matéria não é oferecida na série da turma.";
-  else if (!(await lectureTeacherIds(s)).has(teacherId)) errors.teacher = "Este professor não é do departamento da matéria.";
+  else if (!(await lectureTeacherIds(s)).has(teacherId))
+    errors.teacher = "Este professor não é do departamento da matéria.";
   return errors;
 }
 
 /** The class's lectures on a date (LectureDayForm): rows with a topic are kept, clearing it deletes the lecture. */
-export async function saveLectureDay(classId: number, date: string, _prev: FormState, formData: FormData): Promise<FormState> {
+export async function saveLectureDay(
+  classId: number,
+  date: string,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
   await requirePermission("lessons", "edit");
   const c = await seriesClass(classId);
-  if (!c || lectureDateError(date, c.begins, c.ends)) redirect(`/lessons/lectures/day?school_class=${classId}&date=${date}`);
+  if (!c || lectureDateError(date, c.begins, c.ends))
+    redirect(`/lessons/lectures/day?school_class=${classId}&date=${date}`);
   const values = formValues(formData);
   const errors: FormErrors = {};
   // The series' subjects once, not once per period
   const [existing, subjects] = await Promise.all([
-    db.select().from(lecture).where(and(eq(lecture.schoolClassId, classId), eq(lecture.date, date))),
+    db
+      .select()
+      .from(lecture)
+      .where(and(eq(lecture.schoolClassId, classId), eq(lecture.date, date))),
     levelSubjects(c.gradeLevel),
   ]);
   const removed: number[] = [];
@@ -62,13 +89,26 @@ export async function saveLectureDay(classId: number, date: string, _prev: FormS
     for (const [field, message] of Object.entries(rowErrors)) errors[`${field}_${period}`] = [message];
     if (!Object.keys(rowErrors).length) changed.push({ id: saved?.id, period, subjectId, teacherId, topic });
   }
-  if (Object.keys(errors).length) return { errors, values, formError: "Corrija as aulas destacadas. Nenhuma aula foi salva." };
+  if (Object.keys(errors).length)
+    return { errors, values, formError: "Corrija as aulas destacadas. Nenhuma aula foi salva." };
   try {
     await db.transaction(async (tx) => {
       for (const id of removed) await tx.delete(lecture).where(eq(lecture.id, id));
       for (const l of changed) {
-        if (l.id) await tx.update(lecture).set({ subjectId: l.subjectId, teacherId: l.teacherId, topic: l.topic }).where(eq(lecture.id, l.id));
-        else await tx.insert(lecture).values({ schoolClassId: classId, date, period: l.period, subjectId: l.subjectId, teacherId: l.teacherId, topic: l.topic });
+        if (l.id)
+          await tx
+            .update(lecture)
+            .set({ subjectId: l.subjectId, teacherId: l.teacherId, topic: l.topic })
+            .where(eq(lecture.id, l.id));
+        else
+          await tx.insert(lecture).values({
+            schoolClassId: classId,
+            date,
+            period: l.period,
+            subjectId: l.subjectId,
+            teacherId: l.teacherId,
+            topic: l.topic,
+          });
       }
     });
   } catch (error) {
@@ -78,7 +118,13 @@ export async function saveLectureDay(classId: number, date: string, _prev: FormS
   redirect(`/lessons/lectures/day?school_class=${classId}&date=${date}&msg=updated`);
 }
 
-const lectureSchema = z.object({ date: requiredDate, period: intField(1, 12), subjectId: foreignKey, teacherId: foreignKey, topic: requiredText(200) });
+const lectureSchema = z.object({
+  date: requiredDate,
+  period: intField(1, 12),
+  subjectId: foreignKey,
+  teacherId: foreignKey,
+  topic: requiredText(200),
+});
 
 /** One lecture; the class stays (new lectures come from the day sheet). */
 export async function updateLecture(id: number, _prev: FormState, formData: FormData): Promise<FormState> {
@@ -90,9 +136,21 @@ export async function updateLecture(id: number, _prev: FormState, formData: Form
   const c = await seriesClass(current.schoolClassId);
   if (!c) redirect("/lessons/lectures");
   const errors = Object.fromEntries(
-    Object.entries(await lectureErrors(c, await levelSubjects(c.gradeLevel), data.date, data.period, data.subjectId, data.teacherId)).map(([f, m]) => [{ subject: "subjectId", teacher: "teacherId" }[f] ?? f, [m]]),
+    Object.entries(
+      await lectureErrors(c, await levelSubjects(c.gradeLevel), data.date, data.period, data.subjectId, data.teacherId),
+    ).map(([f, m]) => [{ subject: "subjectId", teacher: "teacherId" }[f] ?? f, [m]]),
   );
-  const [taken] = await db.select({ id: lecture.id }).from(lecture).where(and(eq(lecture.schoolClassId, current.schoolClassId), eq(lecture.date, data.date), eq(lecture.period, data.period), ne(lecture.id, id)));
+  const [taken] = await db
+    .select({ id: lecture.id })
+    .from(lecture)
+    .where(
+      and(
+        eq(lecture.schoolClassId, current.schoolClassId),
+        eq(lecture.date, data.date),
+        eq(lecture.period, data.period),
+        ne(lecture.id, id),
+      ),
+    );
   if (taken) errors.period = [PERIOD_TAKEN];
   if (Object.keys(errors).length) return { errors, values };
   try {

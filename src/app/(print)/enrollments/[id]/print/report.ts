@@ -25,7 +25,10 @@ export async function loadEnrollmentReport(id: number) {
   const e = row.e;
   const [[pupil], [type], [cls], links, documents, installments] = await Promise.all([
     db.select().from(student).where(eq(student.id, e.studentId)),
-    db.select({ startDate: enrollmentType.startDate, endDate: enrollmentType.endDate }).from(enrollmentType).where(eq(enrollmentType.id, e.enrollmentTypeId)),
+    db
+      .select({ startDate: enrollmentType.startDate, endDate: enrollmentType.endDate })
+      .from(enrollmentType)
+      .where(eq(enrollmentType.id, e.enrollmentTypeId)),
     e.schoolClassId ? db.select().from(klass).where(eq(klass.id, e.schoolClassId)) : Promise.resolve([]),
     db
       .select({ relationship: guardianLink.relationship, person: guardian })
@@ -41,7 +44,12 @@ export async function loadEnrollmentReport(id: number) {
       .orderBy(asc(documentType.description)),
     // The installments actually billed, not a 1/12 estimate
     db
-      .select({ id: installment.id, number: installment.number, dueDate: installment.dueDate, amount: installment.amount })
+      .select({
+        id: installment.id,
+        number: installment.number,
+        dueDate: installment.dueDate,
+        amount: installment.amount,
+      })
       .from(installment)
       .innerJoin(account, eq(installment.accountId, account.id))
       .where(eq(account.enrollmentId, id))
@@ -56,7 +64,9 @@ export async function loadEnrollmentReport(id: number) {
   }
   // A dict keyed by relationship in Django: the last link wins
   const parent = (code: string) => links.findLast((l) => l.relationship === code)?.person ?? null;
-  const values = e.grossValue ? contractValues(e.grossValue, e.firstDiscountPercent ?? 0, e.remainingDiscountPercent ?? 0) : null;
+  const values = e.grossValue
+    ? contractValues(e.grossValue, e.firstDiscountPercent ?? 0, e.remainingDiscountPercent ?? 0)
+    : null;
 
   return {
     enrollment: e,

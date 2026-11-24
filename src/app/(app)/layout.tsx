@@ -9,7 +9,10 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-screen">
       {/* First Tab stop: past the ~40 menu links straight to the page */}
-      <a href="#main" className="fixed top-2 left-2 z-50 -translate-y-20 rounded-lg bg-white px-4 py-2 text-sm font-medium shadow focus:translate-y-0">
+      <a
+        href="#main"
+        className="fixed top-2 left-2 z-50 -translate-y-20 rounded-lg bg-white px-4 py-2 text-sm font-medium shadow focus:translate-y-0"
+      >
         Pular para o conteúdo
       </a>
       <Suspense>

@@ -4,7 +4,20 @@ import { formatZipCode } from "./format";
 /** Class shift as written in the requerimento ("no período matutino"). */
 export const SHIFT_PERIODS: Record<string, string> = { M: "matutino", T: "vespertino", N: "noturno", I: "integral" };
 
-const MONTHS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+const MONTHS = [
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
+];
 
 /** "2026-11-07" → "7 de novembro de 2026" (Django's `j \d\e F \d\e Y|lower`). */
 export function longDate(iso: string): string {
@@ -13,7 +26,8 @@ export function longDate(iso: string): string {
 }
 
 /** Series printed as "{grade}ª Série": the class's grade level, else the contract's level. */
-export const reportGrade = (classGradeLevel: number | null | undefined, level: string) => String(classGradeLevel ?? level);
+export const reportGrade = (classGradeLevel: number | null | undefined, level: string) =>
+  String(classGradeLevel ?? level);
 
 type Address = { address: string; neighborhood: string; city: string; state: string; zipCode: string };
 

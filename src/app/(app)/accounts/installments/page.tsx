@@ -17,7 +17,17 @@ import {
   studentsGuardian as guardian,
   studentsStudent as student,
 } from "@/db/schema/app";
-import { DIRECTIONS, INSTALLMENT_STATUSES, InstallmentStatus, PENDING_STATUSES, formatDate, formatMoney, isOverdue, label, today } from "@/lib/finance";
+import {
+  DIRECTIONS,
+  INSTALLMENT_STATUSES,
+  InstallmentStatus,
+  PENDING_STATUSES,
+  formatDate,
+  formatMoney,
+  isOverdue,
+  label,
+  today,
+} from "@/lib/finance";
 import { outstandingSql } from "@/lib/finance-db";
 import { PAGE_SIZE, pageParam, param, searchWhere, sortParam } from "@/lib/list";
 import { kindOf } from "../kinds";
@@ -46,7 +56,13 @@ export default async function InstallmentListPage({ searchParams }: PageProps<"/
           ? eq(installment.status, status)
           : undefined;
   const where = and(
-    searchWhere(param(sp, "q"), [account.description, guardian.name, supplier.name, student.name, student.registration]),
+    searchWhere(param(sp, "q"), [
+      account.description,
+      guardian.name,
+      supplier.name,
+      student.name,
+      student.registration,
+    ]),
     ["R", "P"].includes(direction) ? eq(account.direction, direction) : undefined,
     statusWhere,
     DATE_RE.test(from) ? gte(installment.dueDate, from) : undefined,
@@ -79,7 +95,11 @@ export default async function InstallmentListPage({ searchParams }: PageProps<"/
     sql<string>`coalesce(sum(${expr}) filter (where ${account.direction} = ${dir}${paidOnly ? sql` and ${installment.status} = 'Q'` : sql``}), 0)`;
   const [rows, [{ total }], [totals]] = await Promise.all([
     base
-      .orderBy(...(sort ? [sort.order, asc(installment.id)] : [asc(installment.dueDate), asc(account.description), asc(installment.number)]))
+      .orderBy(
+        ...(sort
+          ? [sort.order, asc(installment.id)]
+          : [asc(installment.dueDate), asc(account.description), asc(installment.number)]),
+      )
       .limit(PAGE_SIZE)
       .offset((page - 1) * PAGE_SIZE),
     db
@@ -119,7 +139,16 @@ export default async function InstallmentListPage({ searchParams }: PageProps<"/
     ...(direction !== "R" && showPaid ? [["Pago", totals.payablePaid, totals.payableAmount]] : []),
   ];
   const showDirection = !["R", "P"].includes(direction);
-  const headers = ["Vencimento", ...(showDirection ? ["Natureza"] : []), "Conta", "Parcela", "Responsável / Fornecedor", "Valor", "Faltante", "Situação"];
+  const headers = [
+    "Vencimento",
+    ...(showDirection ? ["Natureza"] : []),
+    "Conta",
+    "Parcela",
+    "Responsável / Fornecedor",
+    "Valor",
+    "Faltante",
+    "Situação",
+  ];
   const col = (header: string) => headers.indexOf(header);
 
   return (
@@ -137,12 +166,16 @@ export default async function InstallmentListPage({ searchParams }: PageProps<"/
         </>
       }
       summary={
-        <dl aria-label="Totais das parcelas filtradas" className="flex flex-wrap gap-x-8 gap-y-2 rounded-lg border border-gray-200 bg-white px-4 py-3">
+        <dl
+          aria-label="Totais das parcelas filtradas"
+          className="flex flex-wrap gap-x-8 gap-y-2 rounded-lg border border-gray-200 bg-white px-4 py-3"
+        >
           {totalRows.map(([title, value, of]) => (
             <div key={title}>
               <dt className="text-xs text-gray-600">{title}</dt>
               <dd className="tabular-nums">
-                <span className="font-semibold">R$ {formatMoney(value)}</span> <span className="text-xs text-gray-600">de R$ {formatMoney(of)}</span>
+                <span className="font-semibold">R$ {formatMoney(value)}</span>{" "}
+                <span className="text-xs text-gray-600">de R$ {formatMoney(of)}</span>
               </dd>
             </div>
           ))}
@@ -168,7 +201,10 @@ export default async function InstallmentListPage({ searchParams }: PageProps<"/
             </TableCell>
           )}
           <TableCell className={PRIMARY_CELL}>
-            <Link href={`/accounts/${kindOf(i.direction)}/${i.accountId}/edit`} className="underline-offset-2 hover:text-primary-700 hover:underline">
+            <Link
+              href={`/accounts/${kindOf(i.direction)}/${i.accountId}/edit`}
+              className="underline-offset-2 hover:text-primary-700 hover:underline"
+            >
               <AccountName text={i.description} />
             </Link>
           </TableCell>
@@ -203,13 +239,27 @@ export default async function InstallmentListPage({ searchParams }: PageProps<"/
           <TableCell className={ACTIONS_CELL}>
             <div className="flex gap-2 whitespace-nowrap">
               {PENDING_STATUSES.includes(i.status) && (
-                <LinkButton href={`/accounts/payments/new?installment=${i.id}`} size="xs" color="alternative" className="px-2" aria-label={`Registrar baixa da parcela ${i.number} de ${i.description}`} data-tip="Registrar baixa">
+                <LinkButton
+                  href={`/accounts/payments/new?installment=${i.id}`}
+                  size="xs"
+                  color="alternative"
+                  className="px-2"
+                  aria-label={`Registrar baixa da parcela ${i.number} de ${i.description}`}
+                  data-tip="Registrar baixa"
+                >
                   <span className="material-symbols-outlined" aria-hidden="true">
                     price_check
                   </span>
                 </LinkButton>
               )}
-              <LinkButton href={`/accounts/${kindOf(i.direction)}/${i.accountId}/edit`} size="xs" color="alternative" className="px-2" aria-label={`Abrir a conta ${i.description}`} data-tip="Abrir conta">
+              <LinkButton
+                href={`/accounts/${kindOf(i.direction)}/${i.accountId}/edit`}
+                size="xs"
+                color="alternative"
+                className="px-2"
+                aria-label={`Abrir a conta ${i.description}`}
+                data-tip="Abrir conta"
+              >
                 <span className="material-symbols-outlined" aria-hidden="true">
                   open_in_new
                 </span>

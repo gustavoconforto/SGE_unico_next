@@ -23,7 +23,10 @@ export default async function EnrollmentListPage({ searchParams }: PageProps<"/e
   await requirePermission("enrollments", "view");
   const sp = await searchParams;
   const yearId = Number(param(sp, "school_year")) || null;
-  const where = and(searchWhere(param(sp, "q"), [student.name, student.socialName, student.registration, klass.name, program.name]), yearId ? eq(enrollmentType.schoolYearId, yearId) : undefined);
+  const where = and(
+    searchWhere(param(sp, "q"), [student.name, student.socialName, student.registration, klass.name, program.name]),
+    yearId ? eq(enrollmentType.schoolYearId, yearId) : undefined,
+  );
   const page = pageParam(sp);
   const base = () =>
     db

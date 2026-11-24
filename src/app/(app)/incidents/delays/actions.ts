@@ -19,7 +19,8 @@ export async function saveRecord(id: number | null, _prev: FormState, formData: 
   if (!data) return state;
   const [current] = id ? await db.select({ enrollmentId: t.enrollmentId }).from(t).where(eq(t.id, id)) : [];
   // Only active enrollments, or the one the record already has (ActiveEnrollmentFormMixin)
-  if (!(await enrollmentAllowed(data.enrollmentId, current?.enrollmentId))) return { errors: INVALID_ENROLLMENT, values };
+  if (!(await enrollmentAllowed(data.enrollmentId, current?.enrollmentId)))
+    return { errors: INVALID_ENROLLMENT, values };
   if (id === null) {
     const [row] = await db.insert(t).values(data).returning({ id: t.id });
     const next = anotherUrl("/incidents/delays/new", formData, ["delayType", "incidentDate"], row.id);

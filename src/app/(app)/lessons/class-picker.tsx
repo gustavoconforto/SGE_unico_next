@@ -4,7 +4,17 @@ import { Label, Select, TextInput } from "flowbite-react";
 import { useRouter } from "next/navigation";
 
 /** Class (and optionally date) in the query string. */
-export function ClassDatePicker({ classes, classId, date, withDate = false }: { classes: [number, string][]; classId: number | null; date?: string; withDate?: boolean }) {
+export function ClassDatePicker({
+  classes,
+  classId,
+  date,
+  withDate = false,
+}: {
+  classes: [number, string][];
+  classId: number | null;
+  date?: string;
+  withDate?: boolean;
+}) {
   const router = useRouter();
   const go = (c: number | null, d?: string) => {
     const p = new URLSearchParams();

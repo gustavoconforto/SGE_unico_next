@@ -25,7 +25,8 @@ export async function saveCategory(id: number | null, _prev: FormState, formData
     if (id === null) await db.insert(accountType).values(fields as { name: string; direction: string });
     else await db.update(accountType).set(fields).where(eq(accountType.id, id));
   } catch (error) {
-    if (pgErrorCode(error) === UNIQUE_VIOLATION) return { errors: { name: ["Categoria financeira com este Nome já existe."] }, values };
+    if (pgErrorCode(error) === UNIQUE_VIOLATION)
+      return { errors: { name: ["Categoria financeira com este Nome já existe."] }, values };
     throw error;
   }
   redirect(`/accounts/categories?msg=${id === null ? "created" : "updated"}`);
@@ -33,5 +34,9 @@ export async function saveCategory(id: number | null, _prev: FormState, formData
 
 export async function deleteCategory(id: number) {
   await requirePermission("finance", "edit");
-  await deleteAndRedirect(() => db.delete(accountType).where(eq(accountType.id, id)), "/accounts/categories", "category_protected");
+  await deleteAndRedirect(
+    () => db.delete(accountType).where(eq(accountType.id, id)),
+    "/accounts/categories",
+    "category_protected",
+  );
 }

@@ -25,8 +25,15 @@ export async function saveExamType(id: number | null, _prev: FormState, formData
   // The kind decides where saved grades count (a bimester, the recovery, an adjustment): changing it would move them silently
   if (id !== null) {
     const [current] = await db.select({ kind: examType.kind }).from(examType).where(eq(examType.id, id));
-    const [used] = current && current.kind !== data.kind ? await db.select({ id: grade.id }).from(grade).where(eq(grade.examTypeId, id)).limit(1) : [];
-    if (used) return { errors: { kind: ["Este tipo de avaliação já tem notas lançadas, então o tipo não pode mudar."] }, values };
+    const [used] =
+      current && current.kind !== data.kind
+        ? await db.select({ id: grade.id }).from(grade).where(eq(grade.examTypeId, id)).limit(1)
+        : [];
+    if (used)
+      return {
+        errors: { kind: ["Este tipo de avaliação já tem notas lançadas, então o tipo não pode mudar."] },
+        values,
+      };
   }
   try {
     if (id === null) await db.insert(examType).values(data);

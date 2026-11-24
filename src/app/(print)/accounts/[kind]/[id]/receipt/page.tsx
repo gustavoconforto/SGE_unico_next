@@ -12,7 +12,17 @@ import {
   studentsGuardian as guardian,
   studentsStudent as student,
 } from "@/db/schema/app";
-import { PAYMENT_METHODS, ZERO, formatDate, formatMoney, installmentBalance, label, money, principal, today } from "@/lib/finance";
+import {
+  PAYMENT_METHODS,
+  ZERO,
+  formatDate,
+  formatMoney,
+  installmentBalance,
+  label,
+  money,
+  principal,
+  today,
+} from "@/lib/finance";
 import { amountInWords, formatDocument } from "@/lib/format";
 import { idParam, param } from "@/lib/list";
 import { enrollmentTypeLabel, getEnrollment } from "../../../../../(app)/enrollments/data";
@@ -40,12 +50,21 @@ export default async function ReceiptPage({ params, searchParams }: PageProps<"/
   let only: typeof installment.$inferSelect | undefined;
   if (installmentParam) {
     if (!/^\d+$/.test(installmentParam)) notFound();
-    [only] = await db.select().from(installment).where(and(eq(installment.id, Number(installmentParam)), eq(installment.accountId, id)));
+    [only] = await db
+      .select()
+      .from(installment)
+      .where(and(eq(installment.id, Number(installmentParam)), eq(installment.accountId, id)));
     if (!only) notFound();
   }
 
   const payments = await db
-    .select({ p: payment, number: installment.number, dueDate: installment.dueDate, installmentAmount: installment.amount, installmentStatus: installment.status })
+    .select({
+      p: payment,
+      number: installment.number,
+      dueDate: installment.dueDate,
+      installmentAmount: installment.amount,
+      installmentStatus: installment.status,
+    })
     .from(payment)
     .innerJoin(installment, eq(payment.installmentId, installment.id))
     .where(and(eq(installment.accountId, id), only ? eq(installment.id, only.id) : undefined))
@@ -87,9 +106,13 @@ export default async function ReceiptPage({ params, searchParams }: PageProps<"/
             {/* eslint-disable-next-line @next/next/no-img-element -- print page */}
             <img src="/img/Logo_light.png" alt="Único Educacional" className="h-16 w-auto" />
           </header>
-          <h1 className="border-b border-gray-900 bg-gray-200 p-1 text-center font-sans text-[16pt] font-bold">COMPROVANTE DE PAGAMENTO (RECIBO)</h1>
+          <h1 className="border-b border-gray-900 bg-gray-200 p-1 text-center font-sans text-[16pt] font-bold">
+            COMPROVANTE DE PAGAMENTO (RECIBO)
+          </h1>
           <section className="border-b border-gray-900 px-2 py-1.5">
-            <p className="mb-1.5 font-bold">{receivable ? "Recebemos do(s) responsável(eis) abaixo:" : "Pagamos ao fornecedor abaixo:"}</p>
+            <p className="mb-1.5 font-bold">
+              {receivable ? "Recebemos do(s) responsável(eis) abaixo:" : "Pagamos ao fornecedor abaixo:"}
+            </p>
             <table>
               <tbody>
                 <tr className="text-[15pt] font-bold">
@@ -134,7 +157,11 @@ export default async function ReceiptPage({ params, searchParams }: PageProps<"/
               {contract ? (
                 <p className="border-b border-gray-900 px-2 py-0.5 text-[12pt] font-bold">{`${contract.studentName} - ${enrollmentTypeLabel(contract.program, contract.level, contract.schoolYear)}`}</p>
               ) : (
-                s && <p className="border-b border-gray-900 px-2 py-0.5 text-[12pt] font-bold">Aluno(a): {s.useSocialName && s.socialName ? s.socialName : s.name}</p>
+                s && (
+                  <p className="border-b border-gray-900 px-2 py-0.5 text-[12pt] font-bold">
+                    Aluno(a): {s.useSocialName && s.socialName ? s.socialName : s.name}
+                  </p>
+                )
               )}
               {payer && (
                 <>
@@ -161,7 +188,19 @@ export default async function ReceiptPage({ params, searchParams }: PageProps<"/
           <table className="w-full border-collapse text-right">
             <thead>
               <tr className="bg-gray-200 text-center">
-                {["Parcela", "Vencimento", "Pagamento", "Valor", "Multa", "Juros", "Desconto", "Correção", "Vlr Pago", "Saldo", "Finalidade"].map((h) => (
+                {[
+                  "Parcela",
+                  "Vencimento",
+                  "Pagamento",
+                  "Valor",
+                  "Multa",
+                  "Juros",
+                  "Desconto",
+                  "Correção",
+                  "Vlr Pago",
+                  "Saldo",
+                  "Finalidade",
+                ].map((h) => (
                   <th key={h} className={cell}>
                     {h}
                   </th>
@@ -194,7 +233,14 @@ export default async function ReceiptPage({ params, searchParams }: PageProps<"/
             </tbody>
           </table>
           <p className="mx-2 mt-5 mb-16 text-right">
-            Brasília-DF, {new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${today()}T00:00:00Z`))}.
+            Brasília-DF,{" "}
+            {new Intl.DateTimeFormat("pt-BR", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+              timeZone: "UTC",
+            }).format(new Date(`${today()}T00:00:00Z`))}
+            .
           </p>
           <p className="mx-auto mb-4 w-1/2 border-t border-gray-900 pt-1 text-center">Departamento Financeiro</p>
         </div>

@@ -22,5 +22,8 @@ export async function saveRole(id: number | null, _prev: FormState, formData: Fo
 
 export async function deleteRole(id: number) {
   await requirePermission("employees", "edit");
-  await deleteAndRedirect(() => db.delete(employeesEmployeeroletype).where(eq(employeesEmployeeroletype.id, id)), "/employees/roles");
+  await deleteAndRedirect(
+    () => db.delete(employeesEmployeeroletype).where(eq(employeesEmployeeroletype.id, id)),
+    "/employees/roles",
+  );
 }

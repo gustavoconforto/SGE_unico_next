@@ -20,9 +20,17 @@ export type SheetState = FormState & { saved?: number; count?: number };
  * Saves a whole sheet: blank cells delete the grade; any invalid cell saves nothing. The page reloads in
  * place (no redirect) so a conflict can keep what the user typed next to the grades saved meanwhile.
  */
-export async function saveGradeSheet(selection: { query: string; classId: number; subjectId: number; period: number }, _prev: SheetState, formData: FormData): Promise<SheetState> {
+export async function saveGradeSheet(
+  selection: { query: string; classId: number; subjectId: number; period: number },
+  _prev: SheetState,
+  formData: FormData,
+): Promise<SheetState> {
   await requirePermission("grades", "edit");
-  const [sheet, staff, locks] = await Promise.all([loadSheet(selection.classId, selection.subjectId, selection.period), hasPermission("grades", "manage"), allLocks()]);
+  const [sheet, staff, locks] = await Promise.all([
+    loadSheet(selection.classId, selection.subjectId, selection.period),
+    hasPermission("grades", "manage"),
+    allLocks(),
+  ]);
   if (!sheet) redirect(`/grades/entry?${selection.query}`);
   const values = formValues(formData);
   const errors: FormErrors = {};
@@ -41,7 +49,8 @@ export async function saveGradeSheet(selection: { query: string; classId: number
       if ("error" in parsed) errors[name] = [parsed.error];
       else writes.push({ enrollmentId: row.id, examTypeId: t.id, score: parsed.score, savedId: row.saved[t.id]?.id });
     }
-  if (Object.keys(errors).length) return { errors, values, formError: "Corrija as notas destacadas. Nenhuma nota foi salva." };
+  if (Object.keys(errors).length)
+    return { errors, values, formError: "Corrija as notas destacadas. Nenhuma nota foi salva." };
 
   try {
     // Three statements for the whole sheet, not one per cell. A plain insert (no upsert) still reports SHEET_TAKEN.
@@ -53,12 +62,28 @@ export async function saveGradeSheet(selection: { query: string; classId: number
       if (changed.length)
         await tx
           .update(grade)
-          .set({ score: sql`(case ${grade.id} ${sql.join(changed.map((w) => sql`when ${w.savedId} then ${w.score}::numeric`), sql` `)} end)` })
-          .where(inArray(grade.id, changed.map((w) => w.savedId!)));
+          .set({
+            score: sql`(case ${grade.id} ${sql.join(
+              changed.map((w) => sql`when ${w.savedId} then ${w.score}::numeric`),
+              sql` `,
+            )} end)`,
+          })
+          .where(
+            inArray(
+              grade.id,
+              changed.map((w) => w.savedId!),
+            ),
+          );
       if (added.length)
-        await tx
-          .insert(grade)
-          .values(added.map((w) => ({ enrollmentId: w.enrollmentId, subjectId: selection.subjectId, examTypeId: w.examTypeId, bimester: selection.period, score: w.score! })));
+        await tx.insert(grade).values(
+          added.map((w) => ({
+            enrollmentId: w.enrollmentId,
+            subjectId: selection.subjectId,
+            examTypeId: w.examTypeId,
+            bimester: selection.period,
+            score: w.score!,
+          })),
+        );
     });
   } catch (error) {
     // Another save added the same grade a moment ago (unique_grade_per_exam)

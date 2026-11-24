@@ -69,6 +69,7 @@ never the reset or the seed; the migration goes in before the code that needs it
 - Add each migrated page to `NAV` in `src/components/app-sidebar.tsx` with the `[resource, action]` its page requires.
 
 ### Permissions (not in Django)
+
 - Better Auth Admin plugin roles (`statement` / `roles` in `src/lib/permissions.ts`); `user.role` holds one or more,
   assigned by admins on `/employees`. `admin` holds all; plain `user` holds none. The proxy checks only the session;
   every page and action calls `requirePermission()` (`src/lib/authorization.ts`). See docs/permissions.md.
@@ -79,6 +80,7 @@ Ported rules keep their Django names in camelCase; find them in the `src/lib/` m
 (Modules). Not migrated yet: bank slips (`billing`), users screens.
 
 ### Records
+
 - Fixed options are short codes (`"R"`, `"A"`, `"PIX"`) with Portuguese labels (`label(choices, code)`).
 - CPF/CNPJ/CEP are stored digits only.
 - Student records tied to a school year (grades, incidents, delays, bathroom permissions, Q&A sessions, pathway
@@ -86,6 +88,7 @@ Ported rules keep their Django names in camelCase; find them in the `src/lib/` m
   record's current one when editing).
 
 ### Finance
+
 - Receivable vs payable is `Account.direction` (`Direction` in `finance.ts`); screens go through
   `src/app/(app)/accounts/kinds.ts` (Django's receivable/payable proxies), never mix them.
 - A payment refreshes its installment's status (`refreshInstallmentStatus()`); don't set `Installment.status` by
@@ -101,6 +104,7 @@ Ported rules keep their Django names in camelCase; find them in the `src/lib/` m
   (movement `02`, confirmed by return `10`) before its installment gets a new slip.
 
 ### Grades
+
 - Only the exam scores (`Grade`) are stored; bimester grades, annual averages and final grades are computed per
   request with `grades.ts` (`bimesterGrade`, `finalAverage`, `finalGrade`, `passed`). `PASSING_GRADE` is 6.
 - The concept (`conceptGrades()`) and extra `EX` (`extraGrades()`) scores are calculated, not typed, then saved
@@ -112,6 +116,7 @@ Ported rules keep their Django names in camelCase; find them in the `src/lib/` m
   `gradeEditError()`; "staff" = holds `grades.manage`.
 
 ### Lessons
+
 - Lessons run Monday to Saturday: 12 periods a day Monday to Friday, 7 on Saturday. Build a day's periods with
   `weekdayPeriods(weekday)` from `src/lib/lessons.ts`, not `PERIODS` (which holds all 12), and validate with
   `periodError()`. The counts (`LECTURES_PER_DAY`, `SATURDAY_LECTURES`) also feed Django choices and constraints:

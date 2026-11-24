@@ -32,7 +32,22 @@ describe.skipIf(!local)("employee logins", () => {
 
   beforeAll(async () => {
     [{ id: roleId }] = await db.insert(role).values({ role: "test-login" }).returning({ id: role.id });
-    const blank = { sex: "M", cpf: "", rg: "", issuingAuthority: "", nationality: "", placeOfBirth: "", phone: "", mobile: "", email: "", address: "", neighborhood: "", city: "", state: "", zipCode: "" };
+    const blank = {
+      sex: "M",
+      cpf: "",
+      rg: "",
+      issuingAuthority: "",
+      nationality: "",
+      placeOfBirth: "",
+      phone: "",
+      mobile: "",
+      email: "",
+      address: "",
+      neighborhood: "",
+      city: "",
+      state: "",
+      zipCode: "",
+    };
     [{ id: employeeId }] = await db
       .insert(employee)
       .values({ ...blank, name: "Test Login", roleId, canAccessSuga: false, passwordSuga: "" })
@@ -45,7 +60,8 @@ describe.skipIf(!local)("employee logins", () => {
     await db.delete(role).where(eq(role.id, roleId));
   });
 
-  const flag = async (id: string) => (await db.select({ f: user.mustChangePassword }).from(user).where(eq(user.id, id)))[0].f;
+  const flag = async (id: string) =>
+    (await db.select({ f: user.mustChangePassword }).from(user).where(eq(user.id, id)))[0].f;
 
   it("creates a login that must change its password, and a reset signs it out", async () => {
     await applyLoginPlan("create", { id: employeeId, name: "Test Login" }, input, undefined);
@@ -55,8 +71,19 @@ describe.skipIf(!local)("employee logins", () => {
 
     // The employee changed the password and has a session; then an admin resets it (the roles picked on the list stay)
     await db.update(user).set({ mustChangePassword: false, role: "admin,secretaria" }).where(eq(user.id, login.id));
-    await db.insert(sessionTable).values({ id: `s-${username}`, token: `t-${username}`, userId: login.id, expiresAt: new Date(Date.now() + 3600_000), updatedAt: new Date() });
-    await applyLoginPlan("update", { id: employeeId, name: "Test Login" }, { ...input, password: "senha-nova-123" }, login);
+    await db.insert(sessionTable).values({
+      id: `s-${username}`,
+      token: `t-${username}`,
+      userId: login.id,
+      expiresAt: new Date(Date.now() + 3600_000),
+      updatedAt: new Date(),
+    });
+    await applyLoginPlan(
+      "update",
+      { id: employeeId, name: "Test Login" },
+      { ...input, password: "senha-nova-123" },
+      login,
+    );
     expect(await flag(login.id)).toBe(true);
     expect(await db.select().from(sessionTable).where(eq(sessionTable.userId, login.id))).toEqual([]);
     expect((await employeeLogin(employeeId))!.role).toBe("admin,secretaria");
@@ -90,7 +117,9 @@ describe("setUserRoles", () => {
     try {
       // A crafted form can't save a role that doesn't exist (nor an Object prototype key)
       expect(await run("other", form("secretaria", "superuser", "toString"))).toBe("REDIRECT /employees?msg=updated");
-      expect(setRole).toHaveBeenLastCalledWith(expect.objectContaining({ body: { userId: "other", role: ["secretaria"] } }));
+      expect(setRole).toHaveBeenLastCalledWith(
+        expect.objectContaining({ body: { userId: "other", role: ["secretaria"] } }),
+      );
       expect(await run("other", form())).toBe("REDIRECT /employees?msg=updated");
       expect(setRole).toHaveBeenLastCalledWith(expect.objectContaining({ body: { userId: "other", role: "user" } }));
 

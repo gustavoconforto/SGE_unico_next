@@ -33,7 +33,9 @@ export function ConceptControls({
   };
   const compute = () =>
     start(async () => {
-      setResult(mode === "all" ? await computeAll(kind, bimester!) : await computeIndividual(kind, enrollmentId!, bimester!));
+      setResult(
+        mode === "all" ? await computeAll(kind, bimester!) : await computeIndividual(kind, enrollmentId!, bimester!),
+      );
       router.refresh();
     });
   const ready = !!bimester && (mode === "all" || !!enrollmentId);
@@ -43,7 +45,11 @@ export function ConceptControls({
         {mode === "individual" && (
           <div className="min-w-72">
             <Label htmlFor="enrollment">Aluno</Label>
-            <Select id="enrollment" value={enrollmentId ?? ""} onChange={(e) => go(Number(e.target.value) || null, bimester)}>
+            <Select
+              id="enrollment"
+              value={enrollmentId ?? ""}
+              onChange={(e) => go(Number(e.target.value) || null, bimester)}
+            >
               <option value="">Selecione um aluno</option>
               {enrollments!.map(([id, l]) => (
                 <option key={id} value={id}>
@@ -55,7 +61,11 @@ export function ConceptControls({
         )}
         <div className="w-48">
           <Label htmlFor="bimester">Bimestre</Label>
-          <Select id="bimester" value={bimester ?? ""} onChange={(e) => go(enrollmentId, Number(e.target.value) || null)}>
+          <Select
+            id="bimester"
+            value={bimester ?? ""}
+            onChange={(e) => go(enrollmentId, Number(e.target.value) || null)}
+          >
             <option value="">Selecione um bimestre</option>
             {BIMESTERS.map((b) => (
               <option key={b} value={b}>
@@ -65,7 +75,13 @@ export function ConceptControls({
           </Select>
         </div>
         <Button onClick={compute} disabled={!ready || pending}>
-          {pending ? "Calculando…" : mode === "all" ? "Calcular para todos" : kind === "extra" ? "Calcular nota extra" : "Calcular conceito"}
+          {pending
+            ? "Calculando…"
+            : mode === "all"
+              ? "Calcular para todos"
+              : kind === "extra"
+                ? "Calcular nota extra"
+                : "Calcular conceito"}
         </Button>
       </div>
       {result.ok && <Alert color="success">{result.ok}</Alert>}

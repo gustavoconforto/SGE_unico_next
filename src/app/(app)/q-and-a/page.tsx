@@ -4,7 +4,13 @@ import type { Metadata } from "next";
 import { FilterDate, FilterSelect } from "@/components/list-controls";
 import { ListPage, ListRow } from "@/components/list-page";
 import { db } from "@/db";
-import { classesClass as klass, enrollmentsEnrollment as enrollment, gradesSubject as subject, qAndAQanda as qa, studentsStudent as student } from "@/db/schema/app";
+import {
+  classesClass as klass,
+  enrollmentsEnrollment as enrollment,
+  gradesSubject as subject,
+  qAndAQanda as qa,
+  studentsStudent as student,
+} from "@/db/schema/app";
 import { formatDate } from "@/lib/finance";
 import { PAGE_SIZE, pageParam, param, searchWhere } from "@/lib/list";
 import { subjectOptions } from "../grades/options";

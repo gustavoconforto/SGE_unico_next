@@ -20,7 +20,9 @@ export default async function ReportCardPrintPage({ params }: PageProps<"/grades
   // The Ajuste column only when some subject has one: it's rare and costs four columns
   const cols = card.examTypes
     .map((t, i) => ({ t, i }))
-    .filter(({ t, i }) => t.kind !== ExamKind.ADJUSTMENT || card.rows.some((r) => r.examScores.some((b) => b[i] !== null)));
+    .filter(
+      ({ t, i }) => t.kind !== ExamKind.ADJUSTMENT || card.rows.some((r) => r.examScores.some((b) => b[i] !== null)),
+    );
   const n = cols.length + 1;
   return (
     <>
@@ -42,7 +44,8 @@ export default async function ReportCardPrintPage({ params }: PageProps<"/grades
               <td className="border border-gray-900 px-1">{e.program}</td>
               <th className="border border-gray-900 px-1">TURMA:</th>
               <td className="border border-gray-900 px-1">
-                {e.className ? `${e.gradeLevel ? `${e.gradeLevel}º ` : ""}${e.className}` : "Sem turma"} — ANO LETIVO: {e.schoolYear}
+                {e.className ? `${e.gradeLevel ? `${e.gradeLevel}º ` : ""}${e.className}` : "Sem turma"} — ANO LETIVO:{" "}
+                {e.schoolYear}
               </td>
             </tr>
           </tbody>

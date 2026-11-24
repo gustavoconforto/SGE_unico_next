@@ -2,10 +2,7 @@ import { asc, count, eq, sql } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ListPage, ListRow } from "@/components/list-page";
 import { db } from "@/db";
-import {
-  employeesEmployee as employee,
-  employeesEmployeeroletype as role,
-} from "@/db/schema/app";
+import { employeesEmployee as employee, employeesEmployeeroletype as role } from "@/db/schema/app";
 import { user } from "@/db/schema/auth";
 import { PAGE_SIZE, pageParam, param, searchWhere } from "@/lib/list";
 import { type AssignableRole, ROLE_LABELS, roleList } from "@/lib/permissions";
@@ -14,18 +11,10 @@ import { requireAdmin } from "@/lib/authorization";
 
 export const metadata: Metadata = { title: "Funcionários" };
 
-export default async function EmployeeListPage({
-  searchParams,
-}: PageProps<"/employees">) {
+export default async function EmployeeListPage({ searchParams }: PageProps<"/employees">) {
   const sp = await searchParams;
   await requireAdmin();
-  const where = searchWhere(param(sp, "q"), [
-    employee.name,
-    employee.cpf,
-    role.role,
-    user.name,
-    user.username,
-  ]);
+  const where = searchWhere(param(sp, "q"), [employee.name, employee.cpf, role.role, user.name, user.username]);
   const page = pageParam(sp);
   const name = sql<string>`coalesce(${employee.name}, ${user.name})`;
   // Full join: employees without a login and logins without an employee (create-admin) both show up
@@ -71,11 +60,7 @@ export default async function EmployeeListPage({
             e.name,
             e.role ?? "—",
             e.username ?? "—",
-            e.userId ? (
-              <RolePicker userId={e.userId} current={roleList(e.roles)} />
-            ) : (
-              "Sem acesso"
-            ),
+            e.userId ? <RolePicker userId={e.userId} current={roleList(e.roles)} /> : "Sem acesso",
           ]}
           label={e.name}
           editHref={e.id ? `/employees/${e.id}/edit` : undefined}
@@ -87,23 +72,13 @@ export default async function EmployeeListPage({
 }
 
 /** A no-JS multiselect: the summary lists the login's roles; opening it shows a checkbox per role and Salvar. */
-function RolePicker({
-  userId,
-  current,
-}: {
-  userId: string;
-  current: string[];
-}) {
-  const picked = current.filter((r): r is AssignableRole =>
-    Object.hasOwn(ROLE_LABELS, r),
-  );
+function RolePicker({ userId, current }: { userId: string; current: string[] }) {
+  const picked = current.filter((r): r is AssignableRole => Object.hasOwn(ROLE_LABELS, r));
   return (
     <form action={setUserRoles.bind(null, userId)}>
       <details>
         <summary className="cursor-pointer text-sm">
-          {picked.length
-            ? picked.map((r) => ROLE_LABELS[r]).join(", ")
-            : "Nenhum perfil"}
+          {picked.length ? picked.map((r) => ROLE_LABELS[r]).join(", ") : "Nenhum perfil"}
         </summary>
         <div className="mt-2 flex flex-col gap-1.5">
           {Object.entries(ROLE_LABELS).map(([value, label]) => (

@@ -9,5 +9,9 @@ export async function offeringFormOptions() {
     yearOptions(),
     db.select({ id: employee.id, name: employee.name }).from(employee).orderBy(asc(employee.name)),
   ]);
-  return { pathways: pathways.map((p) => [p.id, p.name] as [number, string]), years, teachers: teachers.map((t) => [t.id, t.name] as [number, string]) };
+  return {
+    pathways: pathways.map((p) => [p.id, p.name] as [number, string]),
+    years,
+    teachers: teachers.map((t) => [t.id, t.name] as [number, string]),
+  };
 }

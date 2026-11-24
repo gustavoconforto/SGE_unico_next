@@ -11,7 +11,9 @@ export const money = (value: Decimal.Value | null | undefined): Money => new Dec
 export const toDb = (value: Money): string => value.toFixed(2);
 /** "1.234,56" (no currency symbol), as the Django templates show money. */
 export const formatMoney = (value: Decimal.Value | null | undefined): string =>
-  new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(money(value).toNumber());
+  new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+    money(value).toNumber(),
+  );
 // toNumber() above is display-only; amounts up to 10 digits are exact in a double.
 
 const cents = (value: Money, rounding: Decimal.Rounding) => value.toDecimalPlaces(2, rounding);
@@ -33,7 +35,11 @@ export const INSTALLMENT_STATUSES = [
   ["E", "Expirada"],
 ] as const;
 /** Still owed. EXPIRED = the bank wrote off the unpaid slip; the debt remains. */
-export const PENDING_STATUSES: string[] = [InstallmentStatus.OPEN, InstallmentStatus.PARTIAL, InstallmentStatus.EXPIRED];
+export const PENDING_STATUSES: string[] = [
+  InstallmentStatus.OPEN,
+  InstallmentStatus.PARTIAL,
+  InstallmentStatus.EXPIRED,
+];
 
 export const PAYMENT_METHODS = [
   ["PIX", "PIX"],
@@ -71,7 +77,8 @@ export function today(now = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(now);
 }
 
-export const formatDate = (iso: string | null | undefined) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "");
+export const formatDate = (iso: string | null | undefined) =>
+  iso ? iso.slice(0, 10).split("-").reverse().join("/") : "";
 
 const daysInMonth = (year: number, month: number) => new Date(Date.UTC(year, month, 0)).getUTCDate();
 const iso = (year: number, month: number, day: number) =>
@@ -97,7 +104,11 @@ export function splitValue(total: Money, count: number): Money[] {
 /** build_installments(): N monthly installments of the account's net value from the first due date. */
 export function accountInstallments(netValue: Money, count: number, firstDueDate: string) {
   const day = Number(firstDueDate.slice(8, 10));
-  return splitValue(netValue, count).map((amount, i) => ({ number: i + 1, dueDate: addMonths(firstDueDate, i, day), amount }));
+  return splitValue(netValue, count).map((amount, i) => ({
+    number: i + 1,
+    dueDate: addMonths(firstDueDate, i, day),
+    amount,
+  }));
 }
 
 // --- enrollment contract -------------------------------------------------------
@@ -105,7 +116,11 @@ export function accountInstallments(netValue: Money, count: number, firstDueDate
 export const percentOf = (value: Money, percent: Money) => cents(value.times(percent).div(100), Decimal.ROUND_HALF_UP);
 
 /** The contract's values: the first installment is 1/12 of it, each group with its own discount. */
-export function contractValues(grossValue: Decimal.Value, firstDiscountPercent: Decimal.Value, remainingDiscountPercent: Decimal.Value) {
+export function contractValues(
+  grossValue: Decimal.Value,
+  firstDiscountPercent: Decimal.Value,
+  remainingDiscountPercent: Decimal.Value,
+) {
   const gross = money(grossValue);
   const firstGross = cents(gross.div(12), Decimal.ROUND_HALF_UP);
   const remainingGross = gross.minus(firstGross);
@@ -135,7 +150,9 @@ export type ContractValues = ReturnType<typeof contractValues>;
 export function enrollmentDueDates(enrolledAt: string, schoolYear: number, dueDay: number): string[] {
   const [year, month] = enrolledAt.split("-").map(Number);
   const during = year === schoolYear;
-  const months = during ? Array.from({ length: 12 - month }, (_, i) => month + 1 + i) : Array.from({ length: 12 }, (_, i) => i + 1);
+  const months = during
+    ? Array.from({ length: 12 - month }, (_, i) => month + 1 + i)
+    : Array.from({ length: 12 }, (_, i) => i + 1);
   return [...(during ? [enrolledAt] : []), ...months.map((m) => adjustWeekend(iso(schoolYear, m, dueDay)))];
 }
 
@@ -161,11 +178,21 @@ export function lopsidedInstallment<T extends { amount: Money }>(installments: T
 
 // --- payments and installment status --------------------------------------------
 
-export type PaymentValues = { amount: Decimal.Value; penalty: Decimal.Value; interest: Decimal.Value; monetaryAdjust: Decimal.Value; discount: Decimal.Value };
+export type PaymentValues = {
+  amount: Decimal.Value;
+  penalty: Decimal.Value;
+  interest: Decimal.Value;
+  monetaryAdjust: Decimal.Value;
+  discount: Decimal.Value;
+};
 
 /** Principal settled by a payment: amount − penalty − interest − adjustment + discount. */
 export function principal(p: PaymentValues): Money {
-  return money(p.amount).minus(money(p.penalty)).minus(money(p.interest)).minus(money(p.monetaryAdjust)).plus(money(p.discount));
+  return money(p.amount)
+    .minus(money(p.penalty))
+    .minus(money(p.interest))
+    .minus(money(p.monetaryAdjust))
+    .plus(money(p.discount));
 }
 
 export const paidPrincipal = (payments: PaymentValues[]) => payments.reduce((sum, p) => sum.plus(principal(p)), ZERO);
@@ -180,7 +207,11 @@ export function installmentBalance(amount: Decimal.Value, status: string, paid: 
 export function nextInstallmentStatus(current: string, amount: Decimal.Value, paid: Money): string {
   if (current === InstallmentStatus.CANCELLED) return current;
   // Paid first: a zero installment (100% discount) is settled, never open or overdue
-  const status = paid.gte(money(amount)) ? InstallmentStatus.PAID : paid.lte(0) ? InstallmentStatus.OPEN : InstallmentStatus.PARTIAL;
+  const status = paid.gte(money(amount))
+    ? InstallmentStatus.PAID
+    : paid.lte(0)
+      ? InstallmentStatus.OPEN
+      : InstallmentStatus.PARTIAL;
   if (current === InstallmentStatus.EXPIRED && status !== InstallmentStatus.PAID) return current;
   return status;
 }
@@ -188,7 +219,8 @@ export function nextInstallmentStatus(current: string, amount: Decimal.Value, pa
 /** Status of a new installment: open, or already paid when it is worth nothing. */
 export const initialStatus = (amount: Decimal.Value) => nextInstallmentStatus(InstallmentStatus.OPEN, amount, ZERO);
 
-export const isOverdue = (status: string, dueDate: string, on = today()) => PENDING_STATUSES.includes(status) && dueDate < on;
+export const isOverdue = (status: string, dueDate: string, on = today()) =>
+  PENDING_STATUSES.includes(status) && dueDate < on;
 
 /** Account.situation from its installment counts. */
 export function accountSituation(c: { total: number; pending: number; overdue: number; paid: number }): string {

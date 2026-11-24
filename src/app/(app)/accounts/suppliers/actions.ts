@@ -17,7 +17,10 @@ const supplierSchema = z.object({
     .trim()
     .default("")
     .refine((v) => v === "" || /^\d+$/.test(v), "Informe somente números.")
-    .refine((v) => v === "" || !/^\d+$/.test(v) || v.length === 11 || v.length === 14, "O CPF deve ter 11 dígitos e o CNPJ, 14."),
+    .refine(
+      (v) => v === "" || !/^\d+$/.test(v) || v.length === 11 || v.length === 14,
+      "O CPF deve ter 11 dígitos e o CNPJ, 14.",
+    ),
   phone: optionalText(20),
   email: z.union([z.literal(""), z.email("Informe um endereço de email válido.").max(254)]).default(""),
   notes: z.string().default(""),
@@ -31,7 +34,8 @@ export async function saveSupplier(id: number | null, _prev: FormState, formData
     if (id === null) await db.insert(supplier).values(data);
     else await db.update(supplier).set(data).where(eq(supplier.id, id));
   } catch (error) {
-    if (pgErrorCode(error) === UNIQUE_VIOLATION) return { errors: { document: ["Já existe um fornecedor com este CPF/CNPJ."] }, values };
+    if (pgErrorCode(error) === UNIQUE_VIOLATION)
+      return { errors: { document: ["Já existe um fornecedor com este CPF/CNPJ."] }, values };
     throw error;
   }
   redirect(`/accounts/suppliers?msg=${id === null ? "created" : "updated"}`);
@@ -39,5 +43,9 @@ export async function saveSupplier(id: number | null, _prev: FormState, formData
 
 export async function deleteSupplier(id: number) {
   await requirePermission("finance", "edit");
-  await deleteAndRedirect(() => db.delete(supplier).where(eq(supplier.id, id)), "/accounts/suppliers", "supplier_protected");
+  await deleteAndRedirect(
+    () => db.delete(supplier).where(eq(supplier.id, id)),
+    "/accounts/suppliers",
+    "supplier_protected",
+  );
 }

@@ -28,7 +28,12 @@ function search(q: string) {
         .innerJoin(employee, eq(departmentTeachers.employeeId, employee.id))
         .where(and(eq(departmentTeachers.departmentId, ref(department.id)), ilike(employee.name, p))),
     ),
-    exists(db.select().from(subject).where(and(eq(subject.departmentId, ref(department.id)), ilike(subject.name, p)))),
+    exists(
+      db
+        .select()
+        .from(subject)
+        .where(and(eq(subject.departmentId, ref(department.id)), ilike(subject.name, p))),
+    ),
   );
 }
 
@@ -38,7 +43,13 @@ export default async function DepartmentListPage({ searchParams }: PageProps<"/d
   const where = search(param(sp, "q"));
   const page = pageParam(sp);
   const [rows, [{ total }]] = await Promise.all([
-    db.select().from(department).where(where).orderBy(asc(department.name)).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE),
+    db
+      .select()
+      .from(department)
+      .where(where)
+      .orderBy(asc(department.name))
+      .limit(PAGE_SIZE)
+      .offset((page - 1) * PAGE_SIZE),
     db.select({ total: count() }).from(department).where(where),
   ]);
   const ids = rows.map((d) => d.id);
@@ -50,11 +61,18 @@ export default async function DepartmentListPage({ searchParams }: PageProps<"/d
           .innerJoin(employee, eq(departmentTeachers.employeeId, employee.id))
           .where(inArray(departmentTeachers.departmentId, ids))
           .orderBy(asc(employee.name)),
-        db.select({ departmentId: subject.departmentId, name: subject.name }).from(subject).where(inArray(subject.departmentId, ids)).orderBy(asc(subject.name)),
+        db
+          .select({ departmentId: subject.departmentId, name: subject.name })
+          .from(subject)
+          .where(inArray(subject.departmentId, ids))
+          .orderBy(asc(subject.name)),
       ])
     : [[], []];
   const namesOf = (list: { departmentId: number | null; name: string }[], id: number) =>
-    list.filter((x) => x.departmentId === id).map((x) => x.name).join(", ") || "—";
+    list
+      .filter((x) => x.departmentId === id)
+      .map((x) => x.name)
+      .join(", ") || "—";
 
   return (
     <ListPage

@@ -21,7 +21,13 @@ export default async function EditLecturePage({ params }: PageProps<"/lessons/le
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">Editar aula</h1>
-      <LectureForm id={id} defaults={row} classLabel={c.label} subjects={subjects.map((s) => [s.id, s.name])} teachers={teachers.map((t) => [t.id, t.name])} />
+      <LectureForm
+        id={id}
+        defaults={row}
+        classLabel={c.label}
+        subjects={subjects.map((s) => [s.id, s.name])}
+        teachers={teachers.map((t) => [t.id, t.name])}
+      />
     </div>
   );
 }

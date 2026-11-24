@@ -36,7 +36,14 @@ export function LoginForm() {
       </div>
       <div>
         <Label htmlFor="password">Senha</Label>
-        <TextInput id="password" name="password" type="password" placeholder="senha" autoComplete="current-password" required />
+        <TextInput
+          id="password"
+          name="password"
+          type="password"
+          placeholder="senha"
+          autoComplete="current-password"
+          required
+        />
       </div>
       <Button type="submit" disabled={pending}>
         {pending ? "Entrando…" : "Entrar"}

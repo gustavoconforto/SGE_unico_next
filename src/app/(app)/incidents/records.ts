@@ -7,6 +7,7 @@ export const recordFields = { enrollmentId: foreignKey, incidentDate: requiredDa
 
 export const studentColumns = { student: studentName, className: klass.name, gradeLevel: klass.gradeLevel };
 
-export const classCell = (c: { className: string | null; gradeLevel: number | null }) => (c.className ? `${c.gradeLevel ? `${c.gradeLevel}º ` : ""}${c.className}` : "—");
+export const classCell = (c: { className: string | null; gradeLevel: number | null }) =>
+  c.className ? `${c.gradeLevel ? `${c.gradeLevel}º ` : ""}${c.className}` : "—";
 
 export const INVALID_ENROLLMENT = { enrollmentId: [INVALID_CHOICE] };

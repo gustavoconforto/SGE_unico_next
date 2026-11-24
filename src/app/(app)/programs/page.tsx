@@ -9,9 +9,7 @@ import { deleteProgram } from "./actions";
 
 export const metadata: Metadata = { title: "Cursos oferecidos" };
 
-export default async function ProgramListPage({
-  searchParams,
-}: PageProps<"/programs">) {
+export default async function ProgramListPage({ searchParams }: PageProps<"/programs">) {
   await requirePermission("programs", "view");
   const sp = await searchParams;
   const where = searchWhere(param(sp, "q"), [programsProgram.name]);

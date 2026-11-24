@@ -13,7 +13,11 @@ export const metadata: Metadata = { title: "Editar contrato" };
 export default async function EditEnrollmentTypePage({ params }: PageProps<"/enrollments/types/[id]/edit">) {
   await requirePermission("enrollmentSetup", "edit");
   const id = await idParam(params);
-  const [[row], programs, years] = await Promise.all([db.select().from(enrollmentType).where(eq(enrollmentType.id, id)), programOptions(), yearOptions()]);
+  const [[row], programs, years] = await Promise.all([
+    db.select().from(enrollmentType).where(eq(enrollmentType.id, id)),
+    programOptions(),
+    yearOptions(),
+  ]);
   if (!row) notFound();
   return (
     <div className="flex flex-col gap-4">

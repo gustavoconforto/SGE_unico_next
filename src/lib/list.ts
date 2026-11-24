@@ -9,7 +9,7 @@ type SearchParams = Record<string, string | string[] | undefined>;
 
 export function param(searchParams: SearchParams, key: string): string {
   const value = searchParams[key];
-  return (Array.isArray(value) ? value[0] : value ?? "").trim();
+  return (Array.isArray(value) ? value[0] : (value ?? "")).trim();
 }
 
 /** `?page=` as a 1-based integer, defaulting to 1 for anything invalid. */
@@ -37,7 +37,9 @@ export function searchTerms(query: string): string[] {
 /** Case-insensitive "contains" over the columns, OR'ed together (Django's icontains), ignoring accents: "otavio" finds "Otávio". */
 export function searchWhere(query: string, columns: (AnyPgColumn | SQL)[]): SQL | undefined {
   if (!query || columns.length === 0) return undefined;
-  return or(...searchTerms(query).flatMap((term) => columns.map((column) => ilike(foldSql(column), likePattern(term)))));
+  return or(
+    ...searchTerms(query).flatMap((term) => columns.map((column) => ilike(foldSql(column), likePattern(term)))),
+  );
 }
 
 /** `%query%` with LIKE wildcards escaped. */
@@ -53,7 +55,10 @@ export async function idParam(params: Promise<{ id: string }>): Promise<number> 
 }
 
 /** `?sort=key` (ascending) or `?sort=-key` (descending) over the list's sortable `columns`; null when absent or unknown. */
-export function sortParam(searchParams: SearchParams, columns: Record<string, AnyPgColumn | SQL>): { param: string; order: SQL } | null {
+export function sortParam(
+  searchParams: SearchParams,
+  columns: Record<string, AnyPgColumn | SQL>,
+): { param: string; order: SQL } | null {
   const raw = param(searchParams, "sort");
   const descending = raw.startsWith("-");
   const key = descending ? raw.slice(1) : raw;

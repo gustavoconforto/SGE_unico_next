@@ -18,18 +18,36 @@ export default async function PathwayListPage({ searchParams }: PageProps<"/path
   const where = searchWhere(param(sp, "q"), [pathway.name, pathway.description]);
   const page = pageParam(sp);
   const [rows, [{ total }]] = await Promise.all([
-    db.select().from(pathway).where(where).orderBy(asc(pathway.name)).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE),
+    db
+      .select()
+      .from(pathway)
+      .where(where)
+      .orderBy(asc(pathway.name))
+      .limit(PAGE_SIZE)
+      .offset((page - 1) * PAGE_SIZE),
     db.select({ total: count() }).from(pathway).where(where),
   ]);
   return (
-    <ListPage title="Itinerários" newHref="/pathways/new" newLabel="Novo itinerário" searchPlaceholder="Pesquisar por nome ou descrição..." headers={["Nome", "Descrição", "Nota máxima", "Carga horária"]} page={page} total={total}>
+    <ListPage
+      title="Itinerários"
+      newHref="/pathways/new"
+      newLabel="Novo itinerário"
+      searchPlaceholder="Pesquisar por nome ou descrição..."
+      headers={["Nome", "Descrição", "Nota máxima", "Carga horária"]}
+      page={page}
+      total={total}
+    >
       {rows.map((p) => (
         <ListRow
           key={p.id}
           cells={[
             p.name,
-            <span key="d" className="line-clamp-2">{p.description || "—"}</span>,
-            <span key="n" className="block text-right">{Number(p.extraPoints) > 0 ? formatGrade(p.extraPoints) : "Sem nota"}</span>,
+            <span key="d" className="line-clamp-2">
+              {p.description || "—"}
+            </span>,
+            <span key="n" className="block text-right">
+              {Number(p.extraPoints) > 0 ? formatGrade(p.extraPoints) : "Sem nota"}
+            </span>,
             p.workloadType === "F" ? `${formatHours(p.workloadHours)} h` : label(WORKLOAD_TYPES, p.workloadType),
           ]}
           label={p.name}

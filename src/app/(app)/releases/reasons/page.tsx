@@ -25,9 +25,23 @@ export default async function ReasonListPage({ searchParams }: PageProps<"/relea
     db.select({ total: count() }).from(reason).where(where),
   ]);
   return (
-    <ListPage title="Motivos de liberação" newHref="/releases/reasons/new" newLabel="Novo motivo" searchPlaceholder="Pesquisar motivo..." headers={["Motivo"]} page={page} total={total}>
+    <ListPage
+      title="Motivos de liberação"
+      newHref="/releases/reasons/new"
+      newLabel="Novo motivo"
+      searchPlaceholder="Pesquisar motivo..."
+      headers={["Motivo"]}
+      page={page}
+      total={total}
+    >
       {rows.map((r) => (
-        <ListRow key={r.id} cells={[r.reason]} label={r.reason} editHref={`/releases/reasons/${r.id}/edit`} deleteAction={deleteReason.bind(null, r.id)} />
+        <ListRow
+          key={r.id}
+          cells={[r.reason]}
+          label={r.reason}
+          editHref={`/releases/reasons/${r.id}/edit`}
+          deleteAction={deleteReason.bind(null, r.id)}
+        />
       ))}
     </ListPage>
   );

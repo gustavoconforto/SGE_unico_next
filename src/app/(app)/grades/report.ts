@@ -38,16 +38,35 @@ export async function loadReportCard(enrollmentId: number) {
   const [subjects, grades, examTypes, recoveryTypes] = await Promise.all([
     // A class without a series has no subjects
     e.gradeLevel
-      ? db.select({ id: subject.id, name: subject.name }).from(levelSubject).innerJoin(subject, eq(levelSubject.subjectId, subject.id)).where(eq(levelSubject.gradeLevel, e.gradeLevel)).orderBy(asc(subject.name))
+      ? db
+          .select({ id: subject.id, name: subject.name })
+          .from(levelSubject)
+          .innerJoin(subject, eq(levelSubject.subjectId, subject.id))
+          .where(eq(levelSubject.gradeLevel, e.gradeLevel))
+          .orderBy(asc(subject.name))
       : [],
     db
-      .select({ subjectId: grade.subjectId, bimester: grade.bimester, examTypeId: grade.examTypeId, score: grade.score, kind: examType.kind })
+      .select({
+        subjectId: grade.subjectId,
+        bimester: grade.bimester,
+        examTypeId: grade.examTypeId,
+        score: grade.score,
+        kind: examType.kind,
+      })
       .from(grade)
       .innerJoin(examType, eq(grade.examTypeId, examType.id))
       .where(eq(grade.enrollmentId, enrollmentId)),
     // Recovery isn't taken in the bimesters: it has its own column
-    db.select().from(examType).where(ne(examType.kind, ExamKind.RECOVERY)).orderBy(asc(examType.order), asc(examType.name)),
-    db.select().from(examType).where(eq(examType.kind, ExamKind.RECOVERY)).orderBy(asc(examType.order), asc(examType.name)),
+    db
+      .select()
+      .from(examType)
+      .where(ne(examType.kind, ExamKind.RECOVERY))
+      .orderBy(asc(examType.order), asc(examType.name)),
+    db
+      .select()
+      .from(examType)
+      .where(eq(examType.kind, ExamKind.RECOVERY))
+      .orderBy(asc(examType.order), asc(examType.name)),
   ]);
   const rows = subjects.map((s) => {
     const mine = grades.filter((g) => g.subjectId === s.id);

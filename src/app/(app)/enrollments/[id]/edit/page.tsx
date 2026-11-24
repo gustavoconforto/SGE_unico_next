@@ -1,6 +1,16 @@
 import { requirePermission } from "@/lib/authorization";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
-import { Badge, Button, Checkbox, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow } from "flowbite-react";
+import {
+  Badge,
+  Button,
+  Checkbox,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeadCell,
+  TableRow,
+} from "flowbite-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -20,7 +30,18 @@ import {
   studentsGuardian as guardian,
   studentsGuardianassociation as guardianLink,
 } from "@/db/schema/app";
-import { ENROLLMENT_STATUSES, INSTALLMENT_STATUSES, PENDING_STATUSES, accountSituation, formatDate, formatMoney, isOverdue, label, money, today } from "@/lib/finance";
+import {
+  ENROLLMENT_STATUSES,
+  INSTALLMENT_STATUSES,
+  PENDING_STATUSES,
+  accountSituation,
+  formatDate,
+  formatMoney,
+  isOverdue,
+  label,
+  money,
+  today,
+} from "@/lib/finance";
 import { accountSummary, financialGuardians, outstandingSql, syncDocuments } from "@/lib/finance-db";
 import { idParam } from "@/lib/list";
 import { classOptions, classesFor, enrollmentTypeLabel, enrollmentTypeOptions, getEnrollment } from "../../data";
@@ -30,7 +51,19 @@ import { PrintMenu } from "../../print-menu";
 export const metadata: Metadata = { title: "Matrícula" };
 
 /** A titled block on the page floor; its table brings its own white panel. */
-function Section({ id, title, help, action, children }: { id?: string; title: string; help?: string; action?: React.ReactNode; children: React.ReactNode }) {
+function Section({
+  id,
+  title,
+  help,
+  action,
+  children,
+}: {
+  id?: string;
+  title: string;
+  help?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <section id={id} className="flex scroll-mt-20 flex-col gap-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
@@ -67,13 +100,23 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
     enrollmentTypeOptions(),
     classOptions(),
     db
-      .select({ id: enrollmentDiscount.id, group: enrollmentDiscount.group, percentage: enrollmentDiscount.percentage, observation: enrollmentDiscount.observation, type: discountType.description })
+      .select({
+        id: enrollmentDiscount.id,
+        group: enrollmentDiscount.group,
+        percentage: enrollmentDiscount.percentage,
+        observation: enrollmentDiscount.observation,
+        type: discountType.description,
+      })
       .from(enrollmentDiscount)
       .leftJoin(discountType, eq(enrollmentDiscount.discountTypeId, discountType.id))
       .where(eq(enrollmentDiscount.enrollmentId, id))
       .orderBy(asc(enrollmentDiscount.group), asc(enrollmentDiscount.id)),
     db
-      .select({ id: enrollmentDocument.id, type: documentType.description, isDelivered: enrollmentDocument.isDelivered })
+      .select({
+        id: enrollmentDocument.id,
+        type: documentType.description,
+        isDelivered: enrollmentDocument.isDelivered,
+      })
       .from(enrollmentDocument)
       .innerJoin(documentType, eq(enrollmentDocument.typeId, documentType.id))
       .where(eq(enrollmentDocument.enrollmentId, id))
@@ -103,7 +146,14 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
   ]);
   const installments = contract
     ? await db
-        .select({ id: installment.id, number: installment.number, dueDate: installment.dueDate, amount: installment.amount, status: installment.status, outstanding: outstandingSql })
+        .select({
+          id: installment.id,
+          number: installment.number,
+          dueDate: installment.dueDate,
+          amount: installment.amount,
+          status: installment.status,
+          outstanding: outstandingSql,
+        })
         .from(installment)
         .where(eq(installment.accountId, contract.id))
         .orderBy(asc(installment.number))
@@ -140,13 +190,17 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
               {overdue.length
                 ? `${overdue.length} ${overdue.length === 1 ? "parcela vencida" : "parcelas vencidas"} · R$ ${formatMoney(overdueTotal)} em atraso`
                 : "Nenhuma parcela vencida"}
-              {!owed.isZero() && <span className="font-normal text-gray-600"> · R$ {formatMoney(owed)} ainda a receber no contrato</span>}
+              {!owed.isZero() && (
+                <span className="font-normal text-gray-600"> · R$ {formatMoney(owed)} ainda a receber no contrato</span>
+              )}
             </p>
           )}
           {documents.length > 0 && (
             <p className="mt-1 text-sm text-gray-700 tabular-nums">
               <Link href="#matricula" className="underline-offset-2 hover:text-primary-700 hover:underline">
-                {delivered === documents.length ? "Todos os documentos entregues" : `${delivered} de ${documents.length} documentos entregues`}
+                {delivered === documents.length
+                  ? "Todos os documentos entregues"
+                  : `${delivered} de ${documents.length} documentos entregues`}
               </Link>
             </p>
           )}
@@ -168,7 +222,11 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
 
       <Section
         title="Parcelas"
-        help={canPay && pending.length > 1 ? "Para registrar a baixa de várias parcelas de uma vez, marque-as e use “Baixar selecionadas”." : undefined}
+        help={
+          canPay && pending.length > 1
+            ? "Para registrar a baixa de várias parcelas de uma vez, marque-as e use “Baixar selecionadas”."
+            : undefined
+        }
         action={
           canPay &&
           pending.length > 1 && (
@@ -176,7 +234,11 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
               <Button type="submit" form="batch-payment" size="xs" color="alternative">
                 Baixar selecionadas
               </Button>
-              <LinkButton href={`/accounts/payments/batch?${new URLSearchParams([["enrollment", String(id)], ...pending.map((i) => ["installment", String(i.id)])])}`} size="xs" color="alternative">
+              <LinkButton
+                href={`/accounts/payments/batch?${new URLSearchParams([["enrollment", String(id)], ...pending.map((i) => ["installment", String(i.id)])])}`}
+                size="xs"
+                color="alternative"
+              >
                 Baixar todas em aberto ({pending.length})
               </LinkButton>
             </div>
@@ -244,7 +306,13 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
                       </TableCell>
                       <TableCell className={ACTIONS_CELL}>
                         {contract && (
-                          <InstallmentActions receiptHref={`/accounts/receivable/${contract.id}/receipt`} installment={i} due={late || i.id === nextDue?.id} enrollmentId={id} canPay={canPay} />
+                          <InstallmentActions
+                            receiptHref={`/accounts/receivable/${contract.id}/receipt`}
+                            installment={i}
+                            due={late || i.id === nextDue?.id}
+                            enrollmentId={id}
+                            canPay={canPay}
+                          />
                         )}
                       </TableCell>
                     </TableRow>
@@ -270,7 +338,10 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
         />
       </section>
 
-      <Section title="Descontos" help="Definidos na matrícula; a conta já foi gerada com a soma de cada grupo de parcelas.">
+      <Section
+        title="Descontos"
+        help="Definidos na matrícula; a conta já foi gerada com a soma de cada grupo de parcelas."
+      >
         {discounts.length === 0 ? (
           <p className="text-sm text-gray-600">Nenhum desconto nesta matrícula.</p>
         ) : (
@@ -290,7 +361,9 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
                     <TableCell className="font-medium text-gray-900">{d.type ?? "Desconto avulso"}</TableCell>
                     <TableCell>{d.group === "F" ? "1ª parcela" : "Demais parcelas"}</TableCell>
                     <TableCell>{d.observation || "—"}</TableCell>
-                    <TableCell className="whitespace-nowrap text-right tabular-nums max-sm:text-left">{formatMoney(d.percentage)}%</TableCell>
+                    <TableCell className="whitespace-nowrap text-right tabular-nums max-sm:text-left">
+                      {formatMoney(d.percentage)}%
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -332,7 +405,10 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
                         {formatDate(a.issueDate)}
                       </TableCell>
                       <TableCell className={PRIMARY_CELL}>
-                        <Link className="underline-offset-2 hover:text-primary-700 hover:underline" href={`/accounts/receivable/${a.id}/edit`}>
+                        <Link
+                          className="underline-offset-2 hover:text-primary-700 hover:underline"
+                          href={`/accounts/receivable/${a.id}/edit`}
+                        >
                           {a.description}
                         </Link>
                         <span className="block text-xs font-normal text-gray-500">{a.category}</span>
@@ -348,7 +424,10 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
                       </TableCell>
                       <TableCell>
                         <PhoneLabel>Situação</PhoneLabel>
-                        <Badge color={situation === "Quitada" ? "success" : situation === "Vencida" ? "failure" : "gray"} className="w-fit whitespace-nowrap">
+                        <Badge
+                          color={situation === "Quitada" ? "success" : situation === "Vencida" ? "failure" : "gray"}
+                          className="w-fit whitespace-nowrap"
+                        >
                           {situation}
                         </Badge>
                       </TableCell>

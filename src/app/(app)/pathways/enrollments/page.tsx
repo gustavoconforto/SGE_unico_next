@@ -34,7 +34,15 @@ export default async function MemberListPage({ searchParams }: PageProps<"/pathw
   const page = pageParam(sp);
   const [rows, [{ total }], offerings] = await Promise.all([
     db
-      .select({ id: member.id, joinedAt: member.joinedAt, leftAt: member.leftAt, pathway: pathway.name, offeringName: offering.name, year: offeringYear, ...studentColumns })
+      .select({
+        id: member.id,
+        joinedAt: member.joinedAt,
+        leftAt: member.leftAt,
+        pathway: pathway.name,
+        offeringName: offering.name,
+        year: offeringYear,
+        ...studentColumns,
+      })
       .from(member)
       .innerJoin(enrollment, eq(member.enrollmentId, enrollment.id))
       .innerJoin(student, eq(enrollment.studentId, student.id))
@@ -64,8 +72,19 @@ export default async function MemberListPage({ searchParams }: PageProps<"/pathw
       searchPlaceholder="Pesquisar por aluno ou itinerário..."
       filters={
         <>
-          <FilterSelect name="offering" label="Turma de itinerário" options={offerings.map((o) => [o.id, o.label] as const)} />
-          <FilterSelect name="status" label="Situação" options={[["current", "Inscritos"], ["left", "Saíram"]]} />
+          <FilterSelect
+            name="offering"
+            label="Turma de itinerário"
+            options={offerings.map((o) => [o.id, o.label] as const)}
+          />
+          <FilterSelect
+            name="status"
+            label="Situação"
+            options={[
+              ["current", "Inscritos"],
+              ["left", "Saíram"],
+            ]}
+          />
         </>
       }
       headers={["Aluno", "Turma", "Itinerário", "Entrada", "Saída"]}
@@ -75,7 +94,13 @@ export default async function MemberListPage({ searchParams }: PageProps<"/pathw
       {rows.map((r) => (
         <ListRow
           key={r.id}
-          cells={[r.student, classCell(r), offeringLabel({ pathway: r.pathway, year: r.year, name: r.offeringName }), formatDate(r.joinedAt), formatDate(r.leftAt) || "—"]}
+          cells={[
+            r.student,
+            classCell(r),
+            offeringLabel({ pathway: r.pathway, year: r.year, name: r.offeringName }),
+            formatDate(r.joinedAt),
+            formatDate(r.leftAt) || "—",
+          ]}
           label={`a inscrição de ${r.student}`}
           editHref={`/pathways/enrollments/${r.id}/edit`}
           deleteAction={deleteMember.bind(null, r.id)}

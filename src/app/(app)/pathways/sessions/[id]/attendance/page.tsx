@@ -3,7 +3,14 @@ import { asc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
-import { classesClass as klass, enrollmentsEnrollment as enrollment, pathwaysPathwayattendance as attendance, pathwaysPathwayenrollment as member, pathwaysPathwaysession as session, studentsStudent as student } from "@/db/schema/app";
+import {
+  classesClass as klass,
+  enrollmentsEnrollment as enrollment,
+  pathwaysPathwayattendance as attendance,
+  pathwaysPathwayenrollment as member,
+  pathwaysPathwaysession as session,
+  studentsStudent as student,
+} from "@/db/schema/app";
 import { formatDate } from "@/lib/finance";
 import { idParam } from "@/lib/list";
 import { classCell } from "../../../../incidents/records";
@@ -36,7 +43,16 @@ export default async function AttendancePage({ params }: PageProps<"/pathways/se
         Aula de {formatDate(s.date)}
         {s.topic && ` · ${s.topic}`}. Todos começam como presentes.
       </p>
-      <AttendanceForm sessionId={id} cancelHref={`/pathways/sessions?offering=${s.offeringId}`} rows={members.map((m) => ({ id: m.id, student: m.student, className: classCell(m), status: saved.find((a) => a.pathwayEnrollmentId === m.id)?.status ?? "P" }))} />
+      <AttendanceForm
+        sessionId={id}
+        cancelHref={`/pathways/sessions?offering=${s.offeringId}`}
+        rows={members.map((m) => ({
+          id: m.id,
+          student: m.student,
+          className: classCell(m),
+          status: saved.find((a) => a.pathwayEnrollmentId === m.id)?.status ?? "P",
+        }))}
+      />
     </div>
   );
 }

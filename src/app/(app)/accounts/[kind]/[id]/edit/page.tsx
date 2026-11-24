@@ -31,7 +31,14 @@ export default async function EditAccountPage({ params }: PageProps<"/accounts/[
   const [options, installments, contract, canPay] = await Promise.all([
     accountFormOptions(kind),
     db
-      .select({ id: installment.id, number: installment.number, dueDate: installment.dueDate, amount: installment.amount, status: installment.status, outstanding: outstandingSql })
+      .select({
+        id: installment.id,
+        number: installment.number,
+        dueDate: installment.dueDate,
+        amount: installment.amount,
+        status: installment.status,
+        outstanding: outstandingSql,
+      })
       .from(installment)
       .where(eq(installment.accountId, id))
       .orderBy(asc(installment.dueDate), asc(installment.number)),
@@ -49,7 +56,11 @@ export default async function EditAccountPage({ params }: PageProps<"/accounts/[
         id={id}
         defaults={row}
         options={options}
-        enrollmentLabel={contract ? `${contract.studentName} - ${enrollmentTypeLabel(contract.program, contract.level, contract.schoolYear)}` : undefined}
+        enrollmentLabel={
+          contract
+            ? `${contract.studentName} - ${enrollmentTypeLabel(contract.program, contract.level, contract.schoolYear)}`
+            : undefined
+        }
         cancelHref={`/accounts/${kind}`}
       />
       <section className="flex flex-col gap-2 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
@@ -98,8 +109,12 @@ export default async function EditAccountPage({ params }: PageProps<"/accounts/[
                     </TableCell>
                     <TableCell className="text-right">{formatMoney(i.outstanding)}</TableCell>
                     <TableCell>
-<InstallmentActions receiptHref={`/accounts/${kind}/${id}/receipt`} installment={i} canPay={canPay} />
-</TableCell>
+                      <InstallmentActions
+                        receiptHref={`/accounts/${kind}/${id}/receipt`}
+                        installment={i}
+                        canPay={canPay}
+                      />
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

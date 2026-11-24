@@ -4,7 +4,15 @@ import { useActionState } from "react";
 import { FormButtons, FormFields, SelectField, TextField } from "@/components/form-fields";
 import { saveSubject } from "./actions";
 
-export function SubjectForm({ id = null, defaults, departments }: { id?: number | null; defaults?: Record<string, unknown>; departments: [number, string][] }) {
+export function SubjectForm({
+  id = null,
+  defaults,
+  departments,
+}: {
+  id?: number | null;
+  defaults?: Record<string, unknown>;
+  departments: [number, string][];
+}) {
   const [state, action, pending] = useActionState(saveSubject.bind(null, id), {});
   return (
     <form action={action} className="flex max-w-lg flex-col gap-4">

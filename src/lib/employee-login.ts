@@ -15,25 +15,37 @@ export const MIN_PASSWORD = 8; // same as create-admin
  * What saving the form does to the login, and why it can't (pure: the action reads the login first).
  * `isSelf`: the login is the signed-in admin's own, who can't lock themselves out.
  */
-export function loginPlan(input: LoginInput, hasLogin: boolean, isSelf = false): { plan: LoginPlan; errors?: FormErrors } {
-  if (isSelf && !input.access) return { plan: "none", errors: { access: ["Você não pode remover o seu próprio acesso."] } };
+export function loginPlan(
+  input: LoginInput,
+  hasLogin: boolean,
+  isSelf = false,
+): { plan: LoginPlan; errors?: FormErrors } {
+  if (isSelf && !input.access)
+    return { plan: "none", errors: { access: ["Você não pode remover o seu próprio acesso."] } };
   if (!input.access) return { plan: hasLogin ? "delete" : "none" };
   const errors: FormErrors = {};
   if (!input.username) errors.username = [REQUIRED];
-  else if (!USERNAME_RE.test(input.username)) errors.username = ["Use de 3 a 30 letras sem acento, números, ponto ou _."];
+  else if (!USERNAME_RE.test(input.username))
+    errors.username = ["Use de 3 a 30 letras sem acento, números, ponto ou _."];
   // On edit a blank password keeps the current one
   if (!input.password && !hasLogin) errors.password = [REQUIRED];
-  else if (input.password && input.password.length < MIN_PASSWORD) errors.password = [`Use pelo menos ${MIN_PASSWORD} caracteres.`];
+  else if (input.password && input.password.length < MIN_PASSWORD)
+    errors.password = [`Use pelo menos ${MIN_PASSWORD} caracteres.`];
   return Object.keys(errors).length ? { plan: "none", errors } : { plan: hasLogin ? "update" : "create" };
 }
 
 export async function employeeLogin(employeeId: number) {
-  const [login] = await db.select({ id: user.id, username: user.username, role: user.role }).from(user).where(eq(user.employeeId, employeeId));
+  const [login] = await db
+    .select({ id: user.id, username: user.username, role: user.role })
+    .from(user)
+    .where(eq(user.employeeId, employeeId));
   return login;
 }
 
 export async function usernameTaken(username: string, exceptUserId?: string) {
-  const where = exceptUserId ? and(eq(user.username, username), ne(user.id, exceptUserId)) : eq(user.username, username);
+  const where = exceptUserId
+    ? and(eq(user.username, username), ne(user.id, exceptUserId))
+    : eq(user.username, username);
   return (await db.select({ id: user.id }).from(user).where(where)).length > 0;
 }
 
@@ -59,12 +71,18 @@ export async function applyLoginPlan(
         name: employee.name,
         role: "user", // roles are picked on the /employees list (setUserRoles)
         // The admin picked this password: the employee replaces it at first sign-in
-        data: { username: input.username, displayUsername: input.username, employeeId: employee.id, mustChangePassword: true },
+        data: {
+          username: input.username,
+          displayUsername: input.username,
+          employeeId: employee.id,
+          mustChangePassword: true,
+        },
       },
     });
   } else if (plan === "update" && loginId) {
     // Better Auth's username hook rejects a user's own unchanged username as "taken": send it only when it changes
-    const renamed = input.username !== login!.username ? { email, username: input.username, displayUsername: input.username } : {};
+    const renamed =
+      input.username !== login!.username ? { email, username: input.username, displayUsername: input.username } : {};
     await ctx.internalAdapter.updateUser(loginId, { name: employee.name, ...renamed });
     if (input.password) {
       // A reset works like a first access: whoever held the old password is signed out, and the new one must be replaced

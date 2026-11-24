@@ -49,7 +49,9 @@ export function GuardianRows({
   children?: React.ReactNode;
 }) {
   // Keys count per form, not per module, so the server render and hydration agree. A blank row only when there is none yet
-  const [rows, setRows] = useState<Row[]>(() => (initial.length ? initial.map((r, i) => ({ ...r, key: i })) : [blank(0)]));
+  const [rows, setRows] = useState<Row[]>(() =>
+    initial.length ? initial.map((r, i) => ({ ...r, key: i })) : [blank(0)],
+  );
   const nextKey = useRef(initial.length + 1);
   const markFixed = useMarkFixed();
   // A guardian registered in another tab shows up here when staff come back to this one
@@ -82,7 +84,8 @@ export function GuardianRows({
     <fieldset className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 sm:p-5">
       <legend className="px-1.5 text-base font-semibold text-gray-900">Responsáveis</legend>
       <p className="-mt-2 text-sm text-gray-600">
-        Quem responde pelo aluno e quem pode buscá-lo. O responsável financeiro é quem paga: as parcelas e os recibos da matrícula saem no nome dele.
+        Quem responde pelo aluno e quem pode buscá-lo. O responsável financeiro é quem paga: as parcelas e os recibos da
+        matrícula saem no nome dele.
       </p>
       {children}
       <input type="hidden" name="guardians" value={JSON.stringify(rows.map(({ key: _key, ...r }) => r))} />
@@ -91,7 +94,12 @@ export function GuardianRows({
         const rowLabel = `Responsável ${i + 1}`;
         const wa = showWhatsapp && row.id && !row.delete ? byId.get(row.guardianId ?? 0)?.mobile : undefined;
         return (
-          <div key={row.key} role="group" aria-label={name ? `${rowLabel}: ${name}` : rowLabel} className={`grid gap-4 border-t border-gray-200 pt-4 sm:grid-cols-2 ${row.delete ? "opacity-60" : ""}`}>
+          <div
+            key={row.key}
+            role="group"
+            aria-label={name ? `${rowLabel}: ${name}` : rowLabel}
+            className={`grid gap-4 border-t border-gray-200 pt-4 sm:grid-cols-2 ${row.delete ? "opacity-60" : ""}`}
+          >
             <Combobox
               id={`guardian-${row.key}`}
               label={rowLabel}
@@ -120,7 +128,9 @@ export function GuardianRows({
                   checked={row[flag]}
                   disabled={row.delete}
                   // The rows error is usually "no financial guardian": the box that fixes it points to it too
-                  aria-describedby={flag === "isFinancial" && row.key === firstActive && error ? `guardian-${row.key}-error` : undefined}
+                  aria-describedby={
+                    flag === "isFinancial" && row.key === firstActive && error ? `guardian-${row.key}-error` : undefined
+                  }
                   onChange={(e) => update(row.key, { [flag]: e.target.checked })}
                 />
               ))}
@@ -142,7 +152,11 @@ export function GuardianRows({
                     // Undoable, so it stays quiet until pointed at (DESIGN.md: delete turns red on hover)
                     className="ml-auto enabled:hover:text-red-700"
                     aria-label={`Remover ${name ?? rowLabel.toLowerCase()}`}
-                    onClick={() => (row.id ? update(row.key, { delete: true }) : setRows((all) => all.filter((r) => r.key !== row.key)))}
+                    onClick={() =>
+                      row.id
+                        ? update(row.key, { delete: true })
+                        : setRows((all) => all.filter((r) => r.key !== row.key))
+                    }
                   >
                     Remover
                   </Button>
@@ -159,7 +173,15 @@ export function GuardianRows({
           </span>{" "}
           Adicionar responsável
         </Button>
-        <Button as="a" href="/guardians/new" target="_blank" rel="noopener" size="sm" color="light" onClick={() => (registering.current = true)}>
+        <Button
+          as="a"
+          href="/guardians/new"
+          target="_blank"
+          rel="noopener"
+          size="sm"
+          color="light"
+          onClick={() => (registering.current = true)}
+        >
           <span className="material-symbols-outlined" aria-hidden="true">
             open_in_new
           </span>{" "}

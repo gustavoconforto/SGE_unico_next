@@ -25,28 +25,24 @@ function receivable(where: SQL) {
     })
     .from(installment)
     .innerJoin(account, eq(installment.accountId, account.id))
-    .where(
-      and(
-        eq(account.direction, Direction.RECEIVABLE),
-        inArray(installment.status, PENDING_STATUSES),
-        where,
-      ),
-    );
+    .where(and(eq(account.direction, Direction.RECEIVABLE), inArray(installment.status, PENDING_STATUSES), where));
 }
 
 /** The secretaria's start page: find a student, start the usual tasks, see what needs attention today. */
 export default async function HomePage() {
   await connection(); // depends on today's date: never prerender it
   const on = today();
-  const [finance, enrollments, enrollmentsEdit, students, studentsEdit, paymentsEdit, paymentsView] = await Promise.all([
-    hasPermission("finance", "view"),
-    hasPermission("enrollments", "view"),
-    hasPermission("enrollments", "edit"),
-    hasPermission("students", "view"),
-    hasPermission("students", "edit"),
-    hasPermission("payments", "edit"),
-    hasPermission("payments", "view"),
-  ]);
+  const [finance, enrollments, enrollmentsEdit, students, studentsEdit, paymentsEdit, paymentsView] = await Promise.all(
+    [
+      hasPermission("finance", "view"),
+      hasPermission("enrollments", "view"),
+      hasPermission("enrollments", "edit"),
+      hasPermission("students", "view"),
+      hasPermission("students", "edit"),
+      hasPermission("payments", "edit"),
+      hasPermission("payments", "view"),
+    ],
+  );
   // What each linked page requires (its requirePermission call)
   const allowed: Record<string, boolean> = {
     "/accounts/installments": finance,
@@ -62,18 +58,9 @@ export default async function HomePage() {
   // Totals only for the areas this user can open: nothing is computed just to be hidden
   const none = [{ n: 0, total: "0" }];
   const [[overdue], [dueToday], [enrolled]] = await Promise.all([
-    can("/accounts/installments")
-      ? receivable(sql`${installment.dueDate} < ${on}`)
-      : none,
-    can("/accounts/installments")
-      ? receivable(sql`${installment.dueDate} = ${on}`)
-      : none,
-    can("/enrollments")
-      ? db
-          .select({ n: count() })
-          .from(enrollment)
-          .where(eq(enrollment.enrolledAt, on))
-      : none,
+    can("/accounts/installments") ? receivable(sql`${installment.dueDate} < ${on}`) : none,
+    can("/accounts/installments") ? receivable(sql`${installment.dueDate} = ${on}`) : none,
+    can("/enrollments") ? db.select({ n: count() }).from(enrollment).where(eq(enrollment.enrolledAt, on)) : none,
   ]);
   const dateLabel = new Intl.DateTimeFormat("pt-BR", {
     weekday: "long",
@@ -88,11 +75,7 @@ export default async function HomePage() {
     { href: "/guardians/new", label: "Novo responsável" },
     { href: "/accounts/payments/new", label: "Registrar baixa" },
     // The payment form without the book (payments.view) has nothing to search: the desk pays from the enrollment
-  ].filter(
-    (a) =>
-      can(a.href) &&
-      (a.href !== "/accounts/payments/new" || can("/accounts/payments")),
-  );
+  ].filter((a) => can(a.href) && (a.href !== "/accounts/payments/new" || can("/accounts/payments")));
   const allRows = [
     {
       label: "Parcelas a receber vencidas",
@@ -115,18 +98,12 @@ export default async function HomePage() {
     <div className="flex max-w-3xl flex-col gap-8">
       <div>
         <h1 className="text-2xl font-semibold">Início</h1>
-        <p className="mt-1 text-sm text-gray-600 first-letter:uppercase">
-          {dateLabel}
-        </p>
+        <p className="mt-1 text-sm text-gray-600 first-letter:uppercase">{dateLabel}</p>
       </div>
 
       {/* A plain GET form: works before hydration and lands on the student list already filtered */}
       {can("/students") && (
-        <form
-          action="/students"
-          role="search"
-          className="flex flex-col gap-1.5"
-        >
+        <form action="/students" role="search" className="flex flex-col gap-1.5">
           <label htmlFor="home-search" className="text-sm font-medium">
             Buscar aluno
           </label>
@@ -149,11 +126,7 @@ export default async function HomePage() {
           </h2>
           <div className="flex flex-wrap gap-2">
             {actions.map((a, i) => (
-              <LinkButton
-                key={a.href}
-                href={a.href}
-                color={i === 0 ? undefined : "alternative"}
-              >
+              <LinkButton key={a.href} href={a.href} color={i === 0 ? undefined : "alternative"}>
                 {a.label}
               </LinkButton>
             ))}
@@ -182,9 +155,7 @@ export default async function HomePage() {
                       </span>
                     )}
                   </span>
-                  <span
-                    className={`font-semibold tabular-nums ${row.alert && row.n > 0 ? "text-red-700" : ""}`}
-                  >
+                  <span className={`font-semibold tabular-nums ${row.alert && row.n > 0 ? "text-red-700" : ""}`}>
                     {row.n.toLocaleString("pt-BR")}
                   </span>
                   {row.total !== undefined && (
@@ -192,10 +163,7 @@ export default async function HomePage() {
                       R$ {formatMoney(row.total)}
                     </span>
                   )}
-                  <span
-                    className="material-symbols-outlined text-gray-400"
-                    aria-hidden="true"
-                  >
+                  <span className="material-symbols-outlined text-gray-400" aria-hidden="true">
                     chevron_right
                   </span>
                 </Link>

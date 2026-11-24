@@ -22,9 +22,7 @@ const intParam = (v: string) => (/^\d+$/.test(v) ? Number(v) : null);
 const classLabel = (c: { gradeLevel: number | null; name: string }) =>
   `${c.gradeLevel ? `${c.gradeLevel}º ` : ""}${c.name}`;
 
-export default async function ClassDetailPage({
-  searchParams,
-}: PageProps<"/classes/detail">) {
+export default async function ClassDetailPage({ searchParams }: PageProps<"/classes/detail">) {
   await requirePermission("academicSetup", "view");
   const sp = await searchParams;
   const urlYearId = intParam(param(sp, "school_year"));
@@ -39,17 +37,17 @@ export default async function ClassDetailPage({
   // The class's own year wins, so the picker never disagrees with the roster; no year at all: the current one
   const yearId = selected?.yearId ?? urlYearId ?? current?.id ?? null;
   const where = selected
-    ? and(eq(enrollment.schoolClassId, selected.id), eq(enrollment.status, ACTIVE), searchWhere(q, [student.name, student.socialName]))
+    ? and(
+        eq(enrollment.schoolClassId, selected.id),
+        eq(enrollment.status, ACTIVE),
+        searchWhere(q, [student.name, student.socialName]),
+      )
     : undefined;
 
   const [years, classes, students, [{ total }]] = await Promise.all([
     yearOptions(),
     yearId
-      ? db
-          .select()
-          .from(klass)
-          .where(eq(klass.yearId, yearId))
-          .orderBy(asc(klass.gradeLevel), asc(klass.name))
+      ? db.select().from(klass).where(eq(klass.yearId, yearId)).orderBy(asc(klass.gradeLevel), asc(klass.name))
       : [],
     where
       ? db

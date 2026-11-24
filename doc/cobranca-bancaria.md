@@ -30,15 +30,15 @@ CNAB 400).
 Acesse pelo botão **Configuração bancária** na tela de Remessas. Precisa ser
 preenchida antes da primeira remessa.
 
-| Campo | Descrição |
-|---|---|
-| Código da empresa | Código do beneficiário informado pelo Bradesco (só números). |
-| Razão social | Nome da escola como cadastrado no banco. |
-| Carteira | Carteira de cobrança (2 dígitos; padrão 09). |
-| Agência / Conta corrente / Dígito da conta | Sem o dígito na agência e na conta. |
-| Multa (%) | Multa por atraso impressa no boleto (padrão 2%). |
-| Juros ao mês (%) | Juros por atraso (padrão 1% ao mês, cobrados por dia). |
-| Número da última remessa | Número da última remessa enviada ao banco; a próxima usa o seguinte. Só altere se o banco pedir. |
+| Campo                                      | Descrição                                                                                        |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| Código da empresa                          | Código do beneficiário informado pelo Bradesco (só números).                                     |
+| Razão social                               | Nome da escola como cadastrado no banco.                                                         |
+| Carteira                                   | Carteira de cobrança (2 dígitos; padrão 09).                                                     |
+| Agência / Conta corrente / Dígito da conta | Sem o dígito na agência e na conta.                                                              |
+| Multa (%)                                  | Multa por atraso impressa no boleto (padrão 2%).                                                 |
+| Juros ao mês (%)                           | Juros por atraso (padrão 1% ao mês, cobrados por dia).                                           |
+| Número da última remessa                   | Número da última remessa enviada ao banco; a próxima usa o seguinte. Só altere se o banco pedir. |
 
 ## Remessas
 
@@ -70,10 +70,10 @@ Para cada parcela aparecem o valor do boleto (saldo da parcela) e o desconto
 de pontualidade. Parcelas com problema aparecem na lista, mas **não podem ser
 enviadas** até serem corrigidas:
 
-| Problema | Como resolver |
-|---|---|
-| Responsável sem CPF válido, endereço ou CEP | Corrija o cadastro em **Responsáveis**. |
-| Vencimento já passou | O banco não aceita boleto vencido; receba de outra forma ou ajuste a parcela. |
+| Problema                                    | Como resolver                                                                 |
+| ------------------------------------------- | ----------------------------------------------------------------------------- |
+| Responsável sem CPF válido, endereço ou CEP | Corrija o cadastro em **Responsáveis**.                                       |
+| Vencimento já passou                        | O banco não aceita boleto vencido; receba de outra forma ou ajuste a parcela. |
 
 Marque as parcelas desejadas (e os pedidos de baixa, se houver) e confirme.
 O sistema gera a remessa e mostra quantos boletos e pedidos de baixa ela
@@ -120,16 +120,16 @@ retorno.
 
 ### O que cada ocorrência faz
 
-| Ocorrência do banco | O que o sistema faz |
-|---|---|
-| 02 – Entrada confirmada | Boleto passa a **Registrado**. |
-| 03 – Entrada rejeitada | Boleto **Rejeitado**; a parcela pode ir em nova remessa. |
-| 06, 15, 17 – Liquidação | Lança a **baixa** na parcela (forma Boleto) com juros e desconto informados pelo banco. Boleto **Liquidado**. |
-| 22, 40 – Pagamento cancelado / estornado | Exclui a baixa; a parcela volta a ficar pendente. |
-| 09 – Baixado por decurso de prazo | Boleto expirou sem pagamento; parcela fica **Expirado** (continua devida). |
-| 10 – Baixado pela agência | Confirma o pedido de baixa. Se a parcela ainda tiver saldo, o sistema avisa para enviá-la novamente. |
-| 27 – Baixa rejeitada | O pedido de baixa foi recusado; o boleto volta a **Registrado**. |
-| Outras | Guardadas como **ignoradas**. |
+| Ocorrência do banco                      | O que o sistema faz                                                                                           |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| 02 – Entrada confirmada                  | Boleto passa a **Registrado**.                                                                                |
+| 03 – Entrada rejeitada                   | Boleto **Rejeitado**; a parcela pode ir em nova remessa.                                                      |
+| 06, 15, 17 – Liquidação                  | Lança a **baixa** na parcela (forma Boleto) com juros e desconto informados pelo banco. Boleto **Liquidado**. |
+| 22, 40 – Pagamento cancelado / estornado | Exclui a baixa; a parcela volta a ficar pendente.                                                             |
+| 09 – Baixado por decurso de prazo        | Boleto expirou sem pagamento; parcela fica **Expirado** (continua devida).                                    |
+| 10 – Baixado pela agência                | Confirma o pedido de baixa. Se a parcela ainda tiver saldo, o sistema avisa para enviá-la novamente.          |
+| 27 – Baixa rejeitada                     | O pedido de baixa foi recusado; o boleto volta a **Registrado**.                                              |
+| Outras                                   | Guardadas como **ignoradas**.                                                                                 |
 
 Linhas de boletos do sistema anterior também são marcadas como ignoradas.
 
@@ -153,16 +153,16 @@ nosso número, parcela, responsável, vencimento, valor e situação.
 **Pesquisa:** nosso número, descrição da conta, responsável ou aluno.
 **Filtros:** situação e período de vencimento.
 
-| Situação do boleto | Significado |
-|---|---|
-| **Gerado** | Incluído numa remessa, ainda não confirmado pelo banco. |
-| **Registrado** | Aceito pelo banco; pode ser pago. |
-| **Baixa solicitada** | Pedido de baixa enviado, aguardando confirmação. |
-| **Rejeitado** | O banco recusou o boleto. |
-| **Liquidado** | Pago. |
-| **Baixado por decurso de prazo** | Venceu e o banco o retirou sem pagamento. |
-| **Baixado pela agência** | Retirado a pedido da escola. |
-| **Pagamento estornado** | O pagamento foi cancelado pelo banco. |
+| Situação do boleto               | Significado                                             |
+| -------------------------------- | ------------------------------------------------------- |
+| **Gerado**                       | Incluído numa remessa, ainda não confirmado pelo banco. |
+| **Registrado**                   | Aceito pelo banco; pode ser pago.                       |
+| **Baixa solicitada**             | Pedido de baixa enviado, aguardando confirmação.        |
+| **Rejeitado**                    | O banco recusou o boleto.                               |
+| **Liquidado**                    | Pago.                                                   |
+| **Baixado por decurso de prazo** | Venceu e o banco o retirou sem pagamento.               |
+| **Baixado pela agência**         | Retirado a pedido da escola.                            |
+| **Pagamento estornado**          | O pagamento foi cancelado pelo banco.                   |
 
 Boletos **Gerado**, **Registrado** e **Baixa solicitada** são considerados
 **ativos**: enquanto houver um, a parcela não recebe outro boleto.

@@ -18,7 +18,12 @@ export default async function NewPaymentPage({ searchParams }: PageProps<"/accou
   // "Baixar" on an account or enrollment page: ?installment=<id> prefills it with its balance (only a pending one)
   const [found] = installmentId
     ? await db
-        .select({ id: installment.id, direction: account.direction, accountId: account.id, enrollmentId: account.enrollmentId })
+        .select({
+          id: installment.id,
+          direction: account.direction,
+          accountId: account.id,
+          enrollmentId: account.enrollmentId,
+        })
         .from(installment)
         .innerJoin(account, eq(installment.accountId, account.id))
         .where(and(eq(installment.id, installmentId), inArray(installment.status, PENDING_STATUSES)))
@@ -39,7 +44,13 @@ export default async function NewPaymentPage({ searchParams }: PageProps<"/accou
         returnTo={fromEnrollment ? "enrollment" : source ? "account" : null}
         selected={selected}
         defaults={selected ? { amount: selected.balance, paidAt: today() } : undefined}
-        cancelHref={fromEnrollment ? `/enrollments/${source.enrollmentId}/edit` : source ? `/accounts/${kind}/${source.accountId}/edit` : `/accounts/payments${direction === "P" ? "?direction=P" : ""}`}
+        cancelHref={
+          fromEnrollment
+            ? `/enrollments/${source.enrollmentId}/edit`
+            : source
+              ? `/accounts/${kind}/${source.accountId}/edit`
+              : `/accounts/payments${direction === "P" ? "?direction=P" : ""}`
+        }
       />
     </div>
   );

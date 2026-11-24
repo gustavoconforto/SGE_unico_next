@@ -30,7 +30,10 @@ export type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type Conn = typeof db | Tx;
 
 /** PENDING_STATUSES as an SQL list, for `status in (...)` in raw subqueries. */
-export const pendingList = sql.join(PENDING_STATUSES.map((s) => sql`${s}`), sql`, `);
+export const pendingList = sql.join(
+  PENDING_STATUSES.map((s) => sql`${s}`),
+  sql`, `,
+);
 
 /** Principal paid on an installment (sum of amount − charges + discount over its payments). */
 export const paidPrincipalSql = sql<string>`coalesce((select sum(p.amount - p.penalty - p.interest - p.monetary_adjust + p.discount) from accounts_payment p where p.installment_id = ${ref(installment.id)}), 0)`;
@@ -80,12 +83,22 @@ export async function refreshInstallmentStatus(tx: Conn, installmentId: number) 
 
 /** Locks the installment row so two payments at once (a double click) are checked one after the other. */
 export async function lockInstallment(tx: Tx, installmentId: number) {
-  const [locked] = await tx.select({ id: installment.id }).from(installment).where(eq(installment.id, installmentId)).for("update");
+  const [locked] = await tx
+    .select({ id: installment.id })
+    .from(installment)
+    .where(eq(installment.id, installmentId))
+    .for("update");
   if (!locked) return undefined;
   // A separate statement after the lock: under READ COMMITTED it takes a fresh snapshot and so sees the
   // payment a concurrent submit just committed (in the locking statement itself the subquery would not)
   const [row] = await tx
-    .select({ id: installment.id, amount: installment.amount, status: installment.status, accountId: installment.accountId, paid: paidPrincipalSql })
+    .select({
+      id: installment.id,
+      amount: installment.amount,
+      status: installment.status,
+      accountId: installment.accountId,
+      paid: paidPrincipalSql,
+    })
     .from(installment)
     .where(eq(installment.id, installmentId));
   return row;
@@ -108,7 +121,13 @@ export async function hasOverdueDebt(conn: Conn, studentId: number, on = today()
     .from(installment)
     .innerJoin(account, eq(installment.accountId, account.id))
     .innerJoin(enrollment, eq(account.enrollmentId, enrollment.id))
-    .where(and(eq(enrollment.studentId, studentId), inArray(installment.status, PENDING_STATUSES), sql`${installment.dueDate} < ${on}`))
+    .where(
+      and(
+        eq(enrollment.studentId, studentId),
+        inArray(installment.status, PENDING_STATUSES),
+        sql`${installment.dueDate} < ${on}`,
+      ),
+    )
     .limit(1);
   return !!row;
 }
@@ -116,7 +135,10 @@ export async function hasOverdueDebt(conn: Conn, studentId: number, on = today()
 const TUITION_CATEGORY = "Mensalidade";
 
 async function tuitionCategoryId(tx: Tx) {
-  await tx.insert(accountType).values({ name: TUITION_CATEGORY, direction: Direction.RECEIVABLE }).onConflictDoNothing();
+  await tx
+    .insert(accountType)
+    .values({ name: TUITION_CATEGORY, direction: Direction.RECEIVABLE })
+    .onConflictDoNothing();
   const [row] = await tx.select({ id: accountType.id }).from(accountType).where(eq(accountType.name, TUITION_CATEGORY));
   return row.id;
 }
@@ -124,7 +146,15 @@ async function tuitionCategoryId(tx: Tx) {
 /** create_enrollment_account(): the contract's receivable and its installments (Django's post_save signal). */
 export async function createEnrollmentAccount(
   tx: Tx,
-  e: { id: number; studentId: number; enrolledAt: string; dueDay: number; description: string; schoolYear: number; selfFinancial: boolean },
+  e: {
+    id: number;
+    studentId: number;
+    enrolledAt: string;
+    dueDay: number;
+    description: string;
+    schoolYear: number;
+    selfFinancial: boolean;
+  },
   values: ContractValues,
 ) {
   const [payer] = e.selfFinancial ? [] : await financialGuardians(tx, e.studentId).limit(1);
@@ -163,13 +193,28 @@ export async function cancelFutureInstallments(tx: Tx, enrollmentId: number, on 
   await tx
     .update(installment)
     .set({ status: InstallmentStatus.CANCELLED })
-    .where(and(eq(installment.accountId, acc.id), eq(installment.status, InstallmentStatus.OPEN), gte(installment.dueDate, on)));
+    .where(
+      and(
+        eq(installment.accountId, acc.id),
+        eq(installment.status, InstallmentStatus.OPEN),
+        gte(installment.dueDate, on),
+      ),
+    );
 }
 
 /** Enrollment.sync_documents(): one checklist row per required document type the enrollment lacks. */
 export async function syncDocuments(conn: Conn, enrollmentId: number) {
-  const existing = conn.select({ id: enrollmentDocument.typeId }).from(enrollmentDocument).where(eq(enrollmentDocument.enrollmentId, enrollmentId));
-  const missing = await conn.select({ id: documentType.id }).from(documentType).where(notInArray(documentType.id, existing));
-  if (missing.length) await conn.insert(enrollmentDocument).values(missing.map((t) => ({ enrollmentId, typeId: t.id, isDelivered: false }))).onConflictDoNothing();
+  const existing = conn
+    .select({ id: enrollmentDocument.typeId })
+    .from(enrollmentDocument)
+    .where(eq(enrollmentDocument.enrollmentId, enrollmentId));
+  const missing = await conn
+    .select({ id: documentType.id })
+    .from(documentType)
+    .where(notInArray(documentType.id, existing));
+  if (missing.length)
+    await conn
+      .insert(enrollmentDocument)
+      .values(missing.map((t) => ({ enrollmentId, typeId: t.id, isDelivered: false })))
+      .onConflictDoNothing();
 }
-

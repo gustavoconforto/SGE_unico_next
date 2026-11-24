@@ -22,16 +22,30 @@ async function startingQuery(): Promise<string | null> {
   try {
     last = new URLSearchParams(decodeURIComponent((await cookies()).get(LAST_SHEET)?.value ?? ""));
   } catch {} // a mangled cookie just starts fresh
-  const kept = new URLSearchParams(SHEET_KEYS.flatMap((k) => (/^\d+$/.test(last.get(k) ?? "") ? [[k, last.get(k)!]] : [])));
+  const kept = new URLSearchParams(
+    SHEET_KEYS.flatMap((k) => (/^\d+$/.test(last.get(k) ?? "") ? [[k, last.get(k)!]] : [])),
+  );
   if (kept.has("school_year")) return kept.toString();
   const year = await currentSchoolYear();
   return year ? `school_year=${year.id}` : null;
 }
 
 /** "a turma, a matéria e o período": only what is still to pick (the year usually comes preselected). */
-function missingChoices(selected: { year: number | null; klass: number | null; subject: number | null; period: number | null }) {
-  const missing = [!selected.year && "o ano letivo", !selected.klass && "a turma", !selected.subject && "a matéria", !selected.period && "o período"].filter((m) => !!m);
-  return missing.length > 1 ? `${missing.slice(0, -1).join(", ")} e ${missing.at(-1)}` : (missing[0] ?? "outra matéria");
+function missingChoices(selected: {
+  year: number | null;
+  klass: number | null;
+  subject: number | null;
+  period: number | null;
+}) {
+  const missing = [
+    !selected.year && "o ano letivo",
+    !selected.klass && "a turma",
+    !selected.subject && "a matéria",
+    !selected.period && "o período",
+  ].filter((m) => !!m);
+  return missing.length > 1
+    ? `${missing.slice(0, -1).join(", ")} e ${missing.at(-1)}`
+    : (missing[0] ?? "outra matéria");
 }
 
 export default async function GradeEntryPage({ searchParams }: PageProps<"/grades/entry">) {
@@ -44,13 +58,26 @@ export default async function GradeEntryPage({ searchParams }: PageProps<"/grade
   const s = await gradeSelection(sp);
   const { klass, subject, period } = s.selected;
   const sheet = klass && subject && period ? await loadSheet(klass, subject, period) : null;
-  const [staff, locks] = sheet ? await Promise.all([hasPermission("grades", "manage"), allLocks()]) : [true, new Set<string>()];
+  const [staff, locks] = sheet
+    ? await Promise.all([hasPermission("grades", "manage"), allLocks()])
+    : [true, new Set<string>()];
   const locked = locks.has(`${subject}:${period}`);
-  const query = new URLSearchParams({ school_year: String(s.selected.year), school_class: String(klass), subject: String(subject), bimester: String(period) }).toString();
+  const query = new URLSearchParams({
+    school_year: String(s.selected.year),
+    school_class: String(klass),
+    subject: String(subject),
+    bimester: String(period),
+  }).toString();
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">Lançamento de notas</h1>
-      <GradePicker basePath="/grades/entry" years={s.years} classes={s.classes} subjects={s.subjects} selected={s.selected} />
+      <GradePicker
+        basePath="/grades/entry"
+        years={s.years}
+        classes={s.classes}
+        subjects={s.subjects}
+        selected={s.selected}
+      />
       {sheet ? (
         <GradeSheet
           key={query}
@@ -58,8 +85,14 @@ export default async function GradeEntryPage({ searchParams }: PageProps<"/grade
           recovery={sheet.recovery}
           unaveraged={sheet.unaveraged}
           examTypes={sheet.examTypes.map((t) => ({ ...t, calculated: staffOnly(t) }))}
-          readOnly={Object.fromEntries(sheet.examTypes.flatMap((t) => (gradeEditError(staff, locked, t) ? [[t.id, gradeEditError(staff, locked, t)!]] : [])))}
-          notice={locked ? { text: staff ? "Bimestre bloqueado para os professores nesta matéria." : LOCKED, staff } : null}
+          readOnly={Object.fromEntries(
+            sheet.examTypes.flatMap((t) =>
+              gradeEditError(staff, locked, t) ? [[t.id, gradeEditError(staff, locked, t)!]] : [],
+            ),
+          )}
+          notice={
+            locked ? { text: staff ? "Bimestre bloqueado para os professores nesta matéria." : LOCKED, staff } : null
+          }
           rows={sheet.rows.map((r) => ({
             id: r.id,
             name: r.name,

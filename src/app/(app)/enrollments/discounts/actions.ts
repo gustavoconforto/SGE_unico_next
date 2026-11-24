@@ -9,7 +9,10 @@ import { deleteAndRedirect } from "@/lib/crud";
 import { type FormState, decimalField, parseForm, requiredText } from "@/lib/form";
 import { requirePermission } from "@/lib/authorization";
 
-const discountSchema = z.object({ description: requiredText(200), percentage: decimalField({ maxDigits: 5, min: 0, max: 100 }) });
+const discountSchema = z.object({
+  description: requiredText(200),
+  percentage: decimalField({ maxDigits: 5, min: 0, max: 100 }),
+});
 
 export async function saveDiscountType(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
   await requirePermission("enrollmentSetup", "edit");

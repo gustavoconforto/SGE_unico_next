@@ -6,7 +6,13 @@ import { LinkButton } from "./link-button";
  * The installments a save will create, as previewed on the enrollment and account forms.
  * `shifted`: numbers of the installments whose due date was moved off a weekend, marked as such.
  */
-export function InstallmentTable({ rows, shifted }: { rows: { number: number; dueDate: string; amount: Money }[]; shifted?: Set<number> }) {
+export function InstallmentTable({
+  rows,
+  shifted,
+}: {
+  rows: { number: number; dueDate: string; amount: Money }[];
+  shifted?: Set<number>;
+}) {
   return (
     <Table className="[&_td]:px-3 [&_th]:px-3">
       <TableHead>
@@ -22,9 +28,7 @@ export function InstallmentTable({ rows, shifted }: { rows: { number: number; du
             <TableCell className="tabular-nums">{i.number}ª</TableCell>
             <TableCell className="tabular-nums">
               {formatDate(i.dueDate)}
-              {shifted?.has(i.number) && (
-                <span className="ml-1.5 text-xs text-gray-600">fim de semana → segunda</span>
-              )}
+              {shifted?.has(i.number) && <span className="ml-1.5 text-xs text-gray-600">fim de semana → segunda</span>}
             </TableCell>
             <TableCell className="text-right tabular-nums">{formatMoney(i.amount)}</TableCell>
           </TableRow>
@@ -56,7 +60,14 @@ export function InstallmentActions({
   return (
     <div className="flex gap-2 whitespace-nowrap">
       {(installment.status === InstallmentStatus.PAID || installment.status === InstallmentStatus.PARTIAL) && (
-        <LinkButton href={`${receiptHref}?installment=${installment.id}`} size="xs" color="alternative" className="px-2" aria-label={`Recibo da parcela ${installment.number}`} data-tip="Recibo">
+        <LinkButton
+          href={`${receiptHref}?installment=${installment.id}`}
+          size="xs"
+          color="alternative"
+          className="px-2"
+          aria-label={`Recibo da parcela ${installment.number}`}
+          data-tip="Recibo"
+        >
           <span className="material-symbols-outlined" aria-hidden="true">
             receipt
           </span>
@@ -65,14 +76,27 @@ export function InstallmentActions({
       {canPay &&
         PENDING_STATUSES.includes(installment.status) &&
         (due ? (
-          <LinkButton href={payHref} size="xs" color="alternative" className="gap-1 px-2" aria-label={`Registrar baixa da parcela ${installment.number}`}>
+          <LinkButton
+            href={payHref}
+            size="xs"
+            color="alternative"
+            className="gap-1 px-2"
+            aria-label={`Registrar baixa da parcela ${installment.number}`}
+          >
             <span className="material-symbols-outlined" aria-hidden="true">
               price_check
             </span>
             Registrar baixa
           </LinkButton>
         ) : (
-          <LinkButton href={payHref} size="xs" color="alternative" className="px-2" aria-label={`Registrar baixa da parcela ${installment.number}`} data-tip="Registrar baixa">
+          <LinkButton
+            href={payHref}
+            size="xs"
+            color="alternative"
+            className="px-2"
+            aria-label={`Registrar baixa da parcela ${installment.number}`}
+            data-tip="Registrar baixa"
+          >
             <span className="material-symbols-outlined" aria-hidden="true">
               price_check
             </span>

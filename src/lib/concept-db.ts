@@ -54,7 +54,13 @@ export async function conceptGrades(enrollmentIds: number[], bimester: number) {
       .innerJoin(enrollment, eq(delay.enrollmentId, enrollment.id))
       .innerJoin(enrollmentType, eq(enrollment.enrollmentTypeId, enrollmentType.id))
       .innerJoin(year, eq(enrollmentType.schoolYearId, year.id))
-      .where(and(inArray(delay.enrollmentId, enrollmentIds), eq(delay.delayType, "A"), between(delay.incidentDate, begins, ends)))
+      .where(
+        and(
+          inArray(delay.enrollmentId, enrollmentIds),
+          eq(delay.delayType, "A"),
+          between(delay.incidentDate, begins, ends),
+        ),
+      )
       .groupBy(delay.enrollmentId),
   ]);
   const penaltyOf = new Map(penalties.map((x) => [x.id, x.total]));
@@ -68,10 +74,19 @@ export async function conceptGrades(enrollmentIds: number[], bimester: number) {
 }
 
 /** Gives every subject of each enrollment's series its score; returns the ids skipped (no score or no subjects). */
-export async function saveSeriesGrades(enrollmentIds: number[], bimester: number, examTypeId: number, scores: Map<number, string>) {
+export async function saveSeriesGrades(
+  enrollmentIds: number[],
+  bimester: number,
+  examTypeId: number,
+  scores: Map<number, string>,
+) {
   const [enrollments, subjects] = await Promise.all([
     enrollmentIds.length
-      ? db.select({ id: enrollment.id, gradeLevel: klass.gradeLevel }).from(enrollment).leftJoin(klass, eq(enrollment.schoolClassId, klass.id)).where(inArray(enrollment.id, enrollmentIds))
+      ? db
+          .select({ id: enrollment.id, gradeLevel: klass.gradeLevel })
+          .from(enrollment)
+          .leftJoin(klass, eq(enrollment.schoolClassId, klass.id))
+          .where(inArray(enrollment.id, enrollmentIds))
       : [],
     db.select({ gradeLevel: levelSubject.gradeLevel, subjectId: levelSubject.subjectId }).from(levelSubject),
   ]);
@@ -92,7 +107,10 @@ export async function saveSeriesGrades(enrollmentIds: number[], bimester: number
         await tx
           .insert(grade)
           .values(rows.slice(i, i + 500))
-          .onConflictDoUpdate({ target: [grade.enrollmentId, grade.subjectId, grade.examTypeId, grade.bimester], set: { score: sqlExcluded("score"), updatedAt: new Date().toISOString() } });
+          .onConflictDoUpdate({
+            target: [grade.enrollmentId, grade.subjectId, grade.examTypeId, grade.bimester],
+            set: { score: sqlExcluded("score"), updatedAt: new Date().toISOString() },
+          });
     });
   return skipped;
 }
@@ -102,6 +120,11 @@ const sqlExcluded = (column: string) => sql.raw(`excluded.${column}`);
 /** The school year that begins in today's calendar year (incidents/forms.py current_school_year). */
 export async function currentSchoolYear() {
   await connection(); // depends on today's date: never prerender it
-  const [y] = await db.select().from(year).where(sql`extract(year from ${year.begins}) = ${Number(today().slice(0, 4))}`).orderBy(year.begins).limit(1);
+  const [y] = await db
+    .select()
+    .from(year)
+    .where(sql`extract(year from ${year.begins}) = ${Number(today().slice(0, 4))}`)
+    .orderBy(year.begins)
+    .limit(1);
   return y ?? null;
 }

@@ -25,9 +25,23 @@ export default async function DocumentTypeListPage({ searchParams }: PageProps<"
     db.select({ total: count() }).from(documentType).where(where),
   ]);
   return (
-    <ListPage title="Documentos" newHref="/enrollments/documents/new" newLabel="Novo documento" searchPlaceholder="Pesquisar documento..." headers={["Descrição"]} page={page} total={total}>
+    <ListPage
+      title="Documentos"
+      newHref="/enrollments/documents/new"
+      newLabel="Novo documento"
+      searchPlaceholder="Pesquisar documento..."
+      headers={["Descrição"]}
+      page={page}
+      total={total}
+    >
       {rows.map((d) => (
-        <ListRow key={d.id} cells={[d.description]} label={d.description} editHref={`/enrollments/documents/${d.id}/edit`} deleteAction={deleteDocumentType.bind(null, d.id)} />
+        <ListRow
+          key={d.id}
+          cells={[d.description]}
+          label={d.description}
+          editHref={`/enrollments/documents/${d.id}/edit`}
+          deleteAction={deleteDocumentType.bind(null, d.id)}
+        />
       ))}
     </ListPage>
   );

@@ -59,7 +59,12 @@ describe("enrollment amounts", () => {
   });
 
   it("splits the remaining 11/12 over the remaining months", () => {
-    expect(amounts(enrollmentInstallments(noDiscount, "2027-09-15", 2027, 10))).toEqual(["83.33", "305.57", "305.55", "305.55"]);
+    expect(amounts(enrollmentInstallments(noDiscount, "2027-09-15", 2027, 10))).toEqual([
+      "83.33",
+      "305.57",
+      "305.55",
+      "305.55",
+    ]);
   });
 
   it("a single installment carries the whole contract", () => {
@@ -93,7 +98,10 @@ describe("account installments (build_installments)", () => {
 });
 
 describe("payments and status (Payment.principal, Installment.refresh_status)", () => {
-  const pay = (amount: string, extra: Partial<Record<"penalty" | "interest" | "monetaryAdjust" | "discount", string>> = {}) => ({
+  const pay = (
+    amount: string,
+    extra: Partial<Record<"penalty" | "interest" | "monetaryAdjust" | "discount", string>> = {},
+  ) => ({
     amount,
     penalty: "0",
     interest: "0",
@@ -103,7 +111,9 @@ describe("payments and status (Payment.principal, Installment.refresh_status)", 
   });
 
   it("principal excludes charges and includes the discount", () => {
-    expect(toDb(principal(pay("110.00", { penalty: "2.00", interest: "3.00", monetaryAdjust: "5.00", discount: "10.00" })))).toBe("110.00");
+    expect(
+      toDb(principal(pay("110.00", { penalty: "2.00", interest: "3.00", monetaryAdjust: "5.00", discount: "10.00" }))),
+    ).toBe("110.00");
   });
 
   it("moves open → partial → paid; cancelled never changes; expired only to paid", () => {

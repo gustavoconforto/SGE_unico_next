@@ -10,7 +10,8 @@ import { EXTRA_CODE } from "./pathways";
 export const ADJUSTMENT_CODE = "A";
 export const STAFF_ONLY_CODES: readonly string[] = [CONCEPT_CODE, EXTRA_CODE, ADJUSTMENT_CODE];
 /** Staff-only exam types: the calculated codes, and any adjustment, whatever its code (it replaces the bimester grade). */
-export const staffOnly = (t: { code: string; kind: string }) => STAFF_ONLY_CODES.includes(t.code) || t.kind === ExamKind.ADJUSTMENT;
+export const staffOnly = (t: { code: string; kind: string }) =>
+  STAFF_ONLY_CODES.includes(t.code) || t.kind === ExamKind.ADJUSTMENT;
 
 export const LOCKED = "Lançamento encerrado para este bimestre. Fale com a secretaria.";
 export const STAFF_ONLY = "Somente a secretaria pode lançar esta nota.";
@@ -24,5 +25,9 @@ export function gradeEditError(staff: boolean, locked: boolean, exam: { code: st
 
 /** Every lock, as "subjectId:bimester" keys. */
 export async function allLocks() {
-  return new Set((await db.select({ subjectId: lock.subjectId, bimester: lock.bimester }).from(lock)).map((r) => `${r.subjectId}:${r.bimester}`));
+  return new Set(
+    (await db.select({ subjectId: lock.subjectId, bimester: lock.bimester }).from(lock)).map(
+      (r) => `${r.subjectId}:${r.bimester}`,
+    ),
+  );
 }

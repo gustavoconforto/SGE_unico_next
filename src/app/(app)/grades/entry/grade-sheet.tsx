@@ -1,7 +1,26 @@
 "use client";
 
-import { Alert, Button, HelperText, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow, TextInput } from "flowbite-react";
-import { type ClipboardEvent, type FormEvent, type KeyboardEvent, useActionState, useEffect, useRef, useState } from "react";
+import {
+  Alert,
+  Button,
+  HelperText,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeadCell,
+  TableRow,
+  TextInput,
+} from "flowbite-react";
+import {
+  type ClipboardEvent,
+  type FormEvent,
+  type KeyboardEvent,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useLeaveGuard } from "@/components/form-fields";
 import { formatGrade } from "@/lib/grades";
 import { RESULT, STICKY, STICKY_BODY } from "../student/cells";
@@ -52,9 +71,19 @@ export function GradeSheet({ selection, recovery, unaveraged, examTypes, rows, r
   const deleteOk = useRef(false);
   const form = useRef<HTMLFormElement>(null);
   // Phones show one exam column at a time: teachers grade one exam for the whole class
-  const [exam, setExam] = useState(() => Math.max(0, examTypes.findIndex((t) => !(t.id in readOnly))));
+  const [exam, setExam] = useState(() =>
+    Math.max(
+      0,
+      examTypes.findIndex((t) => !(t.id in readOnly)),
+    ),
+  );
   const value = (r: Row, t: Exam) => (t.id in readOnly ? loaded(r, t) : (edits[scoreName(r, t)] ?? loaded(r, t)));
-  const sheetCell = (r: Row, t: Exam) => ({ kind: t.kind, raw: value(r, t), maxScore: t.maxScore, calculated: t.calculated });
+  const sheetCell = (r: Row, t: Exam) => ({
+    kind: t.kind,
+    raw: value(r, t),
+    maxScore: t.maxScore,
+    calculated: t.calculated,
+  });
 
   /** The typed error once the user leaves the cell, or the server's while the cell still holds what was sent. */
   const errorOf = (r: Row, t: Exam) => {
@@ -97,11 +126,18 @@ export function GradeSheet({ selection, recovery, unaveraged, examTypes, rows, r
     document.cookie = `${LAST_SHEET}=${encodeURIComponent(selection.query)}; path=/grades; max-age=${60 * 60 * 24 * 180}; samesite=lax`;
   }, [selection.query]);
 
-  if (!examTypes.length) return <Alert color="warning">Cadastre um tipo de avaliação {recovery ? "de recuperação " : ""}para lançar notas.</Alert>;
+  if (!examTypes.length)
+    return (
+      <Alert color="warning">Cadastre um tipo de avaliação {recovery ? "de recuperação " : ""}para lançar notas.</Alert>
+    );
   if (!rows.length)
     return (
       <p className="text-gray-500">
-        {!recovery ? "Nenhum aluno ativo nesta turma." : unaveraged ? `Ninguém em recuperação por enquanto: ${unaveragedNote(unaveraged)}` : "Nenhum aluno desta turma está em recuperação nesta matéria."}
+        {!recovery
+          ? "Nenhum aluno ativo nesta turma."
+          : unaveraged
+            ? `Ninguém em recuperação por enquanto: ${unaveragedNote(unaveraged)}`
+            : "Nenhum aluno desta turma está em recuperação nesta matéria."}
       </p>
     );
 
@@ -133,7 +169,12 @@ export function GradeSheet({ selection, recovery, unaveraged, examTypes, rows, r
     // Left/Right leave the cell only from its edge (or with the whole value selected, as on focus), like a spreadsheet
     const input = e.currentTarget;
     const whole = input.selectionStart === 0 && input.selectionEnd === input.value.length;
-    const side = e.key === "ArrowLeft" && (whole || input.selectionEnd === 0) ? -1 : e.key === "ArrowRight" && (whole || input.selectionStart === input.value.length) ? 1 : 0;
+    const side =
+      e.key === "ArrowLeft" && (whole || input.selectionEnd === 0)
+        ? -1
+        : e.key === "ArrowRight" && (whole || input.selectionStart === input.value.length)
+          ? 1
+          : 0;
     if (side && editable[col + side]) {
       e.preventDefault();
       return focusCell(row, editable[col + side]);
@@ -161,9 +202,13 @@ export function GradeSheet({ selection, recovery, unaveraged, examTypes, rows, r
     );
     setEdits((v) => ({ ...v, ...filled }));
     touch(...Object.keys(filled));
-    setPasteNote(dropped ? `${count(dropped, "valor colado ficou", "valores colados ficaram")} fora da planilha` : null);
+    setPasteNote(
+      dropped ? `${count(dropped, "valor colado ficou", "valores colados ficaram")} fora da planilha` : null,
+    );
   };
-  const progress = [changed > 0 && count(changed, "alteração não salva", "alterações não salvas"), pasteNote].filter((s) => !!s);
+  const progress = [changed > 0 && count(changed, "alteração não salva", "alterações não salvas"), pasteNote].filter(
+    (s) => !!s,
+  );
   const lives = rows.map((r) =>
     rowResult(
       examTypes.map((t) => sheetCell(r, t)),
@@ -175,7 +220,9 @@ export function GradeSheet({ selection, recovery, unaveraged, examTypes, rows, r
   const firstAtRisk = lives.findIndex((l) => l.atRisk);
   /** Invalid cells stop the save here (no round trip); a save that erases grades waits for the bar's confirmation. */
   const submit = (e: FormEvent<HTMLFormElement>) => {
-    const bad = cells.filter(({ r, t }) => !sameScore(value(r, t), loaded(r, t)) && "error" in parseScore(value(r, t), t.maxScore));
+    const bad = cells.filter(
+      ({ r, t }) => !sameScore(value(r, t), loaded(r, t)) && "error" in parseScore(value(r, t), t.maxScore),
+    );
     if (bad.length) {
       e.preventDefault();
       touch(...bad.map(({ r, t }) => scoreName(r, t)));
@@ -190,21 +237,35 @@ export function GradeSheet({ selection, recovery, unaveraged, examTypes, rows, r
   };
   // Esc or a paste can undo the erasing while the question is open: ask only while it still applies
   const asking = confirming && removals > 0;
-  const savedAt = state.saved && new Date(state.saved).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const savedAt =
+    state.saved && new Date(state.saved).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   // Shown in the bar and announced by the status line
   const invalidMsg = count(invalid.length, "nota inválida", "notas inválidas");
   const removeMsg = count(removals, "nota já lançada será apagada", "notas já lançadas serão apagadas");
   // `count` includes erased grades, so "alterações", not "notas salvas"
-  const savedMsg = savedAt && !changed ? (state.count ? `${count(state.count, "alteração salva", "alterações salvas")} às ${savedAt}` : `Nada mudou desde o último salvamento (${savedAt})`) : null;
+  const savedMsg =
+    savedAt && !changed
+      ? state.count
+        ? `${count(state.count, "alteração salva", "alterações salvas")} às ${savedAt}`
+        : `Nada mudou desde o último salvamento (${savedAt})`
+      : null;
   // Phones show one exam: its button marks unsaved edits and errors hiding in the others
   const marks = examTypes.map((t) => ({
     edited: cells.some((c) => c.t === t && !sameScore(value(c.r, t), loaded(c.r, t))),
     errors: invalid.filter((c) => c.t === t).length,
   }));
   /** Why an exam column reads as it does: not editable here, or calculated but open to staff. */
-  const note = (t: Exam) => (t.id in readOnly ? (readOnly[t.id] !== notice?.text ? readOnly[t.id] : null) : t.calculated ? "calculado · editável pela secretaria" : null);
+  const note = (t: Exam) =>
+    t.id in readOnly
+      ? readOnly[t.id] !== notice?.text
+        ? readOnly[t.id]
+        : null
+      : t.calculated
+        ? "calculado · editável pela secretaria"
+        : null;
   const switchExam = (e: KeyboardEvent<HTMLButtonElement>) => {
-    const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
+    const step =
+      e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
     if (!step) return;
     e.preventDefault();
     const next = (exam + step + examTypes.length) % examTypes.length;
@@ -215,7 +276,14 @@ export function GradeSheet({ selection, recovery, unaveraged, examTypes, rows, r
   const narrow = (i: number) => (i === exam ? "" : "hidden sm:table-cell");
 
   return (
-    <form ref={form} action={action} onSubmit={submit} className="flex flex-col gap-3" data-sheet="" data-dirty={changed ? "" : undefined}>
+    <form
+      ref={form}
+      action={action}
+      onSubmit={submit}
+      className="flex flex-col gap-3"
+      data-sheet=""
+      data-dirty={changed ? "" : undefined}
+    >
       {/* Only while the problem is still on screen: fixed cells clear it */}
       {state.formError && invalid.length > 0 && <Alert color="failure">{state.formError}</Alert>}
       {notice && (
@@ -241,7 +309,10 @@ export function GradeSheet({ selection, recovery, unaveraged, examTypes, rows, r
       </dl>
       <p className="text-sm text-gray-600">
         Use vírgula nos decimais (ex.: 2,5) e apague o valor para remover uma nota.
-        <span className="hidden sm:inline"> Enter desce para o próximo aluno (Shift+Enter sobe); colar uma coluna de planilha preenche vários alunos.</span>
+        <span className="hidden sm:inline">
+          {" "}
+          Enter desce para o próximo aluno (Shift+Enter sobe); colar uma coluna de planilha preenche vários alunos.
+        </span>
         {recovery && unaveraged > 0 && <span className="block">{unaveragedNote(unaveraged)}</span>}
       </p>
       <div role="radiogroup" aria-label="Avaliação mostrada" className="flex gap-2 sm:hidden">
@@ -293,7 +364,9 @@ export function GradeSheet({ selection, recovery, unaveraged, examTypes, rows, r
               {examTypes.map((t, i) => (
                 <TableHeadCell key={t.id} scope="col" className={`${narrow(i)} px-3 text-right whitespace-nowrap`}>
                   {t.code} <span className="block text-xs font-normal normal-case">até {formatGrade(t.maxScore)}</span>
-                  {t.calculated && !(t.id in readOnly) && <span className="block text-xs font-normal normal-case">calculado</span>}
+                  {t.calculated && !(t.id in readOnly) && (
+                    <span className="block text-xs font-normal normal-case">calculado</span>
+                  )}
                 </TableHeadCell>
               ))}
               <TableHeadCell scope="col" className={`${RESULT_STICKY} px-4 text-right whitespace-nowrap`}>
@@ -311,13 +384,28 @@ export function GradeSheet({ selection, recovery, unaveraged, examTypes, rows, r
             {rows.map((r, row) => {
               const live = lives[row];
               // The grade is a sum: a partial row is low by design, so it turns red only once it can't reach passing
-              const tone = live.invalid || live.result === null ? "text-gray-500" : live.atRisk ? "text-red-600" : live.incomplete ? "text-gray-500" : "text-gray-900";
+              const tone =
+                live.invalid || live.result === null
+                  ? "text-gray-500"
+                  : live.atRisk
+                    ? "text-red-600"
+                    : live.incomplete
+                      ? "text-gray-500"
+                      : "text-gray-900";
               return (
                 <TableRow key={r.id}>
-                  <th scope="row" title={r.name} className={`${STICKY_BODY} max-w-40 truncate px-3 py-2 text-left font-medium text-gray-900 sm:max-w-none sm:min-w-36 sm:px-4 sm:whitespace-normal`}>
+                  <th
+                    scope="row"
+                    title={r.name}
+                    className={`${STICKY_BODY} max-w-40 truncate px-3 py-2 text-left font-medium text-gray-900 sm:max-w-none sm:min-w-36 sm:px-4 sm:whitespace-normal`}
+                  >
                     {r.name}
                   </th>
-                  {recovery && <TableCell className={`px-3 py-2 text-right ${gradeTone(r.average)}`}>{formatGrade(r.average)}</TableCell>}
+                  {recovery && (
+                    <TableCell className={`px-3 py-2 text-right ${gradeTone(r.average)}`}>
+                      {formatGrade(r.average)}
+                    </TableCell>
+                  )}
                   {examTypes.map((t, i) => {
                     const name = scoreName(r, t);
                     const col = editable.indexOf(t);
@@ -332,7 +420,10 @@ export function GradeSheet({ selection, recovery, unaveraged, examTypes, rows, r
                     const described = [error && `${name}-error`, edited && `${name}-before`].filter(Boolean).join(" ");
                     return (
                       // Calculated columns (staff only) read as results and stay out of the Tab order
-                      <TableCell key={t.id} className={`${narrow(i)} px-3 py-2 text-right ${t.calculated ? RESULT : ""}`}>
+                      <TableCell
+                        key={t.id}
+                        className={`${narrow(i)} px-3 py-2 text-right ${t.calculated ? RESULT : ""}`}
+                      >
                         <input type="hidden" name={shownName(name)} value={loaded(r, t)} />
                         <TextInput
                           id={cellId(row, col)}
@@ -365,7 +456,11 @@ export function GradeSheet({ selection, recovery, unaveraged, examTypes, rows, r
                         )}
                         {/* Under the cell, so the error sits where it is fixed even mid-table */}
                         {error && (
-                          <HelperText id={`${name}-error`} color="failure" className="mt-1 ml-auto w-20 text-right text-xs leading-tight">
+                          <HelperText
+                            id={`${name}-error`}
+                            color="failure"
+                            className="mt-1 ml-auto w-20 text-right text-xs leading-tight"
+                          >
                             {error}
                           </HelperText>
                         )}
@@ -374,7 +469,9 @@ export function GradeSheet({ selection, recovery, unaveraged, examTypes, rows, r
                   })}
                   <TableCell className={`${RESULT} ${RESULT_STICKY} px-4 py-2 text-right font-semibold ${tone}`}>
                     {live.invalid ? "—" : formatGrade(live.result)}
-                    {live.incomplete && !live.invalid && live.result !== null && <span className="block text-xs font-normal text-gray-600">parcial</span>}
+                    {live.incomplete && !live.invalid && live.result !== null && (
+                      <span className="block text-xs font-normal text-gray-600">parcial</span>
+                    )}
                   </TableCell>
                 </TableRow>
               );
@@ -412,14 +509,22 @@ export function GradeSheet({ selection, recovery, unaveraged, examTypes, rows, r
                 <span className="hidden sm:inline">{count(rows.length, "aluno", "alunos")} · </span>
                 {below > 0 && (
                   <>
-                    <button type="button" className={`text-red-700 underline underline-offset-2 hover:text-red-800 ${FOCUS}`} onClick={() => focusCell(firstAtRisk, editable[0])}>
+                    <button
+                      type="button"
+                      className={`text-red-700 underline underline-offset-2 hover:text-red-800 ${FOCUS}`}
+                      onClick={() => focusCell(firstAtRisk, editable[0])}
+                    >
                       {below} abaixo de 6
                     </button>
                     {" · "}
                   </>
                 )}
                 {blanks.length > 0 ? (
-                  <button type="button" className={`underline underline-offset-2 hover:text-gray-900 ${FOCUS}`} onClick={() => focusCell(blanks[0].row, blanks[0].t)}>
+                  <button
+                    type="button"
+                    className={`underline underline-offset-2 hover:text-gray-900 ${FOCUS}`}
+                    onClick={() => focusCell(blanks[0].row, blanks[0].t)}
+                  >
                     {count(blanks.length, "nota em branco", "notas em branco")}
                   </button>
                 ) : (
@@ -427,9 +532,16 @@ export function GradeSheet({ selection, recovery, unaveraged, examTypes, rows, r
                 )}
               </p>
               {invalid.length > 0 ? (
-                <button type="button" className={`text-left text-sm text-red-700 underline underline-offset-2 ${FOCUS}`} onClick={() => focusCell(invalid[0].row, invalid[0].t)}>
+                <button
+                  type="button"
+                  className={`text-left text-sm text-red-700 underline underline-offset-2 ${FOCUS}`}
+                  onClick={() => focusCell(invalid[0].row, invalid[0].t)}
+                >
                   {invalidMsg}
-                  <span className="hidden sm:inline"> ({invalid[0].r.name}, {invalid[0].t.code}: {invalid[0].error})</span>
+                  <span className="hidden sm:inline">
+                    {" "}
+                    ({invalid[0].r.name}, {invalid[0].t.code}: {invalid[0].error})
+                  </span>
                 </button>
               ) : (
                 savedMsg && (

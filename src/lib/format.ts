@@ -20,7 +20,9 @@ export function maskPhone(value: string): string {
   const d = (all.length > 11 && all.startsWith("55") ? all.slice(2) : all).slice(0, 11);
   if (d.length <= 2) return d && `(${d}`;
   const split = d.length === 11 ? 7 : 6;
-  return d.length <= 6 ? `(${d.slice(0, 2)}) ${d.slice(2)}` : `(${d.slice(0, 2)}) ${d.slice(2, split)}-${d.slice(split)}`;
+  return d.length <= 6
+    ? `(${d.slice(0, 2)}) ${d.slice(2)}`
+    : `(${d.slice(0, 2)}) ${d.slice(2, split)}-${d.slice(split)}`;
 }
 
 /** CEP typed so far as 70000-000. */
@@ -34,12 +36,39 @@ export function formatZipCode(zipCode: string): string {
 }
 
 const UNITS = [
-  "zero", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove", "dez",
-  "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove",
+  "zero",
+  "um",
+  "dois",
+  "três",
+  "quatro",
+  "cinco",
+  "seis",
+  "sete",
+  "oito",
+  "nove",
+  "dez",
+  "onze",
+  "doze",
+  "treze",
+  "quatorze",
+  "quinze",
+  "dezesseis",
+  "dezessete",
+  "dezoito",
+  "dezenove",
 ];
 const TENS = ["_", "_", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
 const HUNDREDS = [
-  "_", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos",
+  "_",
+  "cento",
+  "duzentos",
+  "trezentos",
+  "quatrocentos",
+  "quinhentos",
+  "seiscentos",
+  "setecentos",
+  "oitocentos",
+  "novecentos",
 ];
 
 function belowThousand(n: number): string {
@@ -108,7 +137,8 @@ export function formatDocument(value: string | null | undefined): string {
 }
 
 /** "Pessoa física" for a CPF, "Pessoa jurídica" for a CNPJ. */
-export const personKind = (value: string | null | undefined) => ({ 11: "Pessoa física", 14: "Pessoa jurídica" })[(value ?? "").length] ?? "";
+export const personKind = (value: string | null | undefined) =>
+  ({ 11: "Pessoa física", 14: "Pessoa jurídica" })[(value ?? "").length] ?? "";
 
 /** Login suggested from a person's name: "Maria da Conceição Silva" → "maria.silva" (first and last name, no accents). */
 export function suggestUsername(name: string): string {

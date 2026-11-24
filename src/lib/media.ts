@@ -12,7 +12,12 @@ export function mediaPath(name: string): string {
   return full;
 }
 
-export const MEDIA_TYPES: Record<string, string> = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp" };
+export const MEDIA_TYPES: Record<string, string> = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+};
 
 // Vercel rejects request bodies over 4.5 MB before the action runs
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
@@ -35,7 +40,11 @@ export async function readPhoto(file: File): Promise<{ bytes: Uint8Array; ext: s
 }
 
 /** Saves students/<registration>.<ext> and removes a previous photo with another name. */
-export async function saveStudentPhoto(photo: { bytes: Uint8Array; ext: string }, registration: string, oldName: string): Promise<string> {
+export async function saveStudentPhoto(
+  photo: { bytes: Uint8Array; ext: string },
+  registration: string,
+  oldName: string,
+): Promise<string> {
   const name = `students/${registration}${photo.ext}`;
   await mkdir(path.dirname(mediaPath(name)), { recursive: true });
   await writeFile(mediaPath(name), photo.bytes);
@@ -48,7 +57,13 @@ export async function studentPhotoUrl(photo: string, registration: string): Prom
   if (photo) return `/media/${photo}`;
   for (const ext of [".jpg", ".jpeg", ".png", ".webp"]) {
     const name = `students/${registration}${ext}`;
-    if (await access(mediaPath(name)).then(() => true, () => false)) return `/media/${name}`;
+    if (
+      await access(mediaPath(name)).then(
+        () => true,
+        () => false,
+      )
+    )
+      return `/media/${name}`;
   }
   return STUDENT_PLACEHOLDER;
 }

@@ -5,7 +5,13 @@ import { FilterDate, FilterSelect } from "@/components/list-controls";
 import { LinkButton } from "@/components/link-button";
 import { AccountName, Clip, ListPage, ListRow, MoneyCell } from "@/components/list-page";
 import { db } from "@/db";
-import { accountsAccount as account, accountsInstallment as installment, accountsPayment as payment, accountsSupplier as supplier, studentsGuardian as guardian } from "@/db/schema/app";
+import {
+  accountsAccount as account,
+  accountsInstallment as installment,
+  accountsPayment as payment,
+  accountsSupplier as supplier,
+  studentsGuardian as guardian,
+} from "@/db/schema/app";
 import { DIRECTIONS, PAYMENT_METHODS, formatDate, formatMoney, label } from "@/lib/finance";
 import { PAGE_SIZE, pageParam, param, searchWhere } from "@/lib/list";
 import { deletePayment } from "./actions";
@@ -78,7 +84,16 @@ export default async function PaymentListPage({ searchParams }: PageProps<"/acco
             <FilterDate name="paid_to" label="Pago até" />
           </>
         }
-        headers={["Vencimento", "Pago em", "Natureza", "Conta", "Parcela", "Responsável / Fornecedor", "Forma", "Valor pago"]}
+        headers={[
+          "Vencimento",
+          "Pago em",
+          "Natureza",
+          "Conta",
+          "Parcela",
+          "Responsável / Fornecedor",
+          "Forma",
+          "Valor pago",
+        ]}
         numeric={["Valor pago"]}
         page={page}
         total={total}

@@ -12,7 +12,10 @@ export const metadata: Metadata = { title: "Novo plantão" };
 
 export default async function NewQandAPage({ searchParams }: PageProps<"/q-and-a/new">) {
   await requirePermission("qAndA", "edit");
-  const [enrollments, subjects] = await Promise.all([activeEnrollmentOptions(null, (await currentSchoolYear())?.id ?? null), subjectOptions()]);
+  const [enrollments, subjects] = await Promise.all([
+    activeEnrollmentOptions(null, (await currentSchoolYear())?.id ?? null),
+    subjectOptions(),
+  ]);
   // After "Registrar e começar outra": the shared fields come back, and a new key clears the rest
   const sp = await searchParams;
   const saved = param(sp, "saved");
@@ -22,7 +25,13 @@ export default async function NewQandAPage({ searchParams }: PageProps<"/q-and-a
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">Novo plantão</h1>
       <SavedNote text={last && `Plantão de ${last} registrado.`} />
-      <QandAForm key={saved} defaults={defaults} again={!!saved} enrollments={enrollments} subjects={subjects.map((s) => [s.id, s.name])} />
+      <QandAForm
+        key={saved}
+        defaults={defaults}
+        again={!!saved}
+        enrollments={enrollments}
+        subjects={subjects.map((s) => [s.id, s.name])}
+      />
     </div>
   );
 }

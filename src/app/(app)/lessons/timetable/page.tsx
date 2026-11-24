@@ -20,7 +20,11 @@ export default async function TimetablePage({ searchParams }: PageProps<"/lesson
   const [subjects, slots] = c
     ? await Promise.all([
         levelSubjects(c.gradeLevel),
-        db.select({ weekday: slot.weekday, period: slot.period, subjectId: slot.subjectId, teacher: employee.name }).from(slot).innerJoin(employee, eq(slot.teacherId, employee.id)).where(eq(slot.schoolClassId, c.id)),
+        db
+          .select({ weekday: slot.weekday, period: slot.period, subjectId: slot.subjectId, teacher: employee.name })
+          .from(slot)
+          .innerJoin(employee, eq(slot.teacherId, employee.id))
+          .where(eq(slot.schoolClassId, c.id)),
       ])
     : [[], []];
   const subjectName = (id: number) => subjects.find((s) => s.id === id)?.name ?? "?";
@@ -50,13 +54,16 @@ export default async function TimetablePage({ searchParams }: PageProps<"/lesson
                   <TableRow key={period}>
                     <TableCell className="whitespace-nowrap">{label}</TableCell>
                     {WEEKDAYS.map(([weekday]) => {
-                      if (period > weekdayPeriods(weekday).length) return <TableCell key={weekday} className="bg-gray-100 dark:bg-gray-800" />;
+                      if (period > weekdayPeriods(weekday).length)
+                        return <TableCell key={weekday} className="bg-gray-100 dark:bg-gray-800" />;
                       const s = slots.find((x) => x.weekday === weekday && x.period === period);
                       return (
                         <TableCell key={weekday} className="text-xs">
                           {s ? (
                             <>
-                              <span className="block font-semibold text-gray-900 dark:text-white">{subjectName(s.subjectId)}</span>
+                              <span className="block font-semibold text-gray-900 dark:text-white">
+                                {subjectName(s.subjectId)}
+                              </span>
                               <span className="text-gray-500">{s.teacher}</span>
                             </>
                           ) : (
@@ -96,7 +103,9 @@ export default async function TimetablePage({ searchParams }: PageProps<"/lesson
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-right">{s.weeklyClasses === null ? "—" : money(s.weeklyClasses).toString().replace(".", ",")}</TableCell>
+                      <TableCell className="text-right">
+                        {s.weeklyClasses === null ? "—" : money(s.weeklyClasses).toString().replace(".", ",")}
+                      </TableCell>
                     </TableRow>
                   );
                 })}

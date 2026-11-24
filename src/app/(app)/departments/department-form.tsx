@@ -17,7 +17,12 @@ export function DepartmentForm({ id = null, defaults, teacherIds = [], teachers 
         <Fieldset legend="Professores (opcional)">
           {teachers.map(([teacherId, name]) => (
             <div key={teacherId} className="flex items-center gap-2">
-              <Checkbox id={`teacher-${teacherId}`} name="teachers" value={teacherId} defaultChecked={selected.has(teacherId)} />
+              <Checkbox
+                id={`teacher-${teacherId}`}
+                name="teachers"
+                value={teacherId}
+                defaultChecked={selected.has(teacherId)}
+              />
               <Label htmlFor={`teacher-${teacherId}`}>{name}</Label>
             </div>
           ))}

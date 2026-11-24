@@ -4,11 +4,28 @@ import { and, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
-import { accountsAccount as account, accountsAccounttype as accountType, accountsInstallment as installment, accountsPayment as payment, studentsStudent as student } from "@/db/schema/app";
+import {
+  accountsAccount as account,
+  accountsAccounttype as accountType,
+  accountsInstallment as installment,
+  accountsPayment as payment,
+  studentsStudent as student,
+} from "@/db/schema/app";
 import { FOREIGN_KEY_VIOLATION, pgConstraint, pgErrorCode } from "@/lib/db-error";
 import { accountInstallments, initialStatus, money, toDb } from "@/lib/finance";
 import { financialGuardians } from "@/lib/finance-db";
-import { type FormErrors, type FormState, INVALID_CHOICE, decimalField, foreignKey, intField, optionalForeignKey, parseForm, requiredDate, requiredText } from "@/lib/form";
+import {
+  type FormErrors,
+  type FormState,
+  INVALID_CHOICE,
+  decimalField,
+  foreignKey,
+  intField,
+  optionalForeignKey,
+  parseForm,
+  requiredDate,
+  requiredText,
+} from "@/lib/form";
 import { requirePermission } from "@/lib/authorization";
 import { KINDS, type Kind } from "../kinds";
 
@@ -33,16 +50,25 @@ const createSchema = baseSchema.extend({
 function deletedChoice(error: unknown, values: Record<string, string>): FormState {
   if (pgErrorCode(error) !== FOREIGN_KEY_VIOLATION) throw error;
   // Django's constraint names: accounts_account_<field>_id_<hash>_fk_...
-  const field = ["category", "student", "guardian", "supplier"].find((f) => pgConstraint(error).startsWith(`accounts_account_${f}_id_`));
+  const field = ["category", "student", "guardian", "supplier"].find((f) =>
+    pgConstraint(error).startsWith(`accounts_account_${f}_id_`),
+  );
   return field ? { errors: { [`${field}Id`]: [INVALID_CHOICE] }, values } : { formError: INVALID_CHOICE, values };
 }
 
 /** AccountForm.clean() + AccountReceivableForm.clean(): category of this direction, payer rules. */
 async function counterpartErrors(kind: Kind, data: z.infer<typeof baseSchema>, studentLocked: boolean) {
   const errors: FormErrors = {};
-  const [category] = await db.select({ direction: accountType.direction }).from(accountType).where(eq(accountType.id, data.categoryId));
+  const [category] = await db
+    .select({ direction: accountType.direction })
+    .from(accountType)
+    .where(eq(accountType.id, data.categoryId));
   if (category?.direction !== KINDS[kind].direction) errors.categoryId = [INVALID_CHOICE];
-  const fields: { studentId: number | null; guardianId: number | null; supplierId: number | null } = { studentId: null, guardianId: null, supplierId: null };
+  const fields: { studentId: number | null; guardianId: number | null; supplierId: number | null } = {
+    studentId: null,
+    guardianId: null,
+    supplierId: null,
+  };
   if (kind === "payable") {
     fields.supplierId = data.supplierId;
     return { errors, fields };
@@ -58,7 +84,8 @@ async function counterpartErrors(kind: Kind, data: z.infer<typeof baseSchema>, s
     // Only the student's financial guardians; none chosen → the first one (or the student pays)
     if (data.guardianId && !guardians.some((g) => g.id === data.guardianId)) errors.guardianId = [INVALID_CHOICE];
     if (!data.guardianId) {
-      if (!guardians.length && !s?.selfFinancial) errors.studentId = ["O aluno não possui responsável financeiro cadastrado."];
+      if (!guardians.length && !s?.selfFinancial)
+        errors.studentId = ["O aluno não possui responsável financeiro cadastrado."];
       fields.guardianId = guardians[0]?.id ?? null;
     }
   }
@@ -91,9 +118,15 @@ export async function createAccount(kind: Kind, _prev: FormState, formData: Form
         })
         .returning({ id: account.id });
       const net = money(data.grossValue).minus(discount);
-      await tx
-        .insert(installment)
-        .values(accountInstallments(net, data.installmentsCount, data.firstDueDate).map((i) => ({ accountId: id, number: i.number, dueDate: i.dueDate, amount: toDb(i.amount), status: initialStatus(i.amount) })));
+      await tx.insert(installment).values(
+        accountInstallments(net, data.installmentsCount, data.firstDueDate).map((i) => ({
+          accountId: id,
+          number: i.number,
+          dueDate: i.dueDate,
+          amount: toDb(i.amount),
+          status: initialStatus(i.amount),
+        })),
+      );
       return id;
     });
   } catch (error) {
@@ -120,7 +153,13 @@ export async function updateAccount(kind: Kind, id: number, _prev: FormState, fo
   try {
     await db
       .update(account)
-      .set({ description: data.description, categoryId: data.categoryId, issueDate: data.issueDate, notes: data.notes, ...fields })
+      .set({
+        description: data.description,
+        categoryId: data.categoryId,
+        issueDate: data.issueDate,
+        notes: data.notes,
+        ...fields,
+      })
       .where(eq(account.id, id));
   } catch (error) {
     return deletedChoice(error, values);
@@ -132,9 +171,17 @@ export async function updateAccount(kind: Kind, id: number, _prev: FormState, fo
 export async function deleteAccount(kind: Kind, id: number) {
   await requirePermission("finance", "edit");
   // Its installments go first, so check the account is of this kind before touching them
-  const [acc] = await db.select({ id: account.id }).from(account).where(and(eq(account.id, id), eq(account.direction, KINDS[kind].direction)));
+  const [acc] = await db
+    .select({ id: account.id })
+    .from(account)
+    .where(and(eq(account.id, id), eq(account.direction, KINDS[kind].direction)));
   if (!acc) redirect(`/accounts/${kind}`);
-  const [paid] = await db.select({ id: payment.id }).from(payment).innerJoin(installment, eq(payment.installmentId, installment.id)).where(eq(installment.accountId, id)).limit(1);
+  const [paid] = await db
+    .select({ id: payment.id })
+    .from(payment)
+    .innerJoin(installment, eq(payment.installmentId, installment.id))
+    .where(eq(installment.accountId, id))
+    .limit(1);
   if (paid) redirect(`/accounts/${kind}?msg=account_has_payments`);
   try {
     await db.transaction(async (tx) => {

@@ -21,7 +21,10 @@ export function EnrollmentEditForm({ id, locked, defaults, classes, documents }:
   return (
     <form action={action} className="flex flex-col gap-4">
       <FormFields state={state} defaults={defaults}>
-        <Fieldset legend="Matrícula" description="Contrato, data e vencimento não mudam: a conta e as parcelas já foram geradas a partir deles.">
+        <Fieldset
+          legend="Matrícula"
+          description="Contrato, data e vencimento não mudam: a conta e as parcelas já foram geradas a partir deles."
+        >
           {/* Plain text, not disabled inputs: full contrast, and nothing that looks editable but isn't */}
           <dl className="grid gap-x-4 gap-y-3 text-sm sm:col-span-2 sm:grid-cols-3">
             {locked.map(([term, value]) => (

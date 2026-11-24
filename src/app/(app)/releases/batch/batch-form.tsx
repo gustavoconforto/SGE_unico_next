@@ -5,7 +5,11 @@ import { startTransition, useActionState, useState } from "react";
 import { CheckOption, FormButtons, FormFields } from "@/components/form-fields";
 import { saveBatchExits } from "../actions";
 
-const fold = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+const fold = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
 
 type Props = { exitDate: string; schoolYearId: number; reasonId: number; students: [number, string][] };
 
@@ -35,7 +39,8 @@ export function BatchExitForm({ exitDate, schoolYearId, reasonId, students }: Pr
     startTransition(() => action(formData));
   }
 
-  if (!students.length) return <p className="text-sm text-gray-700">Nenhum aluno com matrícula ativa neste ano letivo.</p>;
+  if (!students.length)
+    return <p className="text-sm text-gray-700">Nenhum aluno com matrícula ativa neste ano letivo.</p>;
   return (
     <form onSubmit={onSubmit} className="flex max-w-3xl flex-col gap-4">
       <input type="hidden" name="exitDate" value={exitDate} />
@@ -44,11 +49,31 @@ export function BatchExitForm({ exitDate, schoolYearId, reasonId, students }: Pr
       <FormFields state={state}>
         <div>
           <Label htmlFor="student-filter">Filtrar por nome</Label>
-          <TextInput id="student-filter" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Digite parte do nome…" autoComplete="off" />
+          <TextInput
+            id="student-filter"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Digite parte do nome…"
+            autoComplete="off"
+          />
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 pb-2">
-          <label htmlFor="select-visible" className="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-gray-900">
-            <Checkbox id="select-visible" checked={allVisible} disabled={!visible.length} onChange={(e) => toggle(visible.map(([id]) => id), e.target.checked)} />
+          <label
+            htmlFor="select-visible"
+            className="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-gray-900"
+          >
+            <Checkbox
+              id="select-visible"
+              checked={allVisible}
+              disabled={!visible.length}
+              onChange={(e) =>
+                toggle(
+                  visible.map(([id]) => id),
+                  e.target.checked,
+                )
+              }
+            />
             {query.trim() ? "Selecionar os alunos filtrados" : "Selecionar todos"}
           </label>
           <span className="text-sm text-gray-600" aria-live="polite">
@@ -79,7 +104,12 @@ export function BatchExitForm({ exitDate, schoolYearId, reasonId, students }: Pr
           {!visible.length && <p className="text-sm text-gray-700">Nenhum aluno encontrado com este nome.</p>}
         </fieldset>
       </FormFields>
-      <FormButtons pending={pending} cancelHref="/releases" sticky label={`Registrar ${checked.size ? `${checked.size} ` : ""}liberaç${checked.size === 1 ? "ão" : "ões"}`} />
+      <FormButtons
+        pending={pending}
+        cancelHref="/releases"
+        sticky
+        label={`Registrar ${checked.size ? `${checked.size} ` : ""}liberaç${checked.size === 1 ? "ão" : "ões"}`}
+      />
     </form>
   );
 }

@@ -16,7 +16,10 @@ export default async function CategoryListPage({ searchParams }: PageProps<"/acc
   await requirePermission("finance", "view");
   const sp = await searchParams;
   const direction = param(sp, "direction");
-  const where = and(searchWhere(param(sp, "q"), [accountType.name]), ["R", "P"].includes(direction) ? eq(accountType.direction, direction) : undefined);
+  const where = and(
+    searchWhere(param(sp, "q"), [accountType.name]),
+    ["R", "P"].includes(direction) ? eq(accountType.direction, direction) : undefined,
+  );
   const page = pageParam(sp);
   const [rows, [{ total }]] = await Promise.all([
     db
@@ -45,7 +48,13 @@ export default async function CategoryListPage({ searchParams }: PageProps<"/acc
       total={total}
     >
       {rows.map((c) => (
-        <ListRow key={c.id} cells={[c.name, label(DIRECTIONS, c.direction), c.accounts]} label={c.name} editHref={`/accounts/categories/${c.id}/edit`} deleteAction={deleteCategory.bind(null, c.id)} />
+        <ListRow
+          key={c.id}
+          cells={[c.name, label(DIRECTIONS, c.direction), c.accounts]}
+          label={c.name}
+          editHref={`/accounts/categories/${c.id}/edit`}
+          deleteAction={deleteCategory.bind(null, c.id)}
+        />
       ))}
     </ListPage>
   );

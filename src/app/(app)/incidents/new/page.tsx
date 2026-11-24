@@ -21,7 +21,13 @@ export default async function NewRecordPage({ searchParams }: PageProps<"/incide
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">Nova ocorrência</h1>
       <SavedNote text={last && `Ocorrência de ${last} registrada.`} />
-      <RecordForm key={saved} defaults={defaults} again={!!saved} enrollments={enrollments} types={await incidentTypeOptions()} />
+      <RecordForm
+        key={saved}
+        defaults={defaults}
+        again={!!saved}
+        enrollments={enrollments}
+        types={await incidentTypeOptions()}
+      />
     </div>
   );
 }

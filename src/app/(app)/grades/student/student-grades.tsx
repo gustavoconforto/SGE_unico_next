@@ -21,10 +21,21 @@ type Row = {
 };
 type Exam = { id: number; code: string };
 
-
 /** One subject's row: read-only, or score inputs after "Editar" (Django's htmx row swap). */
 /** `readOnly`: input names this user can't edit (locked bimester or staff-only exam). */
-export function SubjectRow({ enrollmentId, row, examTypes, recoveryTypes, readOnly }: { enrollmentId: number; row: Row; examTypes: Exam[]; recoveryTypes: Exam[]; readOnly: string[] }) {
+export function SubjectRow({
+  enrollmentId,
+  row,
+  examTypes,
+  recoveryTypes,
+  readOnly,
+}: {
+  enrollmentId: number;
+  row: Row;
+  examTypes: Exam[];
+  recoveryTypes: Exam[];
+  readOnly: string[];
+}) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [state, setState] = useState<RowState>({});
@@ -45,8 +56,24 @@ export function SubjectRow({ enrollmentId, row, examTypes, recoveryTypes, readOn
     const error = state.errors?.[name]?.[0];
     return (
       <span key={name}>
-        <input type="hidden" name={shownName(name)} form={formId} value={state.values?.[shownName(name)] ?? scoreInput(saved)} />
-        <TextInput name={name} form={formId} aria-label={`${row.subject.name} ${bimester === 5 ? "recuperação" : `${bimester}º bim.`} ${t.code}`} title={error} defaultValue={state.values?.[name] ?? scoreInput(saved)} sizing="sm" inputMode="decimal" color={error ? "failure" : undefined} readOnly={readOnly.includes(name)} className="w-10 [&_input]:px-0.5 [&_input]:text-right" />
+        <input
+          type="hidden"
+          name={shownName(name)}
+          form={formId}
+          value={state.values?.[shownName(name)] ?? scoreInput(saved)}
+        />
+        <TextInput
+          name={name}
+          form={formId}
+          aria-label={`${row.subject.name} ${bimester === 5 ? "recuperação" : `${bimester}º bim.`} ${t.code}`}
+          title={error}
+          defaultValue={state.values?.[name] ?? scoreInput(saved)}
+          sizing="sm"
+          inputMode="decimal"
+          color={error ? "failure" : undefined}
+          readOnly={readOnly.includes(name)}
+          className="w-10 [&_input]:px-0.5 [&_input]:text-right"
+        />
       </span>
     );
   };
@@ -57,13 +84,21 @@ export function SubjectRow({ enrollmentId, row, examTypes, recoveryTypes, readOn
       {formatGrade(row.bimesters[b])}
     </TableCell>
   );
-  const average = <TableCell className={`${GROUP} px-3 text-right ${tone(row.average)}`}>{formatGrade(row.average)}</TableCell>;
-  const final = <TableCell className={`${RESULT} px-3 text-right font-semibold ${tone(row.final)}`}>{formatGrade(row.final)}</TableCell>;
+  const average = (
+    <TableCell className={`${GROUP} px-3 text-right ${tone(row.average)}`}>{formatGrade(row.average)}</TableCell>
+  );
+  const final = (
+    <TableCell className={`${RESULT} px-3 text-right font-semibold ${tone(row.final)}`}>
+      {formatGrade(row.final)}
+    </TableCell>
+  );
 
   if (!editing)
     return (
       <TableRow className="[&>td]:py-2.5">
-        <TableCell className={`${STICKY_BODY} font-medium whitespace-nowrap text-gray-900`}>{row.subject.name}</TableCell>
+        <TableCell className={`${STICKY_BODY} font-medium whitespace-nowrap text-gray-900`}>
+          {row.subject.name}
+        </TableCell>
         {row.examScores.flatMap((scores, b) => [
           ...scores.map((s, i) => (
             <TableCell key={`${b}-${i}`} className={`${i === 0 ? GROUP : ""} ${SCORE} px-2 text-right text-gray-500`}>
@@ -73,7 +108,9 @@ export function SubjectRow({ enrollmentId, row, examTypes, recoveryTypes, readOn
           results(b),
         ])}
         {average}
-        <TableCell className={`px-3 text-right ${row.needsRecovery ? tone(row.recovery) : "text-gray-400"}`}>{row.needsRecovery ? formatGrade(row.recovery) : "—"}</TableCell>
+        <TableCell className={`px-3 text-right ${row.needsRecovery ? tone(row.recovery) : "text-gray-400"}`}>
+          {row.needsRecovery ? formatGrade(row.recovery) : "—"}
+        </TableCell>
         {final}
         <TableCell className="px-3">
           <Badge color={row.situation.color} className="w-fit whitespace-nowrap">

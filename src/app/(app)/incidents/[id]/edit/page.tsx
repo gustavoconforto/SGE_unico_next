@@ -19,7 +19,12 @@ export default async function EditRecordPage({ params }: PageProps<"/incidents/[
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">Editar ocorrência</h1>
-      <RecordForm id={id} defaults={row} enrollments={await activeEnrollmentOptions(row.enrollmentId)} types={await incidentTypeOptions()} />
+      <RecordForm
+        id={id}
+        defaults={row}
+        enrollments={await activeEnrollmentOptions(row.enrollmentId)}
+        types={await incidentTypeOptions()}
+      />
     </div>
   );
 }

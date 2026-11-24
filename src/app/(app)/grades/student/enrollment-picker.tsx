@@ -8,7 +8,11 @@ export function EnrollmentPicker({ options, value }: { options: [number, string]
   return (
     <div className="max-w-xl">
       <Label htmlFor="enrollment">Aluno</Label>
-      <Select id="enrollment" value={value ?? ""} onChange={(e) => router.replace(e.target.value ? `?enrollment=${e.target.value}` : "?", { scroll: false })}>
+      <Select
+        id="enrollment"
+        value={value ?? ""}
+        onChange={(e) => router.replace(e.target.value ? `?enrollment=${e.target.value}` : "?", { scroll: false })}
+      >
         <option value="">Selecione um aluno</option>
         {options.map(([id, label]) => (
           <option key={id} value={id}>

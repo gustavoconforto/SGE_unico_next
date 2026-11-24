@@ -13,7 +13,10 @@ export const metadata: Metadata = { title: "Editar matéria" };
 export default async function EditSubjectPage({ params }: PageProps<"/grades/subjects/[id]/edit">) {
   await requirePermission("academicSetup", "edit");
   const id = await idParam(params);
-  const [[row], departments] = await Promise.all([db.select().from(subject).where(eq(subject.id, id)), departmentOptions()]);
+  const [[row], departments] = await Promise.all([
+    db.select().from(subject).where(eq(subject.id, id)),
+    departmentOptions(),
+  ]);
   if (!row) notFound();
   return (
     <div className="flex flex-col gap-4">

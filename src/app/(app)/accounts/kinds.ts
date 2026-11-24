@@ -3,8 +3,20 @@ import { notFound } from "next/navigation";
 import { Direction } from "@/lib/finance";
 
 export const KINDS = {
-  receivable: { direction: Direction.RECEIVABLE, title: "A receber", noun: "duplicata a receber", counterpartLabel: "Responsável", newLabel: "Nova conta a receber" },
-  payable: { direction: Direction.PAYABLE, title: "A pagar", noun: "duplicata a pagar", counterpartLabel: "Fornecedor", newLabel: "Nova conta a pagar" },
+  receivable: {
+    direction: Direction.RECEIVABLE,
+    title: "A receber",
+    noun: "duplicata a receber",
+    counterpartLabel: "Responsável",
+    newLabel: "Nova conta a receber",
+  },
+  payable: {
+    direction: Direction.PAYABLE,
+    title: "A pagar",
+    noun: "duplicata a pagar",
+    counterpartLabel: "Fornecedor",
+    newLabel: "Nova conta a pagar",
+  },
 } as const;
 
 export type Kind = keyof typeof KINDS;

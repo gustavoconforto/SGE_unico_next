@@ -6,7 +6,10 @@ import { offeringLabel } from "../data";
 
 type Rows = NonNullable<Awaited<ReturnType<typeof enrollmentWorkload>>>;
 
-const twoPlaces = (h: Decimal.Value) => new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(new Decimal(h).toNumber());
+const twoPlaces = (h: Decimal.Value) =>
+  new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+    new Decimal(h).toNumber(),
+  );
 
 /** The workload rows and total, shared by the screen and its printout (plain table, styled by the caller). */
 export function WorkloadTable({ rows, className, cell }: { rows: Rows; className: string; cell: string }) {
@@ -17,7 +20,9 @@ export function WorkloadTable({ rows, className, cell }: { rows: Rows; className
       <thead>
         <tr>
           {["Itinerário", "Tipo de carga horária", "Entrada", "Saída"].map((h) => (
-            <th key={h} className={`${cell} text-left`}>{h}</th>
+            <th key={h} className={`${cell} text-left`}>
+              {h}
+            </th>
           ))}
           <th className={n}>Presenças</th>
           <th className={n}>Carga horária</th>
@@ -27,7 +32,9 @@ export function WorkloadTable({ rows, className, cell }: { rows: Rows; className
         {rows.length ? (
           rows.map((r) => (
             <tr key={r.id}>
-              <td className={cell}>{offeringLabel({ pathway: r.pathway, year: r.offeringYear, name: r.offeringName })}</td>
+              <td className={cell}>
+                {offeringLabel({ pathway: r.pathway, year: r.offeringYear, name: r.offeringName })}
+              </td>
               <td className={cell}>{label(WORKLOAD_TYPES, r.workloadType)}</td>
               <td className={cell}>{formatDate(r.joinedAt)}</td>
               <td className={cell}>{formatDate(r.leftAt) || "-"}</td>
@@ -45,7 +52,9 @@ export function WorkloadTable({ rows, className, cell }: { rows: Rows; className
       </tbody>
       <tfoot>
         <tr>
-          <th colSpan={5} className={n}>Carga horária total</th>
+          <th colSpan={5} className={n}>
+            Carga horária total
+          </th>
           <th className={n}>{twoPlaces(total)} h</th>
         </tr>
       </tfoot>

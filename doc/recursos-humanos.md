@@ -11,14 +11,14 @@ Contas de quem entra no sistema pela tela de login.
 
 **Pesquisa:** usuário, nome, sobrenome ou e-mail.
 
-| Campo | Descrição |
-|---|---|
-| Primeiro nome / Sobrenome | Nome exibido no rodapé do menu. |
-| Usuário | Nome usado para entrar no sistema. Deve ser único. |
-| E-mail | E-mail de contato da pessoa. |
-| Membro da equipe | Permite acessar a área administrativa do Django (`/admin/`). |
-| Ativo | Desmarque para bloquear o acesso sem apagar a conta. É melhor que excluir. |
-| Superusuário | Tem todas as permissões. Use com cuidado. |
+| Campo                     | Descrição                                                                  |
+| ------------------------- | -------------------------------------------------------------------------- |
+| Primeiro nome / Sobrenome | Nome exibido no rodapé do menu.                                            |
+| Usuário                   | Nome usado para entrar no sistema. Deve ser único.                         |
+| E-mail                    | E-mail de contato da pessoa.                                               |
+| Membro da equipe          | Permite acessar a área administrativa do Django (`/admin/`).               |
+| Ativo                     | Desmarque para bloquear o acesso sem apagar a conta. É melhor que excluir. |
+| Superusuário              | Tem todas as permissões. Use com cuidado.                                  |
 
 ## Grupos
 
@@ -27,9 +27,9 @@ preciso marcar uma a uma em cada usuário.
 
 **Pesquisa:** nome do grupo.
 
-| Campo | Descrição |
-|---|---|
-| Nome | Nome do grupo. |
+| Campo      | Descrição                                                              |
+| ---------- | ---------------------------------------------------------------------- |
+| Nome       | Nome do grupo.                                                         |
 | Permissões | Lista de permissões; segure Ctrl (ou ⌘ no Mac) para selecionar várias. |
 
 ## Permissões
@@ -59,11 +59,11 @@ campo tiver erro, o sistema abre a aba onde ele está.
 
 **Pesquisa:** nome, CPF ou cargo.
 
-| Aba | Campos |
-|---|---|
+| Aba            | Campos                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------ |
 | Dados pessoais | Nome, sexo, cargo, CPF, RG, órgão emissor, data de nascimento, nacionalidade, naturalidade |
-| Contato | Telefone, celular, e-mail |
-| Endereço | Endereço, bairro, cidade, UF, CEP |
+| Contato        | Telefone, celular, e-mail                                                                  |
+| Endereço       | Endereço, bairro, cidade, UF, CEP                                                          |
 
 - CPF e RG não podem se repetir entre funcionários.
 - CPF e CEP são guardados só com números; pode digitar com ou sem pontuação.

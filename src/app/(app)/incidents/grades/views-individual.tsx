@@ -13,11 +13,20 @@ import { loadReportCard } from "../../grades/report";
 import { ConceptControls } from "./concept-controls";
 
 /** One student: the grade of each subject for the picked bimester, and "Calcular". */
-export async function GradesIndividual({ kind, sp }: { kind: GradeKind; sp: Record<string, string | string[] | undefined> }) {
+export async function GradesIndividual({
+  kind,
+  sp,
+}: {
+  kind: GradeKind;
+  sp: Record<string, string | string[] | undefined>;
+}) {
   const code = kind === "extra" ? EXTRA_CODE : CONCEPT_CODE;
   const enrollmentId = Number(param(sp, "enrollment")) || null;
   const bimester = [1, 2, 3, 4].find((b) => b === Number(param(sp, "bimester"))) ?? null;
-  const [enrollments, [concept]] = await Promise.all([activeEnrollmentOptions(), db.select().from(examType).where(eq(examType.code, code))]);
+  const [enrollments, [concept]] = await Promise.all([
+    activeEnrollmentOptions(),
+    db.select().from(examType).where(eq(examType.code, code)),
+  ]);
   const active = enrollmentId && enrollments.some(([id]) => id === enrollmentId) ? enrollmentId : null;
   const card = active && bimester ? await loadReportCard(active) : null;
   const scores =
@@ -31,7 +40,10 @@ export async function GradesIndividual({ kind, sp }: { kind: GradeKind; sp: Reco
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">{kind === "extra" ? "Nota extra" : "Notas de conceito"}</h1>
-        <LinkButton href={kind === "extra" ? "/pathways/extra-grades/all" : "/incidents/grades/all"} color="alternative">
+        <LinkButton
+          href={kind === "extra" ? "/pathways/extra-grades/all" : "/incidents/grades/all"}
+          color="alternative"
+        >
           Todos os alunos
         </LinkButton>
       </div>
@@ -45,7 +57,13 @@ export async function GradesIndividual({ kind, sp }: { kind: GradeKind; sp: Reco
           Cadastre o tipo de avaliação {kind === "extra" ? "Nota extra" : "Conceito"} (sigla {code}) para calcular.
         </Alert>
       )}
-      <ConceptControls kind={kind} mode="individual" enrollments={enrollments} enrollmentId={active} bimester={bimester} />
+      <ConceptControls
+        kind={kind}
+        mode="individual"
+        enrollments={enrollments}
+        enrollmentId={active}
+        bimester={bimester}
+      />
       {card && (
         <Table striped>
           <TableHead>

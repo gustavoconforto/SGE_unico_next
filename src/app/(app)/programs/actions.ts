@@ -21,7 +21,8 @@ export async function saveProgram(id: number | null, _prev: FormState, formData:
     if (id === null) await db.insert(programsProgram).values(data);
     else await db.update(programsProgram).set(data).where(eq(programsProgram.id, id));
   } catch (error) {
-    if (pgErrorCode(error) === UNIQUE_VIOLATION) return { errors: { name: ["Curso com este Nome já existe."] }, values };
+    if (pgErrorCode(error) === UNIQUE_VIOLATION)
+      return { errors: { name: ["Curso com este Nome já existe."] }, values };
     throw error;
   }
   redirect(`/programs?msg=${id === null ? "created" : "updated"}`);

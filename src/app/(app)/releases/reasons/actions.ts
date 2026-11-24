@@ -20,7 +20,8 @@ export async function saveReason(id: number | null, _prev: FormState, formData: 
     if (id === null) await db.insert(reason).values(data);
     else await db.update(reason).set(data).where(eq(reason.id, id));
   } catch (error) {
-    if (pgErrorCode(error) === UNIQUE_VIOLATION) return { errors: { reason: ["Já existe um motivo com este nome."] }, values };
+    if (pgErrorCode(error) === UNIQUE_VIOLATION)
+      return { errors: { reason: ["Já existe um motivo com este nome."] }, values };
     throw error;
   }
   redirect(`/releases/reasons?msg=${id === null ? "created" : "updated"}`);

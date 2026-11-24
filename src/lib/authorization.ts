@@ -26,7 +26,9 @@ export async function hasPermission<R extends Resource>(resource: R, action: Act
   const role = await currentRole(session.user.id);
   if (!role) return false;
   // Given the role, Better Auth checks it in memory ("admin,secretaria" is split like the user's own)
-  const result = await auth.api.userHasPermission({ body: { role: role as RoleName, permissions: { [resource]: [action] } } });
+  const result = await auth.api.userHasPermission({
+    body: { role: role as RoleName, permissions: { [resource]: [action] } },
+  });
   return result.success;
 }
 
