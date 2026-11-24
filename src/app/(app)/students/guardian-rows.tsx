@@ -4,12 +4,13 @@ import { Button } from "flowbite-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Combobox } from "@/components/combobox";
+import type { AddressSource } from "@/components/copy-address";
 import { CheckOption, SelectField, useField, useMarkFixed } from "@/components/form-fields";
 import { WhatsAppLink } from "@/components/whatsapp-link";
 import { formatPhone } from "@/lib/person";
 import { type GuardianRow, RELATIONSHIPS } from "@/lib/students";
 
-export type GuardianOption = { id: number; name: string; mobile: string };
+export type GuardianOption = AddressSource & { mobile: string };
 type Row = Omit<GuardianRow, "guardianId" | "relationship"> & {
   key: number;
   guardianId: number | null;
@@ -40,11 +41,14 @@ export function GuardianRows({
   initial,
   options,
   showWhatsapp,
+  onPick,
   children,
 }: {
   initial: GuardianRow[];
   options: GuardianOption[];
   showWhatsapp: boolean;
+  /** The guardians picked in the rows still kept, whenever they change. */
+  onPick?: (ids: number[]) => void;
   /** Fields shown above the rows (the "student is self-financial" box). */
   children?: React.ReactNode;
 }) {
@@ -54,6 +58,8 @@ export function GuardianRows({
   );
   const nextKey = useRef(initial.length + 1);
   const markFixed = useMarkFixed();
+  const picked = rows.flatMap((r) => (r.guardianId && !r.delete ? [r.guardianId] : [])).join();
+  useEffect(() => onPick?.(picked ? picked.split(",").map(Number) : []), [picked, onPick]);
   // A guardian registered in another tab shows up here when staff come back to this one
   const router = useRouter();
   const registering = useRef(false);

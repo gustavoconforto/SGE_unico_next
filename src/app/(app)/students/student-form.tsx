@@ -1,7 +1,7 @@
 "use client";
 
 import { FileInput } from "flowbite-react";
-import { startTransition, useActionState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import {
   CheckboxField,
   FieldLabel,
@@ -13,6 +13,7 @@ import {
   TextField,
   TextareaField,
 } from "@/components/form-fields";
+import { CopyAddressButtons } from "@/components/copy-address";
 import { PersonFields } from "@/components/person-fields";
 import { WhatsAppLink } from "@/components/whatsapp-link";
 import { formatPhone } from "@/lib/person";
@@ -36,6 +37,7 @@ export function StudentForm({ id = null, defaults, photoUrl, guardianRows = [], 
     mobile: formatPhone(defaults.mobile as string),
   };
   const photoError = state.errors?.photo?.[0];
+  const [picked, setPicked] = useState<number[]>([]);
 
   // Submitted by hand so React doesn't reset the form: the guardian rows live in component state.
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -82,6 +84,7 @@ export function StudentForm({ id = null, defaults, photoUrl, guardianRows = [], 
         <PersonFields
           digitPhones
           autoFocusName={id === null}
+          addressAction={<CopyAddressButtons sources={guardianOptions.filter((g) => picked.includes(g.id))} />}
           // Saved students only, like the guardians' links; it follows the number as it is edited
           mobileAction={id ? <WhatsAppLink field="mobile" phone={defaults?.mobile as string} /> : undefined}
           personal={
@@ -95,7 +98,7 @@ export function StudentForm({ id = null, defaults, photoUrl, guardianRows = [], 
           }
           afterPersonal={
             // Required, and the one most often blocking a save: right after who the student is
-            <GuardianRows initial={guardianRows} options={guardianOptions} showWhatsapp={!!id}>
+            <GuardianRows initial={guardianRows} options={guardianOptions} showWhatsapp={!!id} onPick={setPicked}>
               <CheckboxField name="isSelfFinancial" label="O próprio aluno é o responsável financeiro" />
             </GuardianRows>
           }
