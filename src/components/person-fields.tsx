@@ -6,7 +6,7 @@ import { Fieldset, SelectField, TextField } from "./form-fields";
 
 /**
  * The base.models.Person fields, grouped like the Django tabs. Extra fields go in the slots; `afterPersonal` is a whole
- * section placed right after Dados pessoais; `mobileAction` sits under Celular (the WhatsApp link).
+ * section placed right after Dados pessoais; `mobileAction` sits under Celular (the WhatsApp link); `addressAction` opens Endereço.
  * `digitPhones`: phones are stored as digits (students, guardians), so they're masked as typed; employees keep theirs as typed.
  */
 export function PersonFields({
@@ -14,6 +14,7 @@ export function PersonFields({
   documents,
   afterPersonal,
   mobileAction,
+  addressAction,
   digitPhones = false,
   autoFocusName = false,
 }: {
@@ -21,6 +22,8 @@ export function PersonFields({
   documents?: React.ReactNode;
   afterPersonal?: React.ReactNode;
   mobileAction?: React.ReactNode;
+  /** Top of Endereço: copy the address from a guardian. */
+  addressAction?: React.ReactNode;
   digitPhones?: boolean;
   /** A new record: typing starts at the name. */
   autoFocusName?: boolean;
@@ -88,6 +91,7 @@ export function PersonFields({
         />
       </Fieldset>
       <Fieldset legend="Endereço">
+        {addressAction}
         <TextField name="address" label="Endereço" maxLength={200} optional className="sm:col-span-2" />
         <TextField name="neighborhood" label="Bairro" maxLength={100} optional />
         <TextField name="city" label="Cidade" maxLength={100} optional />
