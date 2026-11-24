@@ -11,7 +11,14 @@ import { requirePermission } from "@/lib/authorization";
 import { enrollmentAllowed } from "@/app/(app)/enrollments/data";
 import { INVALID_ENROLLMENT, recordFields } from "@/app/(app)/incidents/records";
 
-const schema = z.object({ ...recordFields, classPeriod: z.coerce.number({ error: REQUIRED }).int("Informe um número inteiro.").min(1, "O horário deve ser maior que zero.").max(32767) });
+const schema = z.object({
+  ...recordFields,
+  classPeriod: z.coerce
+    .number({ error: REQUIRED })
+    .int("Informe um número inteiro.")
+    .min(1, "O horário deve ser maior que zero.")
+    .max(32767),
+});
 
 export async function saveRecord(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
   await requirePermission("incidents", "edit");
@@ -19,7 +26,8 @@ export async function saveRecord(id: number | null, _prev: FormState, formData: 
   if (!data) return state;
   const [current] = id ? await db.select({ enrollmentId: t.enrollmentId }).from(t).where(eq(t.id, id)) : [];
   // Only active enrollments, or the one the record already has (ActiveEnrollmentFormMixin)
-  if (!(await enrollmentAllowed(data.enrollmentId, current?.enrollmentId))) return { errors: INVALID_ENROLLMENT, values };
+  if (!(await enrollmentAllowed(data.enrollmentId, current?.enrollmentId)))
+    return { errors: INVALID_ENROLLMENT, values };
   if (id === null) {
     const [row] = await db.insert(t).values(data).returning({ id: t.id });
     const next = anotherUrl("/incidents/bathroom/new", formData, ["classPeriod", "incidentDate"], row.id);

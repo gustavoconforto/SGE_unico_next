@@ -29,7 +29,10 @@ export default async function BatchExitPage({ searchParams }: PageProps<"/releas
   const yearId = years.find(([id]) => String(id) === param(sp, "school_year"))?.[0] ?? null;
   const reasonId = reasons.find(([id]) => String(id) === param(sp, "reason"))?.[0] ?? null;
   // Re-sorted by the name shown (social name when used), which activeEnrollmentOptions doesn't sort by
-  const students = date && yearId && reasonId ? (await activeEnrollmentOptions(undefined, yearId)).sort(([, a], [, b]) => a.localeCompare(b, "pt-BR")) : null;
+  const students =
+    date && yearId && reasonId
+      ? (await activeEnrollmentOptions(undefined, yearId)).sort(([, a], [, b]) => a.localeCompare(b, "pt-BR"))
+      : null;
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">Liberação em lote</h1>
@@ -41,9 +44,19 @@ export default async function BatchExitPage({ searchParams }: PageProps<"/releas
         </Suspense>
       </div>
       {students ? (
-        <BatchExitForm key={`${date}:${yearId}:${reasonId}`} exitDate={date!} schoolYearId={yearId!} reasonId={reasonId!} students={students} />
+        <BatchExitForm
+          key={`${date}:${yearId}:${reasonId}`}
+          exitDate={date!}
+          schoolYearId={yearId!}
+          reasonId={reasonId!}
+          students={students}
+        />
       ) : (
-        <p className="text-sm text-gray-700">{reasons.length ? "Escolha a data, o ano letivo e o motivo para ver os alunos." : "Cadastre um motivo em Liberações › Motivos antes de registrar liberações."}</p>
+        <p className="text-sm text-gray-700">
+          {reasons.length
+            ? "Escolha a data, o ano letivo e o motivo para ver os alunos."
+            : "Cadastre um motivo em Liberações › Motivos antes de registrar liberações."}
+        </p>
       )}
     </div>
   );

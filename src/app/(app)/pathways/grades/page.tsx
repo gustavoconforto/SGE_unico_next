@@ -21,7 +21,11 @@ export default async function PathwayGradesPage({ searchParams }: PageProps<"/pa
   const offeringId = offerings.find((o) => o.id === Number(param(sp, "offering")))?.id ?? null;
   const bimester = [1, 2, 3, 4].find((b) => b === Number(param(sp, "bimester"))) ?? null;
   const sheet = offeringId && bimester ? await loadPathwaySheet(offeringId, bimester) : null;
-  const query = new URLSearchParams({ school_year: String(yearId), offering: String(offeringId), bimester: String(bimester) }).toString();
+  const query = new URLSearchParams({
+    school_year: String(yearId),
+    offering: String(offeringId),
+    bimester: String(bimester),
+  }).toString();
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -31,8 +35,19 @@ export default async function PathwayGradesPage({ searchParams }: PageProps<"/pa
       <Suspense>
         <UrlPicker
           fields={[
-            { name: "school_year", label: "Ano escolar", empty: "Selecione um ano escolar", options: years, clears: ["offering"] },
-            { name: "offering", label: "Turma de itinerário", empty: "Selecione uma turma de itinerário", options: offerings.map((o) => [o.id, o.label] as const) },
+            {
+              name: "school_year",
+              label: "Ano escolar",
+              empty: "Selecione um ano escolar",
+              options: years,
+              clears: ["offering"],
+            },
+            {
+              name: "offering",
+              label: "Turma de itinerário",
+              empty: "Selecione uma turma de itinerário",
+              options: offerings.map((o) => [o.id, o.label] as const),
+            },
             { name: "bimester", label: "Bimestre", empty: "Selecione um bimestre", options: BIMESTER_OPTIONS },
           ]}
         />
@@ -43,7 +58,13 @@ export default async function PathwayGradesPage({ searchParams }: PageProps<"/pa
           selection={{ query, offeringId: offeringId!, bimester: bimester! }}
           maxScore={sheet.maxScore}
           hasDates={sheet.hasDates}
-          rows={sheet.rows.map((r) => ({ id: r.id, student: r.student, leftAt: r.leftAt, rate: r.rate?.toFixed(0) ?? null, score: scoreInput(r.saved?.score) }))}
+          rows={sheet.rows.map((r) => ({
+            id: r.id,
+            student: r.student,
+            leftAt: r.leftAt,
+            rate: r.rate?.toFixed(0) ?? null,
+            score: scoreInput(r.saved?.score),
+          }))}
         />
       )}
     </div>

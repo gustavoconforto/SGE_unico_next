@@ -20,9 +20,7 @@ export function WhatsAppLink({
 }) {
   const [typed, setTyped] = useState<string | null>(null);
   useEffect(() => {
-    const input = field
-      ? (document.getElementById(field) as HTMLInputElement | null)
-      : null;
+    const input = field ? (document.getElementById(field) as HTMLInputElement | null) : null;
     if (!input) return;
     const sync = () => setTyped(input.value);
     sync();

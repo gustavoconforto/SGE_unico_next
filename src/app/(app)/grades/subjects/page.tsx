@@ -23,12 +23,30 @@ export default async function SubjectListPage({ searchParams }: PageProps<"/grad
       .orderBy(asc(subject.name))
       .limit(PAGE_SIZE)
       .offset((page - 1) * PAGE_SIZE),
-    db.select({ total: count() }).from(subject).leftJoin(department, eq(subject.departmentId, department.id)).where(where),
+    db
+      .select({ total: count() })
+      .from(subject)
+      .leftJoin(department, eq(subject.departmentId, department.id))
+      .where(where),
   ]);
   return (
-    <ListPage title="Matérias" newHref="/grades/subjects/new" newLabel="Nova matéria" searchPlaceholder="Pesquisar matéria..." headers={["Nome", "Departamento"]} page={page} total={total}>
+    <ListPage
+      title="Matérias"
+      newHref="/grades/subjects/new"
+      newLabel="Nova matéria"
+      searchPlaceholder="Pesquisar matéria..."
+      headers={["Nome", "Departamento"]}
+      page={page}
+      total={total}
+    >
       {rows.map((s) => (
-        <ListRow key={s.id} cells={[s.name, s.department ?? "—"]} label={s.name} editHref={`/grades/subjects/${s.id}/edit`} deleteAction={deleteSubject.bind(null, s.id)} />
+        <ListRow
+          key={s.id}
+          cells={[s.name, s.department ?? "—"]}
+          label={s.name}
+          editHref={`/grades/subjects/${s.id}/edit`}
+          deleteAction={deleteSubject.bind(null, s.id)}
+        />
       ))}
     </ListPage>
   );

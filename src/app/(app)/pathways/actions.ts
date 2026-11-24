@@ -24,13 +24,15 @@ export async function savePathway(id: number | null, _prev: FormState, formData:
   if (!data) return state;
   // Pathway.clean(): hours only for a fixed workload, and then required
   const workloadHours = data.workloadType === "F" ? data.workloadHours : "0.00";
-  if (data.workloadType === "F" && (!workloadHours || Number(workloadHours) === 0)) return { errors: { workloadHours: ["Informe as horas da carga horária fixa."] }, values };
+  if (data.workloadType === "F" && (!workloadHours || Number(workloadHours) === 0))
+    return { errors: { workloadHours: ["Informe as horas da carga horária fixa."] }, values };
   const row = { ...data, workloadHours: workloadHours! };
   try {
     if (id === null) await db.insert(pathway).values(row);
     else await db.update(pathway).set(row).where(eq(pathway.id, id));
   } catch (error) {
-    if (pgErrorCode(error) === UNIQUE_VIOLATION) return { errors: { name: ["Itinerário com este Nome já existe."] }, values };
+    if (pgErrorCode(error) === UNIQUE_VIOLATION)
+      return { errors: { name: ["Itinerário com este Nome já existe."] }, values };
     throw error;
   }
   redirect(`/pathways?msg=${id === null ? "created" : "updated"}`);

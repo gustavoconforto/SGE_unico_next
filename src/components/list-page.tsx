@@ -65,7 +65,15 @@ export function ListPage(props: {
                 <TableHeadCell
                   key={header}
                   className={props.numeric?.includes(header) ? "text-right" : ""}
-                  aria-sort={!props.sortable?.[header] ? undefined : props.sort === props.sortable[header] ? "ascending" : props.sort === `-${props.sortable[header]}` ? "descending" : "none"}
+                  aria-sort={
+                    !props.sortable?.[header]
+                      ? undefined
+                      : props.sort === props.sortable[header]
+                        ? "ascending"
+                        : props.sort === `-${props.sortable[header]}`
+                          ? "descending"
+                          : "none"
+                  }
                 >
                   {props.sortable?.[header] ? <SortHeader label={header} sortKey={props.sortable[header]} /> : header}
                 </TableHeadCell>
@@ -111,7 +119,9 @@ export function AccountName({ text }: { text: string }) {
   return (
     <span className="block" title={text}>
       <span className="block max-w-48 truncate max-sm:max-w-full">{text.slice(0, cut)}</span>
-      <span className="block max-w-48 truncate max-sm:max-w-full text-xs font-normal text-gray-500">{text.slice(cut + 3)}</span>
+      <span className="block max-w-48 truncate max-sm:max-w-full text-xs font-normal text-gray-500">
+        {text.slice(cut + 3)}
+      </span>
     </span>
   );
 }
@@ -122,11 +132,21 @@ export function MoneyCell({ children }: { children: React.ReactNode }) {
 }
 
 /** The pinned actions cell; on phone cards it sits at the end of the card instead. */
-export const ACTIONS_CELL = "sticky right-0 border-l border-gray-200 bg-inherit max-sm:static max-sm:ml-auto max-sm:border-0";
+export const ACTIONS_CELL =
+  "sticky right-0 border-l border-gray-200 bg-inherit max-sm:static max-sm:ml-auto max-sm:border-0";
 
 /** One row: the cells, then `actions` (extra icon buttons), edit, and delete when `deleteAction` is given. `primary`: the cell that names the row (bold). */
 /** `href`: where the name leads when the record has its own page (defaults to `editHref`); no `editHref`, no pencil (read-only viewers). */
-export function ListRow(props: { cells: React.ReactNode[]; primary?: number; label: string; href?: string; editHref?: string; actions?: React.ReactNode; deleteAction?: () => Promise<void>; deleteNote?: string }) {
+export function ListRow(props: {
+  cells: React.ReactNode[];
+  primary?: number;
+  label: string;
+  href?: string;
+  editHref?: string;
+  actions?: React.ReactNode;
+  deleteAction?: () => Promise<void>;
+  deleteNote?: string;
+}) {
   const primary = props.primary ?? 0;
   const href = props.href ?? props.editHref;
   return (
@@ -135,7 +155,10 @@ export function ListRow(props: { cells: React.ReactNode[]; primary?: number; lab
         const text = typeof cell === "string" || typeof cell === "number" ? String(cell) : null;
         const content = text !== null && text.length > LONG ? <Clip text={text} /> : cell;
         return (
-          <TableCell key={i} className={`${i === primary ? PRIMARY_CELL : ""} ${text !== null ? "whitespace-nowrap" : ""}`}>
+          <TableCell
+            key={i}
+            className={`${i === primary ? PRIMARY_CELL : ""} ${text !== null ? "whitespace-nowrap" : ""}`}
+          >
             {i !== primary && <CellLabel i={i} />}
             {/* The name opens the record too: a bigger target than the pencil, and the first stop when tabbing */}
             {i === primary && href ? (
@@ -152,12 +175,23 @@ export function ListRow(props: { cells: React.ReactNode[]; primary?: number; lab
       <TableCell className={ACTIONS_CELL}>
         <div className="flex gap-2 whitespace-nowrap">
           {props.actions}
-          {props.editHref && <LinkButton href={props.editHref} size="xs" color="alternative" className="px-2" aria-label={`Editar ${props.label}`} data-tip="Editar">
-            <span className="material-symbols-outlined" aria-hidden="true">
-              edit
-            </span>
-          </LinkButton>}
-          {props.deleteAction && <DeleteButton action={props.deleteAction} label={props.label} note={props.deleteNote} />}
+          {props.editHref && (
+            <LinkButton
+              href={props.editHref}
+              size="xs"
+              color="alternative"
+              className="px-2"
+              aria-label={`Editar ${props.label}`}
+              data-tip="Editar"
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                edit
+              </span>
+            </LinkButton>
+          )}
+          {props.deleteAction && (
+            <DeleteButton action={props.deleteAction} label={props.label} note={props.deleteNote} />
+          )}
         </div>
       </TableCell>
     </TableRow>

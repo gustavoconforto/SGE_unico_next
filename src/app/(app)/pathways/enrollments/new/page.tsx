@@ -14,7 +14,11 @@ export default async function NewMemberPage({ searchParams }: PageProps<"/pathwa
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">Nova inscrição em itinerário</h1>
-      <MemberForm back={known ? `/pathways/enrollments?offering=${known}` : "/pathways/enrollments"} defaults={known ? { offeringId: known } : undefined} {...options} />
+      <MemberForm
+        back={known ? `/pathways/enrollments?offering=${known}` : "/pathways/enrollments"}
+        defaults={known ? { offeringId: known } : undefined}
+        {...options}
+      />
     </div>
   );
 }

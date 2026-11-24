@@ -10,7 +10,11 @@ import { saveGuardian } from "./actions";
 
 export function GuardianForm({ id = null, defaults }: { id?: number | null; defaults?: Record<string, unknown> }) {
   const [state, action, pending] = useActionState(saveGuardian.bind(null, id), {});
-  const shown = defaults && { ...defaults, phone: formatPhone(defaults.phone as string), mobile: formatPhone(defaults.mobile as string) };
+  const shown = defaults && {
+    ...defaults,
+    phone: formatPhone(defaults.phone as string),
+    mobile: formatPhone(defaults.mobile as string),
+  };
   return (
     <form action={action} className="flex max-w-3xl flex-col gap-4">
       <FormFields state={state} defaults={shown}>

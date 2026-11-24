@@ -8,15 +8,15 @@ responsáveis, matrículas, contas a receber e a pagar, e boletos bancários
 Este manual explica o sistema do ponto de vista de quem usa as telas. Ele está
 dividido assim:
 
-| Documento | Conteúdo |
-|---|---|
-| [sidebar.md](sidebar.md) | Mapa do menu lateral: o que há em cada item e onde ler mais |
-| [recursos-humanos.md](recursos-humanos.md) | Usuários, grupos, permissões, cargos e funcionários |
-| [configuracao-matriculas.md](configuracao-matriculas.md) | Ano escolar, cursos, tipos de contrato, descontos e documentos exigidos |
-| [academico.md](academico.md) | Alunos, responsáveis, turmas (e os alunos de cada turma), matérias e matrículas |
-| [financeiro.md](financeiro.md) | Categorias, fornecedores, contas a receber e a pagar, parcelas e baixas |
-| [cobranca-bancaria.md](cobranca-bancaria.md) | Boletos Bradesco: configuração, remessas, retornos e acompanhamento |
-| [fluxos.md](fluxos.md) | Passo a passo das rotinas mais comuns (início de ano, matrícula, recebimento, cobrança mensal) |
+| Documento                                                | Conteúdo                                                                                       |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| [sidebar.md](sidebar.md)                                 | Mapa do menu lateral: o que há em cada item e onde ler mais                                    |
+| [recursos-humanos.md](recursos-humanos.md)               | Usuários, grupos, permissões, cargos e funcionários                                            |
+| [configuracao-matriculas.md](configuracao-matriculas.md) | Ano escolar, cursos, tipos de contrato, descontos e documentos exigidos                        |
+| [academico.md](academico.md)                             | Alunos, responsáveis, turmas (e os alunos de cada turma), matérias e matrículas                |
+| [financeiro.md](financeiro.md)                           | Categorias, fornecedores, contas a receber e a pagar, parcelas e baixas                        |
+| [cobranca-bancaria.md](cobranca-bancaria.md)             | Boletos Bradesco: configuração, remessas, retornos e acompanhamento                            |
+| [fluxos.md](fluxos.md)                                   | Passo a passo das rotinas mais comuns (início de ano, matrícula, recebimento, cobrança mensal) |
 
 ## Entrar no sistema
 

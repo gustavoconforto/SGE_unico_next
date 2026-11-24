@@ -42,21 +42,35 @@ export default async function LevelSubjectListPage({ searchParams }: PageProps<"
   const page = pageParam(sp);
   const [rows, [{ total }]] = await Promise.all([
     db
-      .select({ id: levelSubject.id, gradeLevel: levelSubject.gradeLevel, weeklyClasses: levelSubject.weeklyClasses, subject: subject.name })
+      .select({
+        id: levelSubject.id,
+        gradeLevel: levelSubject.gradeLevel,
+        weeklyClasses: levelSubject.weeklyClasses,
+        subject: subject.name,
+      })
       .from(levelSubject)
       .innerJoin(subject, eq(levelSubject.subjectId, subject.id))
       .where(where)
       .orderBy(asc(levelSubject.gradeLevel), asc(subject.name))
       .limit(PAGE_SIZE)
       .offset((page - 1) * PAGE_SIZE),
-    db.select({ total: count() }).from(levelSubject).innerJoin(subject, eq(levelSubject.subjectId, subject.id)).where(where),
+    db
+      .select({ total: count() })
+      .from(levelSubject)
+      .innerJoin(subject, eq(levelSubject.subjectId, subject.id))
+      .where(where),
   ]);
   const teachers = rows.length
     ? await db
         .select({ levelSubjectId: levelSubjectTeachers.gradelevelsubjectId, name: employee.name })
         .from(levelSubjectTeachers)
         .innerJoin(employee, eq(levelSubjectTeachers.employeeId, employee.id))
-        .where(inArray(levelSubjectTeachers.gradelevelsubjectId, rows.map((r) => r.id)))
+        .where(
+          inArray(
+            levelSubjectTeachers.gradelevelsubjectId,
+            rows.map((r) => r.id),
+          ),
+        )
         .orderBy(asc(employee.name))
     : [];
   return (
@@ -74,10 +88,18 @@ export default async function LevelSubjectListPage({ searchParams }: PageProps<"
         <ListRow
           key={r.id}
           cells={[
-            label(GRADE_LEVELS.map(([v, l]) => [String(v), l] as const), String(r.gradeLevel)),
+            label(
+              GRADE_LEVELS.map(([v, l]) => [String(v), l] as const),
+              String(r.gradeLevel),
+            ),
             r.subject,
-            teachers.filter((t) => t.levelSubjectId === r.id).map((t) => t.name).join(", ") || "—",
-            <span key="w" className="block text-right">{r.weeklyClasses ? formatMoney(r.weeklyClasses).replace(/,00$/, "") : "—"}</span>,
+            teachers
+              .filter((t) => t.levelSubjectId === r.id)
+              .map((t) => t.name)
+              .join(", ") || "—",
+            <span key="w" className="block text-right">
+              {r.weeklyClasses ? formatMoney(r.weeklyClasses).replace(/,00$/, "") : "—"}
+            </span>,
           ]}
           label={`${r.subject} na ${r.gradeLevel}ª série`}
           editHref={`/grades/level-subjects/${r.id}/edit`}

@@ -58,18 +58,24 @@ const lateBadge = (c: InstallmentChoice) => {
 const split = (label: string) => {
   const [account, number] = label.split(" · ");
   const cut = account.indexOf(" - ");
-  return cut < 0 ? { title: label, rest: "" } : { title: `${account.slice(0, cut)} · ${number}`, rest: account.slice(cut + 3) };
+  return cut < 0
+    ? { title: label, rest: "" }
+    : { title: `${account.slice(0, cut)} · ${number}`, rest: account.slice(cut + 3) };
 };
 /** Course, due date and payer on their own line. */
 const details = (c: InstallmentChoice, direction: "R" | "P") =>
-  [split(c.label).rest, `venc. ${formatDate(c.dueDate)}`, c.party && `${PARTY[direction]}: ${c.party}`].filter(Boolean).join(" · ");
-const toOption = (direction: "R" | "P") => (c: InstallmentChoice): ComboOption => ({
-  value: String(c.id),
-  label: split(c.label).title,
-  hint: details(c, direction),
-  badge: lateBadge(c),
-  detail: `saldo R$ ${formatMoney(c.balance)}`,
-});
+  [split(c.label).rest, `venc. ${formatDate(c.dueDate)}`, c.party && `${PARTY[direction]}: ${c.party}`]
+    .filter(Boolean)
+    .join(" · ");
+const toOption =
+  (direction: "R" | "P") =>
+  (c: InstallmentChoice): ComboOption => ({
+    value: String(c.id),
+    label: split(c.label).title,
+    hint: details(c, direction),
+    badge: lateBadge(c),
+    detail: `saldo R$ ${formatMoney(c.balance)}`,
+  });
 /** "1234.50" → "1.234,50", the way the balance is shown. */
 const typed = (v: unknown) => (v == null || v === "" ? "" : formatMoney(String(v)));
 
@@ -79,7 +85,12 @@ export function PaymentForm({ id, direction, returnTo, defaults = {}, selected, 
   const seen = useRef(new Map<string, InstallmentChoice>(selected ? [[String(selected.id), selected]] : []));
   // The money fields drive the balance line, so they live in state; zero adjustments start blank
   const [values, setValues] = useState<Record<string, string>>(() =>
-    Object.fromEntries(MONEY_FIELDS.map((k) => [k, k !== "amount" && money(String(defaults[k] || 0)).isZero() ? "" : typed(defaults[k])])),
+    Object.fromEntries(
+      MONEY_FIELDS.map((k) => [
+        k,
+        k !== "amount" && money(String(defaults[k] || 0)).isZero() ? "" : typed(defaults[k]),
+      ]),
+    ),
   );
   const set = (name: string) => (v: string) => setValues((all) => ({ ...all, [name]: v }));
   // Valor pago follows saldo + acréscimos − desconto until staff type their own amount (an edit starts typed)
@@ -87,17 +98,24 @@ export function PaymentForm({ id, direction, returnTo, defaults = {}, selected, 
   // The amount error may ask for the adjustments, so open them then too
   // An overdue installment usually owes multa and juros: open them with a reminder (staff still type the amounts)
   const late = installment ? daysLate(installment) : 0;
-  const showAdjustments = !!late || !!state.errors?.amount || ADJUSTMENTS.some(([name]) => state.errors?.[name] || values[name]);
+  const showAdjustments =
+    !!late || !!state.errors?.amount || ADJUSTMENTS.some(([name]) => state.errors?.[name] || values[name]);
 
   useLastMethod(!id);
 
   // On edit, the server's balance already excludes this payment: add it back while the installment is unchanged
-  const original = id && selected && installment?.id === selected.id ? principal(Object.fromEntries(MONEY_FIELDS.map((k) => [k, String(defaults[k] || 0)])) as PaymentValues) : money(0);
+  const original =
+    id && selected && installment?.id === selected.id
+      ? principal(Object.fromEntries(MONEY_FIELDS.map((k) => [k, String(defaults[k] || 0)])) as PaymentValues)
+      : money(0);
   const balance = installment ? money(installment.balance).plus(original) : null;
   // What settles the installment: principal(amount) = balance ⇔ amount = balance + multa + juros + correção − desconto
   const charges = ADJUSTMENTS.map(([k]) => parse(values[k]));
   const discount = parse(values.discount);
-  const total = balance && discount && charges.every(Boolean) ? charges.reduce((sum, c) => sum!.plus(c!), balance)!.minus(discount) : null;
+  const total =
+    balance && discount && charges.every(Boolean)
+      ? charges.reduce((sum, c) => sum!.plus(c!), balance)!.minus(discount)
+      : null;
   const hasCharges = charges.some((c) => c && !c.isZero());
   const amountValue = !amountTyped && total?.gt(0) ? typed(total.toFixed(2)) : values.amount;
 
@@ -140,9 +158,14 @@ export function PaymentForm({ id, direction, returnTo, defaults = {}, selected, 
           />
           {/* The input shows only the label (cut short on phones): the due date and payer stay visible after the pick */}
           {installment && (
-            <p id="installment-details" className="-mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-700 sm:col-span-2">
+            <p
+              id="installment-details"
+              className="-mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-700 sm:col-span-2"
+            >
               <span>{details(installment, direction)}</span>
-              {late > 0 && <span className="rounded bg-red-50 px-1.5 py-0.5 text-xs font-medium text-red-800">{` ${lateBadge(installment)}`}</span>}
+              {late > 0 && (
+                <span className="rounded bg-red-50 px-1.5 py-0.5 text-xs font-medium text-red-800">{` ${lateBadge(installment)}`}</span>
+              )}
             </p>
           )}
           {balance && (
@@ -153,8 +176,16 @@ export function PaymentForm({ id, direction, returnTo, defaults = {}, selected, 
               </div>
               <div aria-live="polite">
                 <dt className="text-gray-600">Saldo após esta baixa</dt>
-                <dd className={`text-base font-semibold tabular-nums ${after?.isNegative() ? "text-red-700" : after?.isZero() ? "text-green-700" : ""}`}>
-                  {after === null ? "—" : after.isNegative() ? `Excede em R$ ${formatMoney(after.abs())}` : after.isZero() ? "R$ 0,00 · quitada" : `R$ ${formatMoney(after)}`}
+                <dd
+                  className={`text-base font-semibold tabular-nums ${after?.isNegative() ? "text-red-700" : after?.isZero() ? "text-green-700" : ""}`}
+                >
+                  {after === null
+                    ? "—"
+                    : after.isNegative()
+                      ? `Excede em R$ ${formatMoney(after.abs())}`
+                      : after.isZero()
+                        ? "R$ 0,00 · quitada"
+                        : `R$ ${formatMoney(after)}`}
                 </dd>
               </div>
             </dl>
@@ -195,16 +226,29 @@ export function PaymentForm({ id, direction, returnTo, defaults = {}, selected, 
               Acréscimos: multa, juros e correção
             </summary>
             {late > 0 && installment && (
-              <p className="mt-2 text-sm text-gray-700">Parcela vencida desde {formatDate(installment.dueDate)}: confira multa e juros.</p>
+              <p className="mt-2 text-sm text-gray-700">
+                Parcela vencida desde {formatDate(installment.dueDate)}: confira multa e juros.
+              </p>
             )}
             <div className="mt-3 grid gap-4 sm:grid-cols-3">
               {ADJUSTMENTS.map(([name, label]) => (
-                <TextField key={name} name={name} label={`${label} (R$)`} type="number" step="0.01" optional placeholder="0,00" value={values[name]} onChange={set(name)} />
+                <TextField
+                  key={name}
+                  name={name}
+                  label={`${label} (R$)`}
+                  type="number"
+                  step="0.01"
+                  optional
+                  placeholder="0,00"
+                  value={values[name]}
+                  onChange={set(name)}
+                />
               ))}
             </div>
             {hasCharges && total && (
               <p className="mt-3 text-sm text-gray-700">
-                Total a receber com os acréscimos: <strong className="font-semibold text-gray-900 tabular-nums">R$ {formatMoney(total)}</strong>
+                Total a receber com os acréscimos:{" "}
+                <strong className="font-semibold text-gray-900 tabular-nums">R$ {formatMoney(total)}</strong>
                 {amountTyped && !after?.isZero() && " (diferente do valor pago)"}
               </p>
             )}
@@ -212,7 +256,18 @@ export function PaymentForm({ id, direction, returnTo, defaults = {}, selected, 
           <TextField name="notes" label="Observações" maxLength={200} optional className="sm:col-span-2" />
         </Fieldset>
       </FormFields>
-      <FormButtons pending={pending} cancelHref={cancelHref} sticky label={id ? "Salvar baixa" : amount && amount.gt(0) ? `Registrar baixa de R$ ${formatMoney(amount)}` : "Registrar baixa"} />
+      <FormButtons
+        pending={pending}
+        cancelHref={cancelHref}
+        sticky
+        label={
+          id
+            ? "Salvar baixa"
+            : amount && amount.gt(0)
+              ? `Registrar baixa de R$ ${formatMoney(amount)}`
+              : "Registrar baixa"
+        }
+      />
     </form>
   );
 }

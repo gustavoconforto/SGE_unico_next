@@ -31,13 +31,27 @@ describe("sameScore", () => {
 });
 
 describe("rowResult", () => {
-  const cell = (kind: string, raw: string, maxScore = "10", calculated = false) => ({ kind, raw, maxScore, calculated });
+  const cell = (kind: string, raw: string, maxScore = "10", calculated = false) => ({
+    kind,
+    raw,
+    maxScore,
+    calculated,
+  });
   it("an adjustment settles the row; a blank one doesn't count as full marks", () => {
-    expect(rowResult([cell("R", "2", "3"), cell("R", "", "6"), cell("A", "7", "10", true)], false, null)).toMatchObject({ result: new Decimal("7"), incomplete: false, atRisk: false });
-    expect(rowResult([cell("R", "1", "3"), cell("R", "4", "6"), cell("A", "", "10", true)], false, null)).toMatchObject({ incomplete: false, atRisk: true });
+    expect(rowResult([cell("R", "2", "3"), cell("R", "", "6"), cell("A", "7", "10", true)], false, null)).toMatchObject(
+      { result: new Decimal("7"), incomplete: false, atRisk: false },
+    );
+    expect(rowResult([cell("R", "1", "3"), cell("R", "4", "6"), cell("A", "", "10", true)], false, null)).toMatchObject(
+      { incomplete: false, atRisk: true },
+    );
   });
   it("matches bimesterGrade: regular plus bonus, capped at 10", () => {
-    expect(rowResult([cell("R", "3"), cell("R", "4,5"), cell("B", "")], false, null)).toEqual({ result: new Decimal("7.5"), invalid: false, incomplete: false, atRisk: false });
+    expect(rowResult([cell("R", "3"), cell("R", "4,5"), cell("B", "")], false, null)).toEqual({
+      result: new Decimal("7.5"),
+      invalid: false,
+      incomplete: false,
+      atRisk: false,
+    });
     expect(rowResult([cell("R", "9"), cell("B", "2")], false, null).result?.toFixed(2)).toBe("10.00");
   });
   it("is incomplete while a typed regular score is blank, never for a bonus or a calculated score", () => {
@@ -48,16 +62,31 @@ describe("rowResult", () => {
   });
   it("puts a partial row at risk only when full marks in the blanks can't reach passing", () => {
     // 2 of 3 typed, the 6-point exam still blank: can reach 8, not at risk
-    expect(rowResult([cell("R", "2", "3"), cell("R", "", "6")], false, null)).toMatchObject({ incomplete: true, atRisk: false });
+    expect(rowResult([cell("R", "2", "3"), cell("R", "", "6")], false, null)).toMatchObject({
+      incomplete: true,
+      atRisk: false,
+    });
     // 0,5 + at most 1 + 1 = 2,5: can't pass any more
-    expect(rowResult([cell("R", "0,5", "3"), cell("R", "", "1"), cell("R", "", "1", true)], false, null).atRisk).toBe(true);
+    expect(rowResult([cell("R", "0,5", "3"), cell("R", "", "1"), cell("R", "", "1", true)], false, null).atRisk).toBe(
+      true,
+    );
     // complete and below 6, even if a staff-only score or a bonus could still lift it
-    expect(rowResult([cell("R", "2", "3"), cell("R", "1", "6"), cell("R", "", "1", true), cell("B", "", "5")], false, null)).toMatchObject({ incomplete: false, atRisk: true });
+    expect(
+      rowResult([cell("R", "2", "3"), cell("R", "1", "6"), cell("R", "", "1", true), cell("B", "", "5")], false, null),
+    ).toMatchObject({ incomplete: false, atRisk: true });
     // complete and below 6
-    expect(rowResult([cell("R", "2", "3"), cell("R", "3", "6")], false, null)).toMatchObject({ incomplete: false, atRisk: true });
+    expect(rowResult([cell("R", "2", "3"), cell("R", "3", "6")], false, null)).toMatchObject({
+      incomplete: false,
+      atRisk: true,
+    });
   });
   it("gives no result while a cell is invalid", () => {
-    expect(rowResult([cell("R", "11"), cell("R", "5")], false, null)).toEqual({ result: null, invalid: true, incomplete: false, atRisk: false });
+    expect(rowResult([cell("R", "11"), cell("R", "5")], false, null)).toEqual({
+      result: null,
+      invalid: true,
+      incomplete: false,
+      atRisk: false,
+    });
     expect(rowResult([cell("R", "abc")], false, null).invalid).toBe(true);
   });
   it("in the final recovery, averages the annual grade with the best recovery score", () => {

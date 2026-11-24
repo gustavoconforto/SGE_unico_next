@@ -20,7 +20,8 @@ describe("formatters", () => {
   it("formats CPF and CEP", () => {
     expect(formatCpf("12345678901")).toBe("123.456.789-01");
     expect(() => formatCpf("123")).toThrow(TypeError);
-    for (const typed of ["00000000030", "000000000-30", "000.000.000-30", " 000.000.000/30 9"]) expect(maskCpf(typed)).toBe("000.000.000-30");
+    for (const typed of ["00000000030", "000000000-30", "000.000.000-30", " 000.000.000/30 9"])
+      expect(maskCpf(typed)).toBe("000.000.000-30");
     expect(maskCpf("")).toBe("");
     expect(maskCpf("123")).toBe("123");
     expect(maskCpf("1234")).toBe("123.4");

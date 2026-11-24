@@ -9,26 +9,26 @@ This Next.js app replaces the Django project in `../../django/gestao`, which is
 now legacy and kept only until cutover (it still owns the database schema).
 The UI is in Brazilian Portuguese; the code is in English.
 
-| | |
-|---|---|
-| Language | TypeScript |
-| Framework | Next.js 16 (App Router, Cache Components), React 19 |
-| Front end | Tailwind CSS 4 + Flowbite React |
-| Auth | Better Auth (username + password, sessions in Postgres) |
-| Database | PostgreSQL via Drizzle ORM and Drizzle migrations (Docker in dev, Neon in production) |
-| Tests | Vitest |
+|           |                                                                                       |
+| --------- | ------------------------------------------------------------------------------------- |
+| Language  | TypeScript                                                                            |
+| Framework | Next.js 16 (App Router, Cache Components), React 19                                   |
+| Front end | Tailwind CSS 4 + Flowbite React                                                       |
+| Auth      | Better Auth (username + password, sessions in Postgres)                               |
+| Database  | PostgreSQL via Drizzle ORM and Drizzle migrations (Docker in dev, Neon in production) |
+| Tests     | Vitest                                                                                |
 
 ## Features
 
-| Area | What you can do |
-|---|---|
-| Secretaria | Students with their guardians, enrollments, class roster |
-| Financeiro | Accounts receivable and payable, installments, payments (baixas) and receipts, financial categories, suppliers |
-| Pedagógico | Grade entry, student grades and report cards, timetable, class diary, Q&A sessions (plantões) |
-| Itinerários | Pathways and their yearly groups (with a printable diary), sign-ups per group or per student, lessons and roll calls, attendance, workload, pathway grades and the extra grade they feed |
-| Ocorrências | Incidents, delays, bathroom permissions, concept grades |
-| Recursos humanos | Employees and roles |
-| Configuração | School years, programs, enrollment contracts, discounts, required documents, classes, departments, subjects, subjects per series, exam and incident types |
+| Area             | What you can do                                                                                                                                                                          |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Secretaria       | Students with their guardians, enrollments, class roster                                                                                                                                 |
+| Financeiro       | Accounts receivable and payable, installments, payments (baixas) and receipts, financial categories, suppliers                                                                           |
+| Pedagógico       | Grade entry, student grades and report cards, timetable, class diary, Q&A sessions (plantões)                                                                                            |
+| Itinerários      | Pathways and their yearly groups (with a printable diary), sign-ups per group or per student, lessons and roll calls, attendance, workload, pathway grades and the extra grade they feed |
+| Ocorrências      | Incidents, delays, bathroom permissions, concept grades                                                                                                                                  |
+| Recursos humanos | Employees and roles                                                                                                                                                                      |
+| Configuração     | School years, programs, enrollment contracts, discounts, required documents, classes, departments, subjects, subjects per series, exam and incident types                                |
 
 Creating an enrollment automatically creates its receivable account and
 monthly installments. Ending an enrollment early (transferred, dropped,
@@ -102,12 +102,12 @@ commands below reach Neon while `.env` keeps pointing at the local database.
    DATABASE_URL="<neon direct url>" npm run create-admin -- <username> "<Full name>" [email]
    ```
 3. **Set the Vercel environment variables** (Production):
-   | Variable | Value |
-   |---|---|
-   | `DATABASE_URL` | Neon **pooled** URL |
-   | `BETTER_AUTH_SECRET` | a new secret, `openssl rand -base64 32` (never the dev one) |
-   | `BETTER_AUTH_URL` | the production address, e.g. `https://gestao.example.com` (login cookies depend on it) |
-   | `MEDIA_ROOT` | `/tmp/media`: the only writable folder on Vercel (see the photo warning below) |
+   | Variable             | Value                                                                                  |
+   | -------------------- | -------------------------------------------------------------------------------------- |
+   | `DATABASE_URL`       | Neon **pooled** URL                                                                    |
+   | `BETTER_AUTH_SECRET` | a new secret, `openssl rand -base64 32` (never the dev one)                            |
+   | `BETTER_AUTH_URL`    | the production address, e.g. `https://gestao.example.com` (login cookies depend on it) |
+   | `MEDIA_ROOT`         | `/tmp/media`: the only writable folder on Vercel (see the photo warning below)         |
 4. **Deploy**, then sign in with the administrator and open a few screens.
 
 ### Later deploys

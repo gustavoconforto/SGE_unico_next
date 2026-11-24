@@ -38,24 +38,9 @@ export function PersonFields({
           className="sm:col-span-2"
         />
         <SelectField name="sex" label="Sexo" options={SEX_CHOICES} optional />
-        <TextField
-          name="birthDate"
-          label="Data de nascimento"
-          type="date"
-          optional
-        />
-        <TextField
-          name="nationality"
-          label="Nacionalidade"
-          maxLength={50}
-          optional
-        />
-        <TextField
-          name="placeOfBirth"
-          label="Naturalidade"
-          maxLength={50}
-          optional
-        />
+        <TextField name="birthDate" label="Data de nascimento" type="date" optional />
+        <TextField name="nationality" label="Nacionalidade" maxLength={50} optional />
+        <TextField name="placeOfBirth" label="Naturalidade" maxLength={50} optional />
         {personal}
       </Fieldset>
       {afterPersonal}
@@ -69,11 +54,7 @@ export function PersonFields({
           autoComplete="off"
         />
         <TextField name="rg" label="RG" maxLength={20} />
-        <TextField
-          name="issuingAuthority"
-          label="Órgão expedidor"
-          maxLength={20}
-        />
+        <TextField name="issuingAuthority" label="Órgão expedidor" maxLength={20} />
         {documents}
       </Fieldset>
       <Fieldset legend="Contato">
@@ -107,27 +88,10 @@ export function PersonFields({
         />
       </Fieldset>
       <Fieldset legend="Endereço">
-        <TextField
-          name="address"
-          label="Endereço"
-          maxLength={200}
-          optional
-          className="sm:col-span-2"
-        />
-        <TextField
-          name="neighborhood"
-          label="Bairro"
-          maxLength={100}
-          optional
-        />
+        <TextField name="address" label="Endereço" maxLength={200} optional className="sm:col-span-2" />
+        <TextField name="neighborhood" label="Bairro" maxLength={100} optional />
         <TextField name="city" label="Cidade" maxLength={100} optional />
-        <SelectField
-          name="state"
-          label="UF"
-          options={UFS}
-          optional
-          emptyLabel="—"
-        />
+        <SelectField name="state" label="UF" options={UFS} optional emptyLabel="—" />
         <TextField
           name="zipCode"
           label="CEP"

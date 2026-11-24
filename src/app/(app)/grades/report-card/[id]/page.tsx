@@ -64,14 +64,18 @@ export default async function ReportCardPage({ params }: PageProps<"/grades/repo
               const sit = situation(r);
               return (
                 <TableRow key={r.subject.id}>
-                  <TableCell className="min-w-48 px-3 font-medium text-gray-900 dark:text-white">{r.subject.name}</TableCell>
+                  <TableCell className="min-w-48 px-3 font-medium text-gray-900 dark:text-white">
+                    {r.subject.name}
+                  </TableCell>
                   {r.bimesters.map((g, i) => (
                     <TableCell key={i} className="px-3 text-right tabular-nums">
                       {formatGrade(g)}
                     </TableCell>
                   ))}
                   <TableCell className="px-3 text-right tabular-nums">{formatGrade(r.average)}</TableCell>
-                  <TableCell className="px-3 text-right tabular-nums">{r.needsRecovery ? formatGrade(r.recovery) : "—"}</TableCell>
+                  <TableCell className="px-3 text-right tabular-nums">
+                    {r.needsRecovery ? formatGrade(r.recovery) : "—"}
+                  </TableCell>
                   <TableCell className="px-3 text-right font-semibold tabular-nums">{formatGrade(r.final)}</TableCell>
                   <TableCell className="px-3 text-right">
                     <Badge color={sit.color} className="ml-auto w-fit whitespace-nowrap">

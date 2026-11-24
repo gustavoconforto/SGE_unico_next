@@ -32,13 +32,50 @@ export const phoneDigits = z
 
 const digitsOnly = (v: string) => v.replace(/\D/g, "");
 
-export const UFS = ["AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"].map((uf) => [uf, uf] as const);
+export const UFS = [
+  "AC",
+  "AL",
+  "AP",
+  "AM",
+  "BA",
+  "CE",
+  "DF",
+  "ES",
+  "GO",
+  "MA",
+  "MT",
+  "MS",
+  "MG",
+  "PA",
+  "PB",
+  "PR",
+  "PE",
+  "PI",
+  "RJ",
+  "RN",
+  "RS",
+  "RO",
+  "RR",
+  "SC",
+  "SP",
+  "SE",
+  "TO",
+].map((uf) => [uf, uf] as const);
 
 export const personFields = {
   name: requiredText(200),
   sex: z.enum(["M", "F", ""]).default(""),
   // Accepts a pasted "123.456.789-00"
-  cpf: z.string().trim().transform(digitsOnly).pipe(z.string().min(1, REQUIRED).regex(/^\d{11}$/, "O CPF deve ter 11 dígitos.")),
+  cpf: z
+    .string()
+    .trim()
+    .transform(digitsOnly)
+    .pipe(
+      z
+        .string()
+        .min(1, REQUIRED)
+        .regex(/^\d{11}$/, "O CPF deve ter 11 dígitos."),
+    ),
   rg: requiredText(20),
   issuingAuthority: requiredText(20),
   birthDate: z

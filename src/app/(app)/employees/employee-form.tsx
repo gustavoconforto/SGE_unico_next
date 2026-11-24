@@ -34,27 +34,31 @@ export function EmployeeForm(props: {
           mobileAction={props.id ? <WhatsAppLink field="mobile" phone={props.defaults?.mobile as string} /> : undefined}
         />
         <Fieldset legend="Acesso ao sistema">
-            <div className="sm:col-span-2" onChange={onAccessChange}>
-              <CheckboxField name="access" label="Pode acessar o sistema" help="Desmarcar apaga o login do funcionário." />
-            </div>
-            {access && (
-              <>
-                <TextField name="username" label="Usuário" maxLength={30} autoComplete="off" />
-                <TextField
-                  name="password"
-                  label="Senha"
-                  type="password"
-                  autoComplete="new-password"
-                  optional={hasLogin}
-                  help={
-                    hasLogin
-                      ? "Deixe em branco para manter a senha atual. Uma nova senha encerra as sessões do funcionário."
-                      : "Senha provisória, com pelo menos 8 caracteres: o funcionário a troca no primeiro acesso."
-                  }
-                />
-              </>
-            )}
-          </Fieldset>
+          <div className="sm:col-span-2" onChange={onAccessChange}>
+            <CheckboxField
+              name="access"
+              label="Pode acessar o sistema"
+              help="Desmarcar apaga o login do funcionário."
+            />
+          </div>
+          {access && (
+            <>
+              <TextField name="username" label="Usuário" maxLength={30} autoComplete="off" />
+              <TextField
+                name="password"
+                label="Senha"
+                type="password"
+                autoComplete="new-password"
+                optional={hasLogin}
+                help={
+                  hasLogin
+                    ? "Deixe em branco para manter a senha atual. Uma nova senha encerra as sessões do funcionário."
+                    : "Senha provisória, com pelo menos 8 caracteres: o funcionário a troca no primeiro acesso."
+                }
+              />
+            </>
+          )}
+        </Fieldset>
       </FormFields>
       <FormButtons pending={pending} cancelHref="/employees" />
     </form>

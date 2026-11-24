@@ -6,27 +6,21 @@
       {
         "rule": "design-system-font",
         "value": "arial",
-        "files": [
-          "src/app/(print)/enrollments/[id]/print/documents.tsx"
-        ],
+        "files": ["src/app/(print)/enrollments/[id]/print/documents.tsx"],
         "createdAt": "2026-11-17T16:18:30.192Z",
         "reason": "agent: ported verbatim from Django print_base.html, printed legal documents keep the legacy font"
       },
       {
         "rule": "design-system-font",
         "value": "times new roman",
-        "files": [
-          "src/app/(print)/enrollments/[id]/print/documents.tsx"
-        ],
+        "files": ["src/app/(print)/enrollments/[id]/print/documents.tsx"],
         "createdAt": "2026-11-17T16:18:30.204Z",
         "reason": "agent: ported verbatim from Django preview_enrollment.html (contract)"
       },
       {
         "rule": "overused-font",
         "value": "arial",
-        "files": [
-          "src/app/(print)/enrollments/[id]/print/documents.tsx"
-        ],
+        "files": ["src/app/(print)/enrollments/[id]/print/documents.tsx"],
         "createdAt": "2026-11-17T16:19:55.855Z",
         "reason": "agent: Arial ported from Django print_base.html; printed enrollment documents keep the legacy font"
       },

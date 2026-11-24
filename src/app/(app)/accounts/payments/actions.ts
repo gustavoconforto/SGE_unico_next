@@ -5,10 +5,34 @@ import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
-import { accountsAccount as account, accountsInstallment as installment, accountsPayment as payment, accountsSupplier as supplier, studentsGuardian as guardian } from "@/db/schema/app";
-import { PAYMENT_METHODS, PENDING_STATUSES, formatMoney, installmentBalance, money, principal, toDb } from "@/lib/finance";
+import {
+  accountsAccount as account,
+  accountsInstallment as installment,
+  accountsPayment as payment,
+  accountsSupplier as supplier,
+  studentsGuardian as guardian,
+} from "@/db/schema/app";
+import {
+  PAYMENT_METHODS,
+  PENDING_STATUSES,
+  formatMoney,
+  installmentBalance,
+  money,
+  principal,
+  toDb,
+} from "@/lib/finance";
 import { lockInstallment, outstandingSql, refreshInstallmentStatus } from "@/lib/finance-db";
-import { type FormErrors, type FormState, INVALID_CHOICE, REQUIRED, decimalField, foreignKey, formIds, parseForm, requiredDate } from "@/lib/form";
+import {
+  type FormErrors,
+  type FormState,
+  INVALID_CHOICE,
+  REQUIRED,
+  decimalField,
+  foreignKey,
+  formIds,
+  parseForm,
+  requiredDate,
+} from "@/lib/form";
 import { foldSql, likePattern, stripAccents } from "@/lib/list";
 import { hasPermission, requirePermission } from "@/lib/authorization";
 import { type InstallmentChoice, toChoice } from "./data";
@@ -51,7 +75,11 @@ export async function searchInstallments(direction: "R" | "P", q: string): Promi
       and(
         eq(account.direction, direction),
         inArray(installment.status, PENDING_STATUSES),
-        q.trim() ? (direction === "R" ? orIlike([account.description, guardian.name], p) : orIlike([account.description, supplier.name, supplier.document], p)) : undefined,
+        q.trim()
+          ? direction === "R"
+            ? orIlike([account.description, guardian.name], p)
+            : orIlike([account.description, supplier.name, supplier.document], p)
+          : undefined,
       ),
     )
     .orderBy(asc(installment.dueDate), asc(installment.id))
@@ -68,34 +96,69 @@ function orIlike(columns: AnyPgColumn[], pattern: string) {
  * PaymentForm + PaymentSaveMixin: the principal (amount − charges + discount) must be positive and fit the
  * installment's balance, checked again with the installment row locked so a double submit can't pass twice.
  */
-export async function savePayment(id: number | null, direction: "R" | "P", returnTo: "account" | "enrollment" | null, _prev: FormState, formData: FormData): Promise<FormState> {
+export async function savePayment(
+  id: number | null,
+  direction: "R" | "P",
+  returnTo: "account" | "enrollment" | null,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
   await requirePermission("payments", "edit");
   // Without the book (payments.view) only new payments of enrollment installments: the desk at signing
   const book = await hasPermission("payments", "view");
   if (id && !book) redirect("/forbidden");
   const { data, values, state } = parseForm(paymentSchema, formData);
   if (!data) return state;
-  const fields = { ...data, discount: data.discount ?? "0.00", penalty: data.penalty ?? "0.00", interest: data.interest ?? "0.00", monetaryAdjust: data.monetaryAdjust ?? "0.00" };
+  const fields = {
+    ...data,
+    discount: data.discount ?? "0.00",
+    penalty: data.penalty ?? "0.00",
+    interest: data.interest ?? "0.00",
+    monetaryAdjust: data.monetaryAdjust ?? "0.00",
+  };
   const paid = principal(fields);
-  if (paid.lte(0)) return { errors: { amount: ["O valor pago mais o desconto deve ser maior que a soma de multa, juros e correção."] }, values };
+  if (paid.lte(0))
+    return {
+      errors: { amount: ["O valor pago mais o desconto deve ser maior que a soma de multa, juros e correção."] },
+      values,
+    };
 
-  if (id && !(await db.select({ id: payment.id }).from(payment).where(eq(payment.id, id))).length) redirect("/accounts/payments");
+  if (id && !(await db.select({ id: payment.id }).from(payment).where(eq(payment.id, id))).length)
+    redirect("/accounts/payments");
 
   const result = await db.transaction(async (tx) => {
     const target = await lockInstallment(tx, data.installmentId);
     // Read under the lock, not before it: an edit of this payment committed meanwhile changed what goes back into the balance
     const [previous] = id ? await tx.select().from(payment).where(eq(payment.id, id)).for("update") : [];
-    if (id && !previous) return { errors: { installmentId: ["Este pagamento acabou de ser excluído por outra pessoa."] } };
-    const [acc] = target ? await tx.select({ direction: account.direction, enrollmentId: account.enrollmentId }).from(account).where(eq(account.id, target.accountId)) : [];
+    if (id && !previous)
+      return { errors: { installmentId: ["Este pagamento acabou de ser excluído por outra pessoa."] } };
+    const [acc] = target
+      ? await tx
+          .select({ direction: account.direction, enrollmentId: account.enrollmentId })
+          .from(account)
+          .where(eq(account.id, target.accountId))
+      : [];
     // Only installments of this direction that still accept payments, plus the current one on edit
     const sameAsBefore = previous?.installmentId === data.installmentId;
-    if (!target || acc?.direction !== direction || (!book && !acc.enrollmentId) || (!PENDING_STATUSES.includes(target.status) && !sameAsBefore)) return { errors: { installmentId: [INVALID_CHOICE] } };
+    if (
+      !target ||
+      acc?.direction !== direction ||
+      (!book && !acc.enrollmentId) ||
+      (!PENDING_STATUSES.includes(target.status) && !sameAsBefore)
+    )
+      return { errors: { installmentId: [INVALID_CHOICE] } };
 
     let balance = installmentBalance(target.amount, target.status, money(target.paid));
     // The payment being edited is already in the balance
     if (sameAsBefore) balance = balance.plus(principal(previous));
     if (paid.gt(balance))
-      return { errors: { amount: [`Esta baixa quitaria R$ ${formatMoney(paid)} da parcela, mas o saldo é R$ ${formatMoney(balance)}. Reduza o valor ou informe multa, juros ou correção.`] } };
+      return {
+        errors: {
+          amount: [
+            `Esta baixa quitaria R$ ${formatMoney(paid)} da parcela, mas o saldo é R$ ${formatMoney(balance)}. Reduza o valor ou informe multa, juros ou correção.`,
+          ],
+        },
+      };
 
     // Moving the payment changes the old installment's balance too
     // shortcut: two edits moving payments between the same two installments in opposite directions deadlock; Postgres aborts one and the user resubmits
@@ -111,7 +174,8 @@ export async function savePayment(id: number | null, direction: "R" | "P", retur
   const msg = id ? "payment_updated" : "payment_created";
   // "Baixar" came from an enrollment or account page: go back there to print the receipt
   if (returnTo === "enrollment" && result.enrollmentId) redirect(`/enrollments/${result.enrollmentId}/edit?msg=${msg}`);
-  if (returnTo) redirect(`/accounts/${direction === "R" ? "receivable" : "payable"}/${result.accountId}/edit?msg=${msg}`);
+  if (returnTo)
+    redirect(`/accounts/${direction === "R" ? "receivable" : "payable"}/${result.accountId}/edit?msg=${msg}`);
   redirect(`/accounts/payments${direction === "P" ? "?direction=P&" : "?"}msg=${msg}`);
 }
 
@@ -150,16 +214,32 @@ export async function saveBatchPayment(_prev: FormState, formData: FormData): Pr
     for (const row of rows) {
       const locked = await lockInstallment(tx, row.id);
       const [acc] = locked
-        ? await tx.select({ direction: account.direction, enrollmentId: account.enrollmentId }).from(account).where(eq(account.id, locked.accountId))
+        ? await tx
+            .select({ direction: account.direction, enrollmentId: account.enrollmentId })
+            .from(account)
+            .where(eq(account.id, locked.accountId))
         : [];
-      if (!locked || acc?.direction !== "R" || (!book && !acc.enrollmentId) || !PENDING_STATUSES.includes(locked.status) || (target && target.accountId !== locked.accountId))
-        return { formError: "Uma das parcelas não aceita mais baixa (já quitada ou cancelada). Volte à matrícula e selecione de novo." };
+      if (
+        !locked ||
+        acc?.direction !== "R" ||
+        (!book && !acc.enrollmentId) ||
+        !PENDING_STATUSES.includes(locked.status) ||
+        (target && target.accountId !== locked.accountId)
+      )
+        return {
+          formError:
+            "Uma das parcelas não aceita mais baixa (já quitada ou cancelada). Volte à matrícula e selecione de novo.",
+        };
       target = { accountId: locked.accountId, enrollmentId: acc.enrollmentId };
       const balance = installmentBalance(locked.amount, locked.status, money(locked.paid));
       if (!/^\d+(\.\d+)?$/.test(row.shown) || !balance.eq(money(row.shown)))
-        return { formError: "Uma das parcelas recebeu outra baixa enquanto esta tela estava aberta. Volte à matrícula e selecione de novo." };
+        return {
+          formError:
+            "Uma das parcelas recebeu outra baixa enquanto esta tela estava aberta. Volte à matrícula e selecione de novo.",
+        };
       const amount = balance.plus(money(row.penalty)).plus(money(row.interest)).minus(money(row.discount));
-      if (amount.lte(0)) return { errors: { [`discount_${row.id}`]: ["O desconto deve ser menor que o saldo mais multa e juros."] } };
+      if (amount.lte(0))
+        return { errors: { [`discount_${row.id}`]: ["O desconto deve ser menor que o saldo mais multa e juros."] } };
       checked.push({ ...row, amount: toDb(amount) });
     }
     for (const row of checked) {
@@ -180,7 +260,11 @@ export async function saveBatchPayment(_prev: FormState, formData: FormData): Pr
   });
   if ("formError" in result || "errors" in result) return { ...result, values };
 
-  redirect(result.enrollmentId ? `/enrollments/${result.enrollmentId}/edit?msg=payments_created` : `/accounts/receivable/${result.accountId}/edit?msg=payments_created`);
+  redirect(
+    result.enrollmentId
+      ? `/enrollments/${result.enrollmentId}/edit?msg=payments_created`
+      : `/accounts/receivable/${result.accountId}/edit?msg=payments_created`,
+  );
 }
 
 export async function deletePayment(id: number) {

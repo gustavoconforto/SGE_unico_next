@@ -115,6 +115,7 @@ It is built on Flowbite React's light theme over Tailwind 4, used close to stock
 The product serves Único Educacional today and other schools later. The school's logo and name are tenant content shown in the sidebar, login and letterhead. They never tint the interface.
 
 **Key Characteristics:**
+
 - Light only: `color-scheme: light`; `dark:` utilities exist but nothing activates them.
 - One action color (navy), one typeface (Geist), one radius (8px).
 - Color carries state: green active/paid, red overdue/below passing, amber pending/recovery, gray neutral.
@@ -126,12 +127,14 @@ The product serves Único Educacional today and other schools later. The school'
 A neutral gray office with a single navy for action and a small state vocabulary.
 
 ### Primary
+
 - **Action Navy** (`action-navy`): primary buttons ("Novo aluno", "Salvar"), the text caret, link-like emphasis. One primary button per view. The scale is `--primary-50…900` in `globals.css` (replacing Flowbite's blue); code uses `primary-*` classes, never `blue-*`.
 - **Action Navy Deep** (`action-navy-deep`): primary hover.
 - **Focus Navy** (`focus-navy`): input focus border and 1px ring.
 - **Selection Navy** (`selection-navy`): text selection and the row being edited in place.
 
 ### Neutral
+
 - **Ink** (`ink`): body text, headings, names in the first column.
 - **Ink Soft** (`ink-soft`): table header labels.
 - **Ink Muted** (`ink-muted`): help text, secondary values, input exam scores next to computed results.
@@ -142,11 +145,13 @@ A neutral gray office with a single navy for action and a small state vocabulary
 - **Field Border** (`field-border`): input borders.
 
 ### State
+
 - **OK Green** on **OK Green Wash**: active, paid, approved.
 - **Alert Red** (`alert-red`): grades below passing and overdue amounts; **Alert Red Deep** for error text; **Alert Red Wash** behind error alerts.
 - **Caution Brown** (yellow-800): pending and "em recuperação" text on a yellow wash.
 
 ### Named Rules
+
 **The One Navy Rule.** Navy means "you can act here" (buttons, focus, the caret, the row being edited). It is never a decorative accent or a section color, and never an icon color: icons are gray (`ink-muted` at rest, `ink` on hover).
 
 **The Tenant Color Rule.** The school's brand colors (Único's red logo) appear only in the school's own logo and letterhead, never in buttons, nav or highlights. Another school must be able to drop in its logo without the UI clashing.
@@ -162,6 +167,7 @@ A neutral gray office with a single navy for action and a small state vocabulary
 **Character:** one neutral grotesque at a few sizes. Hierarchy comes from weight and gray value, not from extra faces.
 
 ### Hierarchy
+
 - **Headline** (600, 1.5rem/2rem): the page title, one per page ("Alunos", "Notas do aluno").
 - **Title** (600, 1.125rem): section headings on detail pages. Form fieldset legends are one step down (600, 1rem), so a long form doesn't shout.
 - **Body** (400, 0.875rem/1.25rem): table cells, inputs, buttons, most UI text. Names in a list's first column use 500.
@@ -170,6 +176,7 @@ A neutral gray office with a single navy for action and a small state vocabulary
 - **Detail value** (500, 1rem) under a **Detail label** (400, 0.875rem, `ink-muted`): the label/value pairs on read-only detail pages (the student profile) and the summaries above forms. Tables and inputs stay at Body (0.875rem).
 
 ### Named Rules
+
 **The Tabular Numbers Rule.** Any column or input of grades, money, dates or CPF uses `tabular-nums` so digits line up.
 
 **The Reading Page Rule.** A page people open to read a record (a profile, not a list or a form) reads at 16px: values 16px/500, labels 14px, section Titles 18px. The data must outweigh the chrome around it (the 16px sidebar, the buttons). Phone numbers on these pages are 16px/600 `tel:` links with a gray `call` icon and a 44px tall target.
@@ -191,10 +198,12 @@ A neutral gray office with a single navy for action and a small state vocabulary
 Mostly flat, with one soft lift for data. Data panels (tables) sit on a white surface with a small drop shadow over the gray floor. Page chrome is flat; forms group fields in white fieldsets with a 1px hairline border and no shadow, so they read as sections, not as data panels. Menus, comboboxes and dropdowns use Flowbite's larger shadow because they float over content.
 
 ### Shadow Vocabulary
+
 - **Panel lift** (`filter: drop-shadow(0 3px 3px rgba(0,0,0,0.12))`): the white surface behind every table.
 - **Overlay** (`box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)`): dropdowns, combobox lists, the mobile drawer.
 
 ### Named Rules
+
 **The Soft Panel Rule.** Data lives on a white panel with the panel-lift shadow, never on a bordered box or a nested card. Inside a panel, separate groups with hairline dividers, not more shadows.
 
 ## Shapes
@@ -204,6 +213,7 @@ Gently rounded and uniform: 8px (`rounded.lg`) on buttons, inputs, panels and na
 ## Components
 
 ### Buttons
+
 - **Shape:** 8px radius; 40px tall by default, 32px (`size="xs"`) inside tables.
 - **Primary:** Action Navy fill, white 14px/500 text. Hover darkens to Action Navy Deep; focus adds a 4px pale-navy ring.
 - **Alternative (secondary):** white, 1px hairline border, ink text; hover turns gray-100 and the text stays ink (no navy; theme override in `src/app/layout.tsx`). Used for "Editar", "Cancelar", and row actions.
@@ -211,25 +221,30 @@ Gently rounded and uniform: 8px (`rounded.lg`) on buttons, inputs, panels and na
 - **Pending:** a submit button disables itself and its label changes ("Salvando…") while the action runs.
 
 ### Badges
+
 - **Style:** 12px/600 text on a pale wash of the state color, 4px radius, 2px 8px padding. Green for active/approved, yellow for pending/recovery, red for overdue/failed and enrollments ended early (transferida, desistente, cancelada), gray for "em andamento" and concluída (`<EnrollmentStatusBadge>`).
 
 ### Cards / Containers
+
 - **Data panel:** white, 8px radius, panel-lift shadow, no border, no internal padding (the table fills it).
 - **Detail section:** a data panel with padding (20px, 24px from `sm`) and an 18px Title, for one part of a record on a detail page. Same white surface and panel-lift shadow (`drop-shadow-md`), never a border.
 - No decorative cards and no nested cards. Summaries above a table are an inline label/value list (Detail label over a Detail value), not a card.
 
 ### Inputs / Fields
+
 - **Style:** Paper fill, 1px field border, 8px radius, 10px padding, 14px text. Label above the field; "(opcional)" marks optional fields.
 - **Focus:** border and a 1px ring in Focus Navy; the caret is Action Navy.
 - **Error:** Flowbite's failure color: red border and red help text under the field.
 - **Masked fields:** CPF formats as it is typed (`mask`), shown with tabular digits.
 
 ### Navigation
+
 - **Sidebar:** transparent on the paper floor. School logo and name at the top, user and "Sair" at the bottom. Groups are collapsible with a chevron; items carry a 20px Material Symbol.
 - **States:** hover and active are gray-100 fills with an 8px radius. Only the most specific matching route is active, and its group opens automatically.
 - **Mobile:** a top bar with the hamburger and the logo; the nav opens as a drawer.
 
 ### Data Table (signature)
+
 - Uppercase 12px bold headers on Paper; 14px cells with 10px padding; rows hover gray-100.
 - The first column holds the record's name in Ink at 500 weight; the actions column sits at the far right.
 - Grade grids add hairline group dividers between bimesters, tint computed columns with Paper, show values below passing in Alert Red, and keep the subject column sticky.
@@ -237,6 +252,7 @@ Gently rounded and uniform: 8px (`rounded.lg`) on buttons, inputs, panels and na
 ## Do's and Don'ts
 
 ### Do:
+
 - **Do** keep one primary (navy) button per view; everything else uses the alternative button.
 - **Do** put data in the white panel with the panel-lift shadow, using `<ListPage>` / `<ListRow>` for lists.
 - **Do** use `tabular-nums` and right alignment for grades, money and counts.
@@ -245,6 +261,7 @@ Gently rounded and uniform: 8px (`rounded.lg`) on buttons, inputs, panels and na
 - **Do** design lists to reflow into stacked rows below `sm`, and keep quick classroom tasks usable one-handed on a phone.
 
 ### Don't:
+
 - **Don't** bring the school's logo colors (Único red) into buttons, nav, or highlights.
 - **Don't** add a second accent color, gradients, or decorative illustrations.
 - **Don't** wrap data in bordered boxes or nested cards; use the soft panel.

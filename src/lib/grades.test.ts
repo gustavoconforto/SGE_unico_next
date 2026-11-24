@@ -77,7 +77,9 @@ describe("lessons (lessons/models.py)", () => {
     expect(isoWeekday("2026-11-16")).toBe(1);
     expect(isoWeekday("2026-11-15")).toBe(7);
     expect(lectureDateError("2026-11-15", "2026-01-10", "2026-12-15")).toBe("As aulas são de segunda a sábado.");
-    expect(lectureDateError("2026-12-19", "2026-01-10", "2026-12-15")).toBe("A data está fora do ano escolar da turma.");
+    expect(lectureDateError("2026-12-19", "2026-01-10", "2026-12-15")).toBe(
+      "A data está fora do ano escolar da turma.",
+    );
     expect(lectureDateError("2026-11-14", "2026-01-10", "2026-12-15")).toBeNull();
   });
 });

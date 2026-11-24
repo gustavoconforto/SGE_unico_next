@@ -18,20 +18,20 @@ user (Better Auth) ── role: "secretaria,professor" (comma-separated) ──�
 
 ## 2. The catalog: `src/lib/permissions.ts` (pure, no database)
 
-| Name | What it does |
-|---|---|
-| `statement` | Every resource and its actions: Better Auth's own (`user`, `session`) plus one per area (`students`, `finance`, `grades`, …), each with `view` / `edit`; `grades` adds `manage` (lock bimesters, C / EX / A grades). |
-| `ac`, `roles` | The access control and the roles (`admin`, `user`, `secretaria`, `coordenacao`, `professor`), passed to the Admin plugin in `src/lib/auth.ts` and `src/lib/auth-client.ts`. |
-| `ROLE_LABELS` | The roles an admin can pick, with Portuguese labels. |
-| `roleList(role)` | Splits a `user.role` string into role names. |
+| Name             | What it does                                                                                                                                                                                                         |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `statement`      | Every resource and its actions: Better Auth's own (`user`, `session`) plus one per area (`students`, `finance`, `grades`, …), each with `view` / `edit`; `grades` adds `manage` (lock bimesters, C / EX / A grades). |
+| `ac`, `roles`    | The access control and the roles (`admin`, `user`, `secretaria`, `coordenacao`, `professor`), passed to the Admin plugin in `src/lib/auth.ts` and `src/lib/auth-client.ts`.                                          |
+| `ROLE_LABELS`    | The roles an admin can pick, with Portuguese labels.                                                                                                                                                                 |
+| `roleList(role)` | Splits a `user.role` string into role names.                                                                                                                                                                         |
 
 ## 3. The checks: `src/lib/authorization.ts` (server only)
 
-| Name | What it does |
-|---|---|
-| `hasPermission(resource, action)` | Boolean, via `auth.api.userHasPermission`. Pages use it to show or hide parts of the UI. |
+| Name                                  | What it does                                                                                                    |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `hasPermission(resource, action)`     | Boolean, via `auth.api.userHasPermission`. Pages use it to show or hide parts of the UI.                        |
 | `requirePermission(resource, action)` | **First line of every page and every Server Action.** No session → `/login`, missing permission → `/forbidden`. |
-| `requireAdmin()` | Same, for admin-only screens and actions (`/employees`: logins, passwords, roles). |
+| `requireAdmin()`                      | Same, for admin-only screens and actions (`/employees`: logins, passwords, roles).                              |
 
 `getCurrentSession()` (cached once per request), `requireSession()` and `<Authenticated>` live in
 `src/lib/session.ts` and check the session only.

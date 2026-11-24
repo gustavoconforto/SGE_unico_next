@@ -6,7 +6,13 @@ import { connection } from "next/server";
 import { FilterDate, FilterSelect } from "@/components/list-controls";
 import { AccountName, Clip, ListPage, ListRow, MoneyCell } from "@/components/list-page";
 import { db } from "@/db";
-import { accountsAccount as account, accountsAccounttype as accountType, accountsSupplier as supplier, studentsGuardian as guardian, studentsStudent as student } from "@/db/schema/app";
+import {
+  accountsAccount as account,
+  accountsAccounttype as accountType,
+  accountsSupplier as supplier,
+  studentsGuardian as guardian,
+  studentsStudent as student,
+} from "@/db/schema/app";
 import { accountSituation, formatDate, formatMoney, money, today } from "@/lib/finance";
 import { accountStatusWhere, accountSummary, pendingList } from "@/lib/finance-db";
 import { PAGE_SIZE, pageParam, param, searchWhere, sortParam } from "@/lib/list";
@@ -49,7 +55,10 @@ export default async function AccountListPage({ params, searchParams }: PageProp
     DATE_RE.test(to) ? lte(account.issueDate, to) : undefined,
   );
   const page = pageParam(sp);
-  const sort = sortParam(sp, { issue: account.issueDate, net: sql`${account.grossValue} - coalesce(${account.discountValue}, 0)` });
+  const sort = sortParam(sp, {
+    issue: account.issueDate,
+    net: sql`${account.grossValue} - coalesce(${account.discountValue}, 0)`,
+  });
   const [rows, [{ total }], categories] = await Promise.all([
     db
       .select({
@@ -86,7 +95,11 @@ export default async function AccountListPage({ params, searchParams }: PageProp
       .leftJoin(student, eq(account.studentId, student.id))
       .leftJoin(supplier, eq(account.supplierId, supplier.id))
       .where(where),
-    db.select({ id: accountType.id, name: accountType.name }).from(accountType).where(eq(accountType.direction, k.direction)).orderBy(asc(accountType.name)),
+    db
+      .select({ id: accountType.id, name: accountType.name })
+      .from(accountType)
+      .where(eq(accountType.direction, k.direction))
+      .orderBy(asc(accountType.name)),
   ]);
   const showPaymentDates = kind === "payable";
 
@@ -95,7 +108,11 @@ export default async function AccountListPage({ params, searchParams }: PageProp
       title={k.title}
       newHref={`/accounts/${kind}/new`}
       newLabel={k.newLabel}
-      searchPlaceholder={kind === "receivable" ? "Pesquisar por descrição, responsável, aluno ou matrícula..." : "Pesquisar por descrição, fornecedor ou CPF/CNPJ..."}
+      searchPlaceholder={
+        kind === "receivable"
+          ? "Pesquisar por descrição, responsável, aluno ou matrícula..."
+          : "Pesquisar por descrição, fornecedor ou CPF/CNPJ..."
+      }
       filters={
         <>
           <FilterSelect name="category" label="Categoria" options={categories.map((c) => [c.id, c.name] as const)} />
@@ -104,7 +121,15 @@ export default async function AccountListPage({ params, searchParams }: PageProp
           <FilterDate name="issue_to" label="Emitida até" />
         </>
       }
-      headers={["Emissão", "Descrição", "Categoria", k.counterpartLabel, "Valor líquido", ...(showPaymentDates ? ["Vencimento", "Pago em"] : []), "Situação"]}
+      headers={[
+        "Emissão",
+        "Descrição",
+        "Categoria",
+        k.counterpartLabel,
+        "Valor líquido",
+        ...(showPaymentDates ? ["Vencimento", "Pago em"] : []),
+        "Situação",
+      ]}
       numeric={["Valor líquido"]}
       sortable={{ Emissão: "issue", "Valor líquido": "net" }}
       sort={sort?.param}
@@ -121,14 +146,19 @@ export default async function AccountListPage({ params, searchParams }: PageProp
               formatDate(a.issueDate),
               <span key="d">
                 <AccountName text={a.description} />
-                {a.student && !a.description.includes(a.student) && <Clip text={a.student} className="text-xs text-gray-500" />}
+                {a.student && !a.description.includes(a.student) && (
+                  <Clip text={a.student} className="text-xs text-gray-500" />
+                )}
               </span>,
               a.category,
               a.counterpart ?? "—",
               <MoneyCell key="v">{formatMoney(money(a.gross).minus(money(a.discount)))}</MoneyCell>,
               ...(showPaymentDates ? [formatDate(a.dueDate) || "—", formatDate(a.lastPaidAt) || "—"] : []),
               <span key="s" className="flex flex-col gap-1">
-                <Badge color={situation === "Quitada" ? "success" : situation === "Vencida" ? "failure" : "gray"} className="w-fit">
+                <Badge
+                  color={situation === "Quitada" ? "success" : situation === "Vencida" ? "failure" : "gray"}
+                  className="w-fit"
+                >
                   {situation}
                 </Badge>
                 {a.pending > 0 && (

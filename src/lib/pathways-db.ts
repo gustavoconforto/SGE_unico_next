@@ -67,7 +67,13 @@ export async function extraGrades(enrollmentIds: number[], bimester: number, max
     .innerJoin(member, eq(pathwayGrade.pathwayEnrollmentId, member.id))
     .innerJoin(offering, eq(member.offeringId, offering.id))
     .innerJoin(pathway, eq(offering.pathwayId, pathway.id))
-    .where(and(inArray(member.enrollmentId, enrollmentIds), gt(pathway.extraPoints, "0"), eq(pathwayGrade.bimester, bimester)))
+    .where(
+      and(
+        inArray(member.enrollmentId, enrollmentIds),
+        gt(pathway.extraPoints, "0"),
+        eq(pathwayGrade.bimester, bimester),
+      ),
+    )
     .groupBy(member.enrollmentId);
   const totalOf = new Map(totals.map((t) => [t.id, t.total]));
   for (const r of rows) {
@@ -76,4 +82,3 @@ export async function extraGrades(enrollmentIds: number[], bimester: number, max
   }
   return grades;
 }
-

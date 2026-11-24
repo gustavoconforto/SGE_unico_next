@@ -5,7 +5,13 @@ import { FilterDate, FilterSelect } from "@/components/list-controls";
 import { LinkButton } from "@/components/link-button";
 import { ListPage, ListRow } from "@/components/list-page";
 import { db } from "@/db";
-import { classesClass as klass, employeesEmployee as employee, gradesGradelevelsubject as levelSubject, gradesSubject as subject, lessonsLecture as lecture } from "@/db/schema/app";
+import {
+  classesClass as klass,
+  employeesEmployee as employee,
+  gradesGradelevelsubject as levelSubject,
+  gradesSubject as subject,
+  lessonsLecture as lecture,
+} from "@/db/schema/app";
 import { formatDate } from "@/lib/finance";
 import { PAGE_SIZE, pageParam, param, searchWhere } from "@/lib/list";
 import { yearOptions } from "../../classes/options";
@@ -33,7 +39,16 @@ export default async function LectureListPage({ searchParams }: PageProps<"/less
   const page = pageParam(sp);
   const [rows, [{ total }], years, classes, subjects, teachers] = await Promise.all([
     db
-      .select({ id: lecture.id, date: lecture.date, period: lecture.period, topic: lecture.topic, className: klass.name, gradeLevel: klass.gradeLevel, subject: subject.name, teacher: employee.name })
+      .select({
+        id: lecture.id,
+        date: lecture.date,
+        period: lecture.period,
+        topic: lecture.topic,
+        className: klass.name,
+        gradeLevel: klass.gradeLevel,
+        subject: subject.name,
+        teacher: employee.name,
+      })
       .from(lecture)
       .innerJoin(klass, eq(lecture.schoolClassId, klass.id))
       .innerJoin(levelSubject, eq(lecture.subjectId, levelSubject.id))
@@ -43,7 +58,12 @@ export default async function LectureListPage({ searchParams }: PageProps<"/less
       .orderBy(desc(lecture.date), asc(klass.name), asc(lecture.period))
       .limit(PAGE_SIZE)
       .offset((page - 1) * PAGE_SIZE),
-    db.select({ total: count() }).from(lecture).innerJoin(klass, eq(lecture.schoolClassId, klass.id)).innerJoin(levelSubject, eq(lecture.subjectId, levelSubject.id)).where(where),
+    db
+      .select({ total: count() })
+      .from(lecture)
+      .innerJoin(klass, eq(lecture.schoolClassId, klass.id))
+      .innerJoin(levelSubject, eq(lecture.subjectId, levelSubject.id))
+      .where(where),
     yearOptions(),
     seriesClasses(),
     subjectOptions(),
@@ -59,7 +79,12 @@ export default async function LectureListPage({ searchParams }: PageProps<"/less
             <FilterSelect name="school_year" label="Ano letivo" options={years} allLabel="Todos" />
             <FilterSelect name="school_class" label="Turma" options={classes.map((c) => [c.id, c.label] as const)} />
             <FilterSelect name="subject" label="Matéria" options={subjects.map((s) => [s.id, s.name] as const)} />
-            <FilterSelect name="teacher" label="Professor" options={teachers.map((t) => [t.id, t.name] as const)} allLabel="Todos" />
+            <FilterSelect
+              name="teacher"
+              label="Professor"
+              options={teachers.map((t) => [t.id, t.name] as const)}
+              allLabel="Todos"
+            />
             <FilterDate name="date_from" label="De" />
             <FilterDate name="date_to" label="Até" />
           </>
@@ -71,7 +96,14 @@ export default async function LectureListPage({ searchParams }: PageProps<"/less
         {rows.map((r) => (
           <ListRow
             key={r.id}
-            cells={[formatDate(r.date), `${r.period}ª`, `${r.gradeLevel ? `${r.gradeLevel}º ` : ""}${r.className}`, r.subject, r.teacher, r.topic]}
+            cells={[
+              formatDate(r.date),
+              `${r.period}ª`,
+              `${r.gradeLevel ? `${r.gradeLevel}º ` : ""}${r.className}`,
+              r.subject,
+              r.teacher,
+              r.topic,
+            ]}
             label={`a aula de ${formatDate(r.date)}`}
             editHref={`/lessons/lectures/${r.id}/edit`}
             deleteAction={deleteLecture.bind(null, r.id)}

@@ -10,7 +10,13 @@ export function IncidentTypeForm({ id = null, defaults }: { id?: number | null; 
     <form action={action} className="flex max-w-lg flex-col gap-4">
       <FormFields state={state} defaults={defaults}>
         <TextField name="type" label="Tipo" maxLength={100} />
-        <TextField name="penalty" label="Penalidade" type="number" step="0.1" help="Descontada da nota de conceito do bimestre" />
+        <TextField
+          name="penalty"
+          label="Penalidade"
+          type="number"
+          step="0.1"
+          help="Descontada da nota de conceito do bimestre"
+        />
       </FormFields>
       <FormButtons pending={pending} cancelHref="/incidents/types" />
     </form>

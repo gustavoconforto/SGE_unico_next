@@ -10,11 +10,22 @@ export default async function NewEnrollmentPage({ searchParams }: PageProps<"/en
   await requirePermission("enrollments", "edit");
   // ?student=<id>: "Matricular" on the student's page arrives with the student already chosen
   const studentId = Number(param(await searchParams, "student")) || null;
-  const [students, types, classes, discountTypes] = await Promise.all([studentOptions(), enrollmentTypeOptions(), classOptions(), discountTypeOptions()]);
+  const [students, types, classes, discountTypes] = await Promise.all([
+    studentOptions(),
+    enrollmentTypeOptions(),
+    classOptions(),
+    discountTypeOptions(),
+  ]);
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">Nova matrícula</h1>
-      <EnrollmentNewForm studentId={students.some(([id]) => id === studentId) ? studentId : null} students={students} types={types} classes={classes} discountTypes={discountTypes} />
+      <EnrollmentNewForm
+        studentId={students.some(([id]) => id === studentId) ? studentId : null}
+        students={students}
+        types={types}
+        classes={classes}
+        discountTypes={discountTypes}
+      />
     </div>
   );
 }

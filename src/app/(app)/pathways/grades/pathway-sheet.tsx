@@ -1,6 +1,17 @@
 "use client";
 
-import { Alert, Button, HelperText, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow, TextInput } from "flowbite-react";
+import {
+  Alert,
+  Button,
+  HelperText,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeadCell,
+  TableRow,
+  TextInput,
+} from "flowbite-react";
 import { useActionState } from "react";
 import { formatDate } from "@/lib/finance";
 import { formatGrade } from "@/lib/grades";
@@ -9,14 +20,26 @@ import { savePathwaySheet } from "./actions";
 
 type Row = { id: number; student: string; leftAt: string | null; rate: string | null; score: string };
 
-export function PathwaySheet({ selection, maxScore, hasDates, rows }: { selection: { query: string; offeringId: number; bimester: number }; maxScore: string; hasDates: boolean; rows: Row[] }) {
+export function PathwaySheet({
+  selection,
+  maxScore,
+  hasDates,
+  rows,
+}: {
+  selection: { query: string; offeringId: number; bimester: number };
+  maxScore: string;
+  hasDates: boolean;
+  rows: Row[];
+}) {
   const [state, action, pending] = useActionState(savePathwaySheet.bind(null, selection), {});
   return (
     <form action={action} className="flex flex-col gap-3">
       {state.formError && <Alert color="failure">{state.formError}</Alert>}
       <p className="text-sm text-gray-500">
-        Notas de 0 a {formatGrade(maxScore)}, somadas como estão à nota extra do bimestre; use vírgula nos decimais (ex.: 0,5). Apague o valor para remover uma nota.
-        {!hasDates && " O ano escolar não tem as datas deste bimestre: a frequência aparece quando elas forem preenchidas."}
+        Notas de 0 a {formatGrade(maxScore)}, somadas como estão à nota extra do bimestre; use vírgula nos decimais
+        (ex.: 0,5). Apague o valor para remover uma nota.
+        {!hasDates &&
+          " O ano escolar não tem as datas deste bimestre: a frequência aparece quando elas forem preenchidas."}
       </p>
       <Table striped>
         <TableHead>
@@ -40,7 +63,16 @@ export function PathwaySheet({ selection, maxScore, hasDates, rows }: { selectio
                   <TableCell className="text-right">{r.rate === null ? "-" : `${r.rate}%`}</TableCell>
                   <TableCell className="text-right">
                     <input type="hidden" name={shownName(name)} value={state.values?.[shownName(name)] ?? r.score} />
-                    <TextInput key={state.values?.[name] ?? r.score} name={name} inputMode="decimal" sizing="sm" className="ml-auto w-24" defaultValue={state.values?.[name] ?? r.score} color={error ? "failure" : undefined} aria-label={`Nota de ${r.student}`} />
+                    <TextInput
+                      key={state.values?.[name] ?? r.score}
+                      name={name}
+                      inputMode="decimal"
+                      sizing="sm"
+                      className="ml-auto w-24"
+                      defaultValue={state.values?.[name] ?? r.score}
+                      color={error ? "failure" : undefined}
+                      aria-label={`Nota de ${r.student}`}
+                    />
                     {error && <HelperText color="failure">{error}</HelperText>}
                   </TableCell>
                 </TableRow>

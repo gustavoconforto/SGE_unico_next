@@ -22,7 +22,10 @@ type Props = {
 
 export function AccountForm({ kind, id, defaults, options, enrollmentLabel, cancelHref }: Props) {
   const editing = id !== undefined;
-  const [state, action, pending] = useActionState(editing ? updateAccount.bind(null, kind, id) : createAccount.bind(null, kind), {});
+  const [state, action, pending] = useActionState(
+    editing ? updateAccount.bind(null, kind, id) : createAccount.bind(null, kind),
+    {},
+  );
   // The guardian options follow the student (Django's receivable_guardian_options endpoint)
   const [studentId, setStudentId] = useState(String(defaults?.studentId ?? ""));
   const [guardianId, setGuardianId] = useState(String(defaults?.guardianId ?? ""));
@@ -30,13 +33,26 @@ export function AccountForm({ kind, id, defaults, options, enrollmentLabel, canc
   const guardianChoices = financial ? options.guardians.filter(([gid]) => financial.includes(gid)) : options.guardians;
 
   // The values decide the installments created, and can't change after saving: preview them with the server's split
-  const [split, setSplit] = useState({ gross: String(defaults?.grossValue ?? ""), discount: "", count: "1", first: today() });
+  const [split, setSplit] = useState({
+    gross: String(defaults?.grossValue ?? ""),
+    discount: "",
+    count: "1",
+    first: today(),
+  });
   const setPart = (key: keyof typeof split) => (v: string) => setSplit((all) => ({ ...all, [key]: v }));
   const gross = parseMoney(split.gross);
   const discount = parseMoney(split.discount);
   const count = Number(split.count);
   const net = gross && discount ? gross.minus(discount) : null;
-  const preview = !editing && net?.gt(0) && Number.isInteger(count) && count >= 1 && count <= 120 && /^\d{4}-\d{2}-\d{2}$/.test(split.first) ? accountInstallments(net, count, split.first) : [];
+  const preview =
+    !editing &&
+    net?.gt(0) &&
+    Number.isInteger(count) &&
+    count >= 1 &&
+    count <= 120 &&
+    /^\d{4}-\d{2}-\d{2}$/.test(split.first)
+      ? accountInstallments(net, count, split.first)
+      : [];
   const n = preview.length;
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -47,7 +63,10 @@ export function AccountForm({ kind, id, defaults, options, enrollmentLabel, canc
 
   return (
     <form onSubmit={onSubmit} className="flex max-w-3xl flex-col gap-4">
-      <FormFields state={state} defaults={{ issueDate: today(), firstDueDate: today(), installmentsCount: "1", ...defaults }}>
+      <FormFields
+        state={state}
+        defaults={{ issueDate: today(), firstDueDate: today(), installmentsCount: "1", ...defaults }}
+      >
         <Fieldset legend="Conta" description="O que está sendo cobrado ou pago, e de quem.">
           <TextField name="description" label="Descrição" maxLength={200} className="sm:col-span-2" />
           <SelectField name="categoryId" label="Categoria" options={options.categories} />
@@ -100,27 +119,62 @@ export function AccountForm({ kind, id, defaults, options, enrollmentLabel, canc
             </>
           ) : (
             <>
-              <TextField name="grossValue" label="Valor bruto (R$)" type="number" step="0.01" value={split.gross} onChange={setPart("gross")} />
-              <TextField name="discountValue" label="Desconto (R$)" type="number" step="0.01" optional placeholder="0,00" value={split.discount} onChange={setPart("discount")} />
+              <TextField
+                name="grossValue"
+                label="Valor bruto (R$)"
+                type="number"
+                step="0.01"
+                value={split.gross}
+                onChange={setPart("gross")}
+              />
+              <TextField
+                name="discountValue"
+                label="Desconto (R$)"
+                type="number"
+                step="0.01"
+                optional
+                placeholder="0,00"
+                value={split.discount}
+                onChange={setPart("discount")}
+              />
             </>
           )}
           {editing ? (
-            <p className="text-sm text-gray-600 sm:col-span-2">Os valores já foram divididos em parcelas e não podem ser alterados.</p>
+            <p className="text-sm text-gray-600 sm:col-span-2">
+              Os valores já foram divididos em parcelas e não podem ser alterados.
+            </p>
           ) : (
             <>
-              <TextField name="installmentsCount" label="Número de parcelas" type="number" min={1} max={120} inputMode="numeric" value={split.count} onChange={setPart("count")} />
-              <TextField name="firstDueDate" label="Primeiro vencimento" type="date" value={split.first} onChange={setPart("first")} />
+              <TextField
+                name="installmentsCount"
+                label="Número de parcelas"
+                type="number"
+                min={1}
+                max={120}
+                inputMode="numeric"
+                value={split.count}
+                onChange={setPart("count")}
+              />
+              <TextField
+                name="firstDueDate"
+                label="Primeiro vencimento"
+                type="date"
+                value={split.first}
+                onChange={setPart("first")}
+              />
               <div className="sm:col-span-2">
                 {n ? (
                   <>
                     <p className="mb-2 text-sm text-gray-600" aria-live="polite">
-                      Ao salvar, {n === 1 ? "esta parcela é criada" : `estas ${n} parcelas são criadas`}, somando R$ {formatMoney(net)}. Os valores não poderão ser alterados depois.
+                      Ao salvar, {n === 1 ? "esta parcela é criada" : `estas ${n} parcelas são criadas`}, somando R${" "}
+                      {formatMoney(net)}. Os valores não poderão ser alterados depois.
                     </p>
                     <InstallmentTable rows={preview} />
                   </>
                 ) : (
                   <p className="text-sm text-gray-600" aria-live="polite">
-                    Informe o valor, o número de parcelas e o primeiro vencimento para ver as parcelas que serão criadas.
+                    Informe o valor, o número de parcelas e o primeiro vencimento para ver as parcelas que serão
+                    criadas.
                   </p>
                 )}
               </div>
@@ -132,7 +186,11 @@ export function AccountForm({ kind, id, defaults, options, enrollmentLabel, canc
         pending={pending}
         cancelHref={cancelHref}
         sticky
-        label={editing ? "Salvar alterações" : `${kind === "payable" ? "Criar conta a pagar" : "Criar conta a receber"}${n ? ` e ${n} parcela${n === 1 ? "" : "s"}` : ""}`}
+        label={
+          editing
+            ? "Salvar alterações"
+            : `${kind === "payable" ? "Criar conta a pagar" : "Criar conta a receber"}${n ? ` e ${n} parcela${n === 1 ? "" : "s"}` : ""}`
+        }
       />
     </form>
   );

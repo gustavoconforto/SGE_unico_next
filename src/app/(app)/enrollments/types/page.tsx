@@ -3,7 +3,11 @@ import { asc, count, desc, eq, sql } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ListPage, ListRow } from "@/components/list-page";
 import { db } from "@/db";
-import { enrollmentsEnrollmenttype as enrollmentType, enrollmentsSchoolyear as year, programsProgram as program } from "@/db/schema/app";
+import {
+  enrollmentsEnrollmenttype as enrollmentType,
+  enrollmentsSchoolyear as year,
+  programsProgram as program,
+} from "@/db/schema/app";
 import { LEVELS, label } from "@/lib/finance";
 import { PAGE_SIZE, pageParam, param, searchWhere } from "@/lib/list";
 import { deleteEnrollmentType } from "./actions";
@@ -17,7 +21,12 @@ export default async function EnrollmentTypeListPage({ searchParams }: PageProps
   const page = pageParam(sp);
   const [rows, [{ total }]] = await Promise.all([
     db
-      .select({ id: enrollmentType.id, level: enrollmentType.level, program: program.name, year: sql<string>`extract(year from ${year.begins})::text` })
+      .select({
+        id: enrollmentType.id,
+        level: enrollmentType.level,
+        program: program.name,
+        year: sql<string>`extract(year from ${year.begins})::text`,
+      })
       .from(enrollmentType)
       .innerJoin(program, eq(enrollmentType.programId, program.id))
       .innerJoin(year, eq(enrollmentType.schoolYearId, year.id))
@@ -25,7 +34,12 @@ export default async function EnrollmentTypeListPage({ searchParams }: PageProps
       .orderBy(desc(year.begins), asc(program.name), asc(enrollmentType.level))
       .limit(PAGE_SIZE)
       .offset((page - 1) * PAGE_SIZE),
-    db.select({ total: count() }).from(enrollmentType).innerJoin(program, eq(enrollmentType.programId, program.id)).innerJoin(year, eq(enrollmentType.schoolYearId, year.id)).where(where),
+    db
+      .select({ total: count() })
+      .from(enrollmentType)
+      .innerJoin(program, eq(enrollmentType.programId, program.id))
+      .innerJoin(year, eq(enrollmentType.schoolYearId, year.id))
+      .where(where),
   ]);
   return (
     <ListPage

@@ -27,7 +27,8 @@ export async function saveClass(id: number | null, _prev: FormState, formData: F
     if (id === null) await db.insert(classesClass).values({ ...data, shift: "" });
     else await db.update(classesClass).set(data).where(eq(classesClass.id, id));
   } catch (error) {
-    if (pgErrorCode(error) === UNIQUE_VIOLATION) return { formError: "Turma com este Ano letivo, Curso e Nome já existe.", values };
+    if (pgErrorCode(error) === UNIQUE_VIOLATION)
+      return { formError: "Turma com este Ano letivo, Curso e Nome já existe.", values };
     throw error;
   }
   redirect(`/classes?msg=${id === null ? "created" : "updated"}`);

@@ -14,22 +14,24 @@ import { requirePermission } from "@/lib/authorization";
 import { foldSql, stripAccents } from "@/lib/list";
 import { BLOOD_TYPES, type GuardianRow, guardianRowSchema, guardianRowsError, nextRegistration } from "@/lib/students";
 
-const studentSchema = z.object({
-  ...personFields,
-  phone: phoneDigits,
-  mobile: phoneDigits,
-  socialName: optionalText(200),
-  useSocialName: checkbox,
-  bloodType: z.enum(BLOOD_TYPES.map(([t]) => t) as [string, ...string[]], { error: REQUIRED }),
-  schoolFrom: optionalText(200),
-  observations: z.string().default(""),
-  isSelfFinancial: checkbox,
-}).refine((d) => !d.useSocialName || d.socialName, {
-  path: ["socialName"],
-  message: "Informe o nome social para usá-lo.",
-  // Check it alongside the other errors, not only once they're fixed (Zod skips object refinements by default)
-  when: (p) => !p.issues.some((i) => i.path?.[0] === "socialName" || i.path?.[0] === "useSocialName"),
-});
+const studentSchema = z
+  .object({
+    ...personFields,
+    phone: phoneDigits,
+    mobile: phoneDigits,
+    socialName: optionalText(200),
+    useSocialName: checkbox,
+    bloodType: z.enum(BLOOD_TYPES.map(([t]) => t) as [string, ...string[]], { error: REQUIRED }),
+    schoolFrom: optionalText(200),
+    observations: z.string().default(""),
+    isSelfFinancial: checkbox,
+  })
+  .refine((d) => !d.useSocialName || d.socialName, {
+    path: ["socialName"],
+    message: "Informe o nome social para usá-lo.",
+    // Check it alongside the other errors, not only once they're fixed (Zod skips object refinements by default)
+    when: (p) => !p.issues.some((i) => i.path?.[0] === "socialName" || i.path?.[0] === "useSocialName"),
+  });
 
 /** The guardian rows travel as JSON in a hidden input; rows left blank are ignored (Django's extra form). */
 function parseGuardianRows(raw: string): { rows: GuardianRow[] } | { error: string } {
@@ -50,14 +52,22 @@ function parseGuardianRows(raw: string): { rows: GuardianRow[] } | { error: stri
   return { rows };
 }
 
-async function saveGuardianLinks(tx: Parameters<Parameters<typeof db.transaction>[0]>[0], studentId: number, rows: GuardianRow[]) {
+async function saveGuardianLinks(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  studentId: number,
+  rows: GuardianRow[],
+) {
   const removed = rows.filter((r) => r.delete && r.id).map((r) => r.id!);
   if (removed.length) await tx.delete(link).where(and(eq(link.studentId, studentId), inArray(link.id, removed)));
   // Clear the flag first so moving "financial" between guardians never trips one_financial_guardian_per_student
   await tx.update(link).set({ isFinancial: false }).where(eq(link.studentId, studentId));
   for (const { id, delete: del, ...fields } of rows) {
     if (del) continue;
-    if (id) await tx.update(link).set(fields).where(and(eq(link.id, id), eq(link.studentId, studentId)));
+    if (id)
+      await tx
+        .update(link)
+        .set(fields)
+        .where(and(eq(link.id, id), eq(link.studentId, studentId)));
     else await tx.insert(link).values({ ...fields, studentId });
   }
 }
@@ -66,13 +76,15 @@ export async function saveStudent(id: number | null, _prev: FormState, formData:
   await requirePermission("students", "edit");
   const { data, values, state } = parseForm(studentSchema, formData);
   const guardians = parseGuardianRows(values.guardians);
-  const guardianError = "error" in guardians ? guardians.error : guardianRowsError(guardians.rows, values.isSelfFinancial === "on");
+  const guardianError =
+    "error" in guardians ? guardians.error : guardianRowsError(guardians.rows, values.isSelfFinancial === "on");
 
   const file = formData.get("photo");
   const photo = file instanceof File && file.size > 0 ? await readPhoto(file) : null;
   const errors = { ...state?.errors, ...(photo && "error" in photo && { photo: [photo.error] }) };
   // The guardian error shows inside Responsáveis (GuardianRows reads errors.guardians)
-  if (!data || guardianError || Object.keys(errors).length) return { errors: { ...errors, ...(guardianError && { guardians: [guardianError] }) }, values };
+  if (!data || guardianError || Object.keys(errors).length)
+    return { errors: { ...errors, ...(guardianError && { guardians: [guardianError] }) }, values };
 
   // Homonyms are legitimate, so a same-name student only asks for a second save, not a block (not in Django)
   if (id === null && values.duplicateOk !== data.name) {
@@ -102,9 +114,16 @@ export async function saveStudent(id: number | null, _prev: FormState, formData:
           .orderBy(desc(student.registration))
           .limit(1);
         registration = nextRegistration(last?.registration, year);
-        [{ id: studentId }] = await tx.insert(student).values({ ...data, registration, photo: "" }).returning({ id: student.id });
+        [{ id: studentId }] = await tx
+          .insert(student)
+          .values({ ...data, registration, photo: "" })
+          .returning({ id: student.id });
       } else {
-        const [row] = await tx.update(student).set(data).where(eq(student.id, studentId)).returning({ registration: student.registration, photo: student.photo });
+        const [row] = await tx
+          .update(student)
+          .set(data)
+          .where(eq(student.id, studentId))
+          .returning({ registration: student.registration, photo: student.photo });
         if (!row) throw new Error("Student not found");
         ({ registration, photo: oldPhoto } = row);
       }

@@ -6,14 +6,24 @@ import { FormButtons, FormFields, useField } from "@/components/form-fields";
 import { PERIODS, WEEKDAYS, weekdayPeriods } from "@/lib/lessons";
 import { saveTimetable } from "./actions";
 
-export function TimetableForm({ classId, choices, initial }: { classId: number; choices: [string, string][]; initial: Record<string, string> }) {
+export function TimetableForm({
+  classId,
+  choices,
+  initial,
+}: {
+  classId: number;
+  choices: [string, string][];
+  initial: Record<string, string>;
+}) {
   const [state, action, pending] = useActionState(saveTimetable.bind(null, classId), {});
   // Six days don't fit full "Matéria — Professor" labels, so the teacher goes on a line under the select
   const teacherOf = new Map(choices.map(([v, l]) => [v, l.slice(l.lastIndexOf(" — ") + 3)]));
   return (
     <form action={action} className="flex flex-col gap-3">
       <FormFields state={state} defaults={initial}>
-        <p className="text-sm text-gray-600">Escolha a matéria e o professor de cada aula; deixe em branco os horários sem aula.</p>
+        <p className="text-sm text-gray-600">
+          Escolha a matéria e o professor de cada aula; deixe em branco os horários sem aula.
+        </p>
         <div className="overflow-x-auto">
           <Table>
             <TableHead>
@@ -30,10 +40,16 @@ export function TimetableForm({ classId, choices, initial }: { classId: number; 
                   <TableCell className="whitespace-nowrap">{label}</TableCell>
                   {WEEKDAYS.map(([weekday]) => {
                     const name = `slot_${weekday}_${period}`;
-                    if (period > weekdayPeriods(weekday).length) return <TableCell key={weekday} className="bg-gray-100" />;
+                    if (period > weekdayPeriods(weekday).length)
+                      return <TableCell key={weekday} className="bg-gray-100" />;
                     return (
                       <TableCell key={weekday} className="min-w-36 px-1 align-top">
-                        <Slot name={name} label={`${WEEKDAYS[weekday - 1][1]}, ${label}`} choices={choices} teacherOf={teacherOf} />
+                        <Slot
+                          name={name}
+                          label={`${WEEKDAYS[weekday - 1][1]}, ${label}`}
+                          choices={choices}
+                          teacherOf={teacherOf}
+                        />
                       </TableCell>
                     );
                   })}
@@ -43,19 +59,43 @@ export function TimetableForm({ classId, choices, initial }: { classId: number; 
           </Table>
         </div>
       </FormFields>
-      <FormButtons pending={pending} cancelHref={`/lessons/timetable?school_class=${classId}`} label="Salvar grade horária" sticky />
+      <FormButtons
+        pending={pending}
+        cancelHref={`/lessons/timetable?school_class=${classId}`}
+        label="Salvar grade horária"
+        sticky
+      />
     </form>
   );
 }
 
 /** One lesson's select; its error and value come from <FormFields>, so it clears when edited. */
-function Slot({ name, label, choices, teacherOf }: { name: string; label: string; choices: [string, string][]; teacherOf: Map<string, string> }) {
+function Slot({
+  name,
+  label,
+  choices,
+  teacherOf,
+}: {
+  name: string;
+  label: string;
+  choices: [string, string][];
+  teacherOf: Map<string, string>;
+}) {
   const { error, value, a11y } = useField(name);
   const [picked, setPicked] = useState(value);
   return (
     <>
       {/* key: React won't re-apply a changed defaultValue on <select> after a failed submit */}
-      <Select key={value} name={name} defaultValue={value} sizing="sm" aria-label={label} color={error ? "failure" : undefined} onChange={(e) => setPicked(e.target.value)} {...a11y}>
+      <Select
+        key={value}
+        name={name}
+        defaultValue={value}
+        sizing="sm"
+        aria-label={label}
+        color={error ? "failure" : undefined}
+        onChange={(e) => setPicked(e.target.value)}
+        {...a11y}
+      >
         <option value="">—</option>
         {choices.map(([v, l]) => (
           <option key={v} value={v}>

@@ -16,11 +16,7 @@ import {
 import { PersonFields } from "@/components/person-fields";
 import { WhatsAppLink } from "@/components/whatsapp-link";
 import { formatPhone } from "@/lib/person";
-import {
-  BLOOD_TYPES,
-  type GuardianRow,
-  STUDENT_PLACEHOLDER as PLACEHOLDER,
-} from "@/lib/students";
+import { BLOOD_TYPES, type GuardianRow, STUDENT_PLACEHOLDER as PLACEHOLDER } from "@/lib/students";
 import { saveStudent } from "./actions";
 import { type GuardianOption, GuardianRows } from "./guardian-rows";
 
@@ -32,17 +28,8 @@ type Props = {
   guardianOptions: GuardianOption[];
 };
 
-export function StudentForm({
-  id = null,
-  defaults,
-  photoUrl,
-  guardianRows = [],
-  guardianOptions,
-}: Props) {
-  const [state, action, pending] = useActionState(
-    saveStudent.bind(null, id),
-    {},
-  );
+export function StudentForm({ id = null, defaults, photoUrl, guardianRows = [], guardianOptions }: Props) {
+  const [state, action, pending] = useActionState(saveStudent.bind(null, id), {});
   const shown = defaults && {
     ...defaults,
     phone: formatPhone(defaults.phone as string),
@@ -68,11 +55,7 @@ export function StudentForm({
         }
       >
         {/* Set by the action after a same-name warning: saving again with this name goes through */}
-        <input
-          type="hidden"
-          name="duplicateOk"
-          value={state.values?.duplicateOk ?? ""}
-        />
+        <input type="hidden" name="duplicateOk" value={state.values?.duplicateOk ?? ""} />
         <Fieldset legend="Foto">
           <div className="flex items-center gap-4 sm:col-span-2">
             {/* eslint-disable-next-line @next/next/no-img-element -- served by the authenticated /media route */}
@@ -92,11 +75,7 @@ export function StudentForm({
                 aria-invalid={!!photoError}
                 aria-describedby={photoError ? "photo-error" : "photo-help"}
               />
-              <FieldMessage
-                name="photo"
-                error={photoError}
-                help="JPG, PNG ou WebP"
-              />
+              <FieldMessage name="photo" error={photoError} help="JPG, PNG ou WebP" />
             </div>
           </div>
         </Fieldset>
@@ -104,57 +83,26 @@ export function StudentForm({
           digitPhones
           autoFocusName={id === null}
           // Saved students only, like the guardians' links; it follows the number as it is edited
-          mobileAction={
-            id ? (
-              <WhatsAppLink field="mobile" phone={defaults?.mobile as string} />
-            ) : undefined
-          }
+          mobileAction={id ? <WhatsAppLink field="mobile" phone={defaults?.mobile as string} /> : undefined}
           personal={
             <>
-              <TextField
-                name="socialName"
-                label="Nome social"
-                maxLength={200}
-                optional
-              />
+              <TextField name="socialName" label="Nome social" maxLength={200} optional />
               <div className="flex items-end">
                 <CheckboxField name="useSocialName" label="Usar nome social" />
               </div>
-              <SelectField
-                name="bloodType"
-                label="Tipo sanguíneo"
-                options={BLOOD_TYPES}
-              />
+              <SelectField name="bloodType" label="Tipo sanguíneo" options={BLOOD_TYPES} />
             </>
           }
           afterPersonal={
             // Required, and the one most often blocking a save: right after who the student is
-            <GuardianRows
-              initial={guardianRows}
-              options={guardianOptions}
-              showWhatsapp={!!id}
-            >
-              <CheckboxField
-                name="isSelfFinancial"
-                label="O próprio aluno é o responsável financeiro"
-              />
+            <GuardianRows initial={guardianRows} options={guardianOptions} showWhatsapp={!!id}>
+              <CheckboxField name="isSelfFinancial" label="O próprio aluno é o responsável financeiro" />
             </GuardianRows>
           }
         />
         <Fieldset legend="Vida escolar">
-          <TextField
-            name="schoolFrom"
-            label="Escola de origem"
-            maxLength={200}
-            optional
-            className="sm:col-span-2"
-          />
-          <TextareaField
-            name="observations"
-            label="Observações pedagógicas"
-            optional
-            className="sm:col-span-2"
-          />
+          <TextField name="schoolFrom" label="Escola de origem" maxLength={200} optional className="sm:col-span-2" />
+          <TextareaField name="observations" label="Observações pedagógicas" optional className="sm:col-span-2" />
         </Fieldset>
       </FormFields>
       <FormButtons

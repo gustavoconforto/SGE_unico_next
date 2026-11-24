@@ -9,4 +9,5 @@ export function addDays(day: string, n: number): string {
 export const isoWeekday = (day: string) => new Date(`${day}T00:00:00Z`).getUTCDay() || 7;
 
 /** Moves a Saturday/Sunday due date (YYYY-MM-DD) to the next Monday. */
-export const adjustWeekend = (dueDate: string) => addDays(dueDate, ({ 6: 2, 7: 1 } as Record<number, number>)[isoWeekday(dueDate)] ?? 0);
+export const adjustWeekend = (dueDate: string) =>
+  addDays(dueDate, ({ 6: 2, 7: 1 } as Record<number, number>)[isoWeekday(dueDate)] ?? 0);

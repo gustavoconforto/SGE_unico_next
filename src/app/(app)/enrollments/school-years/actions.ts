@@ -36,5 +36,8 @@ export async function saveSchoolYear(id: number | null, _prev: FormState, formDa
 
 export async function deleteSchoolYear(id: number) {
   await requirePermission("enrollmentSetup", "edit");
-  await deleteAndRedirect(() => db.delete(enrollmentsSchoolyear).where(eq(enrollmentsSchoolyear.id, id)), "/enrollments/school-years");
+  await deleteAndRedirect(
+    () => db.delete(enrollmentsSchoolyear).where(eq(enrollmentsSchoolyear.id, id)),
+    "/enrollments/school-years",
+  );
 }

@@ -5,7 +5,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { db } from "@/db";
-import { employeesEmployee as employee, enrollmentsEnrollment as enrollment, pathwaysPathwayenrollment as member, pathwaysPathwayofferingTeachers as offeringTeachers, studentsStudent as student } from "@/db/schema/app";
+import {
+  employeesEmployee as employee,
+  enrollmentsEnrollment as enrollment,
+  pathwaysPathwayenrollment as member,
+  pathwaysPathwayofferingTeachers as offeringTeachers,
+  studentsStudent as student,
+} from "@/db/schema/app";
 import { bimesterRange } from "@/lib/concept-db";
 import { formatDate, today } from "@/lib/finance";
 import { idParam, param } from "@/lib/list";
@@ -28,21 +34,41 @@ export default async function DiaryPage({ params, searchParams }: PageProps<"/pa
   // ?bimester=N, else the bimester containing today, else the 1st
   const now = today();
   const requested = Number(param(await searchParams, "bimester"));
-  const bimester = [1, 2, 3, 4].find((b) => b === requested) ?? [1, 2, 3, 4].find((b) => { const r = bimesterRange(o.y, b); return r && r[0] <= now && now <= r[1]; }) ?? 1;
+  const bimester =
+    [1, 2, 3, 4].find((b) => b === requested) ??
+    [1, 2, 3, 4].find((b) => {
+      const r = bimesterRange(o.y, b);
+      return r && r[0] <= now && now <= r[1];
+    }) ??
+    1;
   const range = bimesterRange(o.y, bimester);
   const weekdays = (o.o.weekdays as number[] | null) ?? [];
   const days = range && weekdays.length ? lessonDays(weekdays, ...range) : [];
   const [teachers, members] = await Promise.all([
-    db.select({ name: employee.name }).from(offeringTeachers).innerJoin(employee, eq(offeringTeachers.employeeId, employee.id)).where(eq(offeringTeachers.pathwayofferingId, id)).orderBy(asc(employee.name)),
+    db
+      .select({ name: employee.name })
+      .from(offeringTeachers)
+      .innerJoin(employee, eq(offeringTeachers.employeeId, employee.id))
+      .where(eq(offeringTeachers.pathwayofferingId, id))
+      .orderBy(asc(employee.name)),
     days.length
-      ? db.select({ id: member.id, student: student.name, joinedAt: member.joinedAt, leftAt: member.leftAt }).from(member).innerJoin(enrollment, eq(member.enrollmentId, enrollment.id)).innerJoin(student, eq(enrollment.studentId, student.id)).where(membersBetween(id, ...range!)).orderBy(asc(student.name))
+      ? db
+          .select({ id: member.id, student: student.name, joinedAt: member.joinedAt, leftAt: member.leftAt })
+          .from(member)
+          .innerJoin(enrollment, eq(member.enrollmentId, enrollment.id))
+          .innerJoin(student, eq(enrollment.studentId, student.id))
+          .where(membersBetween(id, ...range!))
+          .orderBy(asc(student.name))
       : Promise.resolve([]),
   ]);
   const message = !range ? (
     "O ano escolar não tem as datas deste bimestre. Preencha-as no cadastro do ano escolar."
   ) : !weekdays.length ? (
     <>
-      Defina os dias de aula da turma para montar o diário. <Link className="text-primary-600 underline" href={`/pathways/offerings/${id}/edit`}>Editar turma de itinerário</Link>
+      Defina os dias de aula da turma para montar o diário.{" "}
+      <Link className="text-primary-600 underline" href={`/pathways/offerings/${id}/edit`}>
+        Editar turma de itinerário
+      </Link>
     </>
   ) : !days.length ? (
     "Nenhum dia de aula neste bimestre."
@@ -62,7 +88,10 @@ export default async function DiaryPage({ params, searchParams }: PageProps<"/pa
           <tbody>
             <tr>
               <th className={box}>ITINERÁRIO:</th>
-              <td className={box}>{o.p.name}{o.o.name && ` – ${o.o.name}`}</td>
+              <td className={box}>
+                {o.p.name}
+                {o.o.name && ` – ${o.o.name}`}
+              </td>
               <th className={box}>ANO ESCOLAR:</th>
               <td className={box}>{o.year}</td>
             </tr>
@@ -76,7 +105,9 @@ export default async function DiaryPage({ params, searchParams }: PageProps<"/pa
             </tr>
             <tr>
               <th className={box}>HORÁRIO:</th>
-              <td className={box} colSpan={3}>{o.o.schedule || "-"}</td>
+              <td className={box} colSpan={3}>
+                {o.o.schedule || "-"}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -102,12 +133,22 @@ export default async function DiaryPage({ params, searchParams }: PageProps<"/pa
                   <tr key={m.id}>
                     <td className={`${box} text-center`}>{i + 1}</td>
                     <td className={`${box} whitespace-nowrap`}>{m.student}</td>
-                    {days.map((d) => (isMemberOn(m, d) ? <td key={d} className={box} /> : <td key={d} className={`${box} bg-gray-100 text-center`}>—</td>))}
+                    {days.map((d) =>
+                      isMemberOn(m, d) ? (
+                        <td key={d} className={box} />
+                      ) : (
+                        <td key={d} className={`${box} bg-gray-100 text-center`}>
+                          —
+                        </td>
+                      ),
+                    )}
                   </tr>
                 ))}
               </tbody>
             </table>
-            <p className="mt-2 text-[8pt]">Marque P (presente), F (falta) ou J (falta justificada). “—”: o aluno não estava inscrito no dia.</p>
+            <p className="mt-2 text-[8pt]">
+              Marque P (presente), F (falta) ou J (falta justificada). “—”: o aluno não estava inscrito no dia.
+            </p>
           </>
         )}
         <section className="mt-16 grid grid-cols-2 gap-16 text-center">

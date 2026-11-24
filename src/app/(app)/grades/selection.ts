@@ -1,7 +1,11 @@
 // Year → class → subject options from the query string (grades/views.py grade_selection).
 import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { classesClass as klass, gradesGradelevelsubject as levelSubject, gradesSubject as subject } from "@/db/schema/app";
+import {
+  classesClass as klass,
+  gradesGradelevelsubject as levelSubject,
+  gradesSubject as subject,
+} from "@/db/schema/app";
 import { GRADE_PERIODS } from "@/lib/grades";
 import { param } from "@/lib/list";
 import { yearOptions } from "../classes/options";

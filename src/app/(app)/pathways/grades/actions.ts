@@ -11,7 +11,11 @@ import { SHEET_TAKEN, editedCell, parseScore } from "../../grades/score";
 import { loadPathwaySheet } from "./sheet";
 
 /** Saves the whole sheet: blank cells delete the grade; any invalid cell saves nothing. */
-export async function savePathwaySheet(sel: { query: string; offeringId: number; bimester: number }, _prev: FormState, formData: FormData): Promise<FormState> {
+export async function savePathwaySheet(
+  sel: { query: string; offeringId: number; bimester: number },
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
   await requirePermission("pathways", "edit");
   const sheet = await loadPathwaySheet(sel.offeringId, sel.bimester);
   if (!sheet) redirect(`/pathways/grades?${sel.query}`);
@@ -25,14 +29,17 @@ export async function savePathwaySheet(sel: { query: string; offeringId: number;
     if ("error" in parsed) errors[`score_${r.id}`] = [parsed.error];
     else writes.push({ id: r.id, score: parsed.score, saved: r.saved });
   }
-  if (Object.keys(errors).length) return { errors, values, formError: "Corrija as notas destacadas. Nenhuma nota foi salva." };
+  if (Object.keys(errors).length)
+    return { errors, values, formError: "Corrija as notas destacadas. Nenhuma nota foi salva." };
   try {
     await db.transaction(async (tx) => {
       for (const w of writes) {
         if (w.score === null) {
           if (w.saved) await tx.delete(pathwayGrade).where(eq(pathwayGrade.id, w.saved.id));
-        } else if (!w.saved) await tx.insert(pathwayGrade).values({ pathwayEnrollmentId: w.id, bimester: sel.bimester, score: w.score });
-        else if (w.saved.score !== w.score) await tx.update(pathwayGrade).set({ score: w.score }).where(eq(pathwayGrade.id, w.saved.id));
+        } else if (!w.saved)
+          await tx.insert(pathwayGrade).values({ pathwayEnrollmentId: w.id, bimester: sel.bimester, score: w.score });
+        else if (w.saved.score !== w.score)
+          await tx.update(pathwayGrade).set({ score: w.score }).where(eq(pathwayGrade.id, w.saved.id));
       }
     });
   } catch (error) {

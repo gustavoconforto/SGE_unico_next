@@ -14,11 +14,11 @@ ligado a vários alunos (irmãos), então cadastre-o só uma vez.
 
 O formulário tem três abas:
 
-| Aba | Campos |
-|---|---|
+| Aba            | Campos                                                                                            |
+| -------------- | ------------------------------------------------------------------------------------------------- |
 | Dados pessoais | Nome, sexo, CPF, RG, estado civil, órgão emissor, data de nascimento, nacionalidade, naturalidade |
-| Contato | Telefone, celular, e-mail |
-| Endereço | Endereço, bairro, cidade, UF, CEP |
+| Contato        | Telefone, celular, e-mail                                                                         |
+| Endereço       | Endereço, bairro, cidade, UF, CEP                                                                 |
 
 > Para quem vai pagar por **boleto**, CPF, endereço e CEP precisam estar
 > corretos: sem eles o boleto não é gerado (veja
@@ -30,12 +30,12 @@ Cadastro do aluno e ligação com seus responsáveis.
 
 **Pesquisa:** nome, nome social, matrícula ou CPF.
 
-| Aba | Campos |
-|---|---|
+| Aba            | Campos                                                                                                                                       |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | Dados pessoais | Nome, nome social e opção "Usar nome social", matrícula, foto, sexo, CPF, RG, órgão emissor, data de nascimento, nacionalidade, naturalidade |
-| Contato | Telefone, celular, e-mail |
-| Endereço | Endereço, bairro, cidade, UF, CEP |
-| Responsáveis | Os responsáveis do aluno (veja abaixo) |
+| Contato        | Telefone, celular, e-mail                                                                                                                    |
+| Endereço       | Endereço, bairro, cidade, UF, CEP                                                                                                            |
+| Responsáveis   | Os responsáveis do aluno (veja abaixo)                                                                                                       |
 
 - **Matrícula** (número do aluno): gerado automaticamente no formato ano +
   sequência, por exemplo `202600001`. Não pode ser editado.
@@ -49,13 +49,13 @@ Cadastro do aluno e ligação com seus responsáveis.
 Na aba de responsáveis, escolha cada responsável (já cadastrado em
 **Responsáveis**) e informe:
 
-| Campo | Significado |
-|---|---|
-| Parentesco | Pai, Mãe, Avô/Avó, Tio(a), Irmão(ã), Padrasto/Madrasta, Tutor(a) legal, Outro |
-| Responsável financeiro | Quem paga. **Obrigatório ter pelo menos um para matricular o aluno.** O primeiro responsável financeiro é quem aparece na conta a receber e no boleto. |
-| Contato principal | Quem a escola procura primeiro. |
-| Mora com o aluno(a) | |
-| Autorizado a buscar o aluno | Pode retirar o aluno da escola. |
+| Campo                       | Significado                                                                                                                                            |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Parentesco                  | Pai, Mãe, Avô/Avó, Tio(a), Irmão(ã), Padrasto/Madrasta, Tutor(a) legal, Outro                                                                          |
+| Responsável financeiro      | Quem paga. **Obrigatório ter pelo menos um para matricular o aluno.** O primeiro responsável financeiro é quem aparece na conta a receber e no boleto. |
+| Contato principal           | Quem a escola procura primeiro.                                                                                                                        |
+| Mora com o aluno(a)         |                                                                                                                                                        |
+| Autorizado a buscar o aluno | Pode retirar o aluno da escola.                                                                                                                        |
 
 Um mesmo responsável não pode ser ligado duas vezes ao mesmo aluno.
 
@@ -65,13 +65,13 @@ Turmas de cada curso em cada ano escolar.
 
 **Pesquisa:** nome da turma, curso ou ano.
 
-| Campo | Descrição |
-|---|---|
-| Curso | Curso da turma. |
-| Ano letivo | Ano escolar da turma. |
-| Série | 1, 2 ou 3 (opcional). |
-| Nome | Ex.: "A", "Inspiração". Não pode repetir no mesmo curso e ano. |
-| Vagas | Capacidade da turma (opcional). |
+| Campo      | Descrição                                                      |
+| ---------- | -------------------------------------------------------------- |
+| Curso      | Curso da turma.                                                |
+| Ano letivo | Ano escolar da turma.                                          |
+| Série      | 1, 2 ou 3 (opcional).                                          |
+| Nome       | Ex.: "A", "Inspiração". Não pode repetir no mesmo curso e ano. |
+| Vagas      | Capacidade da turma (opcional).                                |
 
 Na matrícula, cada turma aparece com a ocupação, por exemplo
 `2° Inspiração - 2027 (12/50)`: 12 alunos ativos de 50 vagas.
@@ -98,9 +98,9 @@ só um cadastro; elas serão usadas no lançamento de notas.
 
 **Pesquisa:** nome da matéria.
 
-| Campo | Descrição |
-|---|---|
-| Nome | Nome da matéria. Não pode repetir. |
+| Campo | Descrição                          |
+| ----- | ---------------------------------- |
+| Nome  | Nome da matéria. Não pode repetir. |
 
 ## Matrículas
 
@@ -112,16 +112,16 @@ mensalidades.
 
 ### Cadastrar uma matrícula
 
-| Campo | Descrição |
-|---|---|
-| Aluno | O aluno precisa ter **pelo menos um responsável financeiro**. |
-| Tipo de contrato | Curso, série e ano. Ao escolher, a lista de turmas se atualiza. |
-| Turma | Só aparecem turmas do mesmo ano, curso e série do contrato. |
-| Situação | Ativa (padrão), Transferida, Desistente, Concluída, Cancelada. |
-| Descontos | Marque um ou mais tipos de desconto, se houver. Os percentuais são somados. |
-| Desconto avulso (%) e Observação | Para um percentual fora da tabela. A observação é obrigatória (ex.: "desconto autorizado pela direção"). |
-| Dia de vencimento | Dia do mês em que as mensalidades vencem (1 a 28; padrão 10). |
-| Data da matrícula, Valor bruto, Percentual de desconto | Preenchidos automaticamente. |
+| Campo                                                  | Descrição                                                                                                |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| Aluno                                                  | O aluno precisa ter **pelo menos um responsável financeiro**.                                            |
+| Tipo de contrato                                       | Curso, série e ano. Ao escolher, a lista de turmas se atualiza.                                          |
+| Turma                                                  | Só aparecem turmas do mesmo ano, curso e série do contrato.                                              |
+| Situação                                               | Ativa (padrão), Transferida, Desistente, Concluída, Cancelada.                                           |
+| Descontos                                              | Marque um ou mais tipos de desconto, se houver. Os percentuais são somados.                              |
+| Desconto avulso (%) e Observação                       | Para um percentual fora da tabela. A observação é obrigatória (ex.: "desconto autorizado pela direção"). |
+| Dia de vencimento                                      | Dia do mês em que as mensalidades vencem (1 a 28; padrão 10).                                            |
+| Data da matrícula, Valor bruto, Percentual de desconto | Preenchidos automaticamente.                                                                             |
 
 Um aluno não pode ter duas matrículas no mesmo tipo de contrato. A soma dos
 descontos não pode passar de 100%. Os descontos só podem ser escolhidos ao

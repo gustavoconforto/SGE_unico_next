@@ -6,7 +6,12 @@ import { saveClass } from "./actions";
 
 type Options = [number, string][];
 
-export function ClassForm(props: { id?: number | null; defaults?: Record<string, unknown>; programs: Options; years: Options }) {
+export function ClassForm(props: {
+  id?: number | null;
+  defaults?: Record<string, unknown>;
+  programs: Options;
+  years: Options;
+}) {
   const [state, action, pending] = useActionState(saveClass.bind(null, props.id ?? null), {});
   return (
     <form action={action} className="flex max-w-lg flex-col gap-4">

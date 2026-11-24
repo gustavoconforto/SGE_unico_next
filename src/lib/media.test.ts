@@ -8,7 +8,14 @@ describe("mediaPath", () => {
   });
 
   it("refuses names that escape it, including a sibling folder sharing its prefix", () => {
-    for (const name of ["../x", "students/../../x", `../${path.basename(MEDIA_ROOT)}-other/x.jpg`, "/etc/passwd", "", "."])
+    for (const name of [
+      "../x",
+      "students/../../x",
+      `../${path.basename(MEDIA_ROOT)}-other/x.jpg`,
+      "/etc/passwd",
+      "",
+      ".",
+    ])
       expect(() => mediaPath(name), name).toThrow("Invalid media path");
   });
 });

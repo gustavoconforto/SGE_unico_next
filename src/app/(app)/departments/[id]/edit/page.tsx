@@ -3,7 +3,10 @@ import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
-import { departmentsDepartment as department, departmentsDepartmentTeachers as departmentTeachers } from "@/db/schema/app";
+import {
+  departmentsDepartment as department,
+  departmentsDepartmentTeachers as departmentTeachers,
+} from "@/db/schema/app";
 import { idParam } from "@/lib/list";
 import { DepartmentForm } from "../../department-form";
 import { teacherOptions } from "../../options";
@@ -15,7 +18,10 @@ export default async function EditDepartmentPage({ params }: PageProps<"/departm
   const id = await idParam(params);
   const [[row], links, teachers] = await Promise.all([
     db.select().from(department).where(eq(department.id, id)),
-    db.select({ employeeId: departmentTeachers.employeeId }).from(departmentTeachers).where(eq(departmentTeachers.departmentId, id)),
+    db
+      .select({ employeeId: departmentTeachers.employeeId })
+      .from(departmentTeachers)
+      .where(eq(departmentTeachers.departmentId, id)),
     teacherOptions(),
   ]);
   if (!row) notFound();

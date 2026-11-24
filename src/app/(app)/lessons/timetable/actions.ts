@@ -50,14 +50,25 @@ export async function saveTimetable(classId: number, _prev: FormState, formData:
     await db.transaction(async (tx) => {
       for (const id of removed) await tx.delete(slot).where(and(eq(slot.id, id), eq(slot.schoolClassId, classId)));
       for (const s of changed) {
-        if (s.id) await tx.update(slot).set({ subjectId: s.subjectId, teacherId: s.teacherId }).where(eq(slot.id, s.id));
-        else await tx.insert(slot).values({ schoolClassId: classId, weekday: s.weekday, period: s.period, subjectId: s.subjectId, teacherId: s.teacherId });
+        if (s.id)
+          await tx.update(slot).set({ subjectId: s.subjectId, teacherId: s.teacherId }).where(eq(slot.id, s.id));
+        else
+          await tx.insert(slot).values({
+            schoolClassId: classId,
+            weekday: s.weekday,
+            period: s.period,
+            subjectId: s.subjectId,
+            teacherId: s.teacherId,
+          });
       }
     });
   } catch (error) {
     // Two people saved this class's timetable at once (unique_timetable_slot)
     if (pgErrorCode(error) !== UNIQUE_VIOLATION) throw error;
-    return { values, formError: "Outra pessoa acabou de salvar o horário desta turma. Recarregue a página e confira. Nada foi salvo." };
+    return {
+      values,
+      formError: "Outra pessoa acabou de salvar o horário desta turma. Recarregue a página e confira. Nada foi salvo.",
+    };
   }
   redirect(`/lessons/timetable?school_class=${classId}&msg=updated`);
 }

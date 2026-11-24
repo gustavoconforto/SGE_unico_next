@@ -15,7 +15,8 @@ export const WEEKDAYS = [
 ] as const;
 
 /** The weekday's periods: Saturday has fewer. */
-export const weekdayPeriods = (weekday: number) => (weekday === SATURDAY ? PERIODS.slice(0, SATURDAY_LECTURES) : PERIODS);
+export const weekdayPeriods = (weekday: number) =>
+  weekday === SATURDAY ? PERIODS.slice(0, SATURDAY_LECTURES) : PERIODS;
 
 /** Why the weekday has no such period, or null. */
 export const periodError = (weekday: number, period: number) =>

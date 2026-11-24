@@ -9,9 +9,7 @@ import { requireAdmin } from "@/lib/authorization";
 
 export const metadata: Metadata = { title: "Cargos" };
 
-export default async function RoleListPage({
-  searchParams,
-}: PageProps<"/employees/roles">) {
+export default async function RoleListPage({ searchParams }: PageProps<"/employees/roles">) {
   await requireAdmin();
   const sp = await searchParams;
   const where = searchWhere(param(sp, "q"), [role.role]);

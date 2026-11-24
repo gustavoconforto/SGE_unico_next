@@ -3,7 +3,10 @@ import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
-import { gradesGradelevelsubject as levelSubject, gradesGradelevelsubjectTeachers as levelSubjectTeachers } from "@/db/schema/app";
+import {
+  gradesGradelevelsubject as levelSubject,
+  gradesGradelevelsubjectTeachers as levelSubjectTeachers,
+} from "@/db/schema/app";
 import { idParam } from "@/lib/list";
 import { LevelSubjectForm } from "../../level-subject-form";
 import { levelSubjectFormOptions } from "../../options";
@@ -15,7 +18,10 @@ export default async function EditLevelSubjectPage({ params }: PageProps<"/grade
   const id = await idParam(params);
   const [[row], links, options] = await Promise.all([
     db.select().from(levelSubject).where(eq(levelSubject.id, id)),
-    db.select({ id: levelSubjectTeachers.employeeId }).from(levelSubjectTeachers).where(eq(levelSubjectTeachers.gradelevelsubjectId, id)),
+    db
+      .select({ id: levelSubjectTeachers.employeeId })
+      .from(levelSubjectTeachers)
+      .where(eq(levelSubjectTeachers.gradelevelsubjectId, id)),
     levelSubjectFormOptions(),
   ]);
   if (!row) notFound();

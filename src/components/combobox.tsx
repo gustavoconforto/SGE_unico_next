@@ -52,7 +52,8 @@ export function Combobox(props: Props) {
   useFixWhenSet(props.name, props.value);
 
   const options = props.options?.map((o) => ("value" in o ? o : { value: String(o[0]), label: o[1] }));
-  const find = (v: string) => (v ? (options?.find((o) => o.value === v) ?? (props.initial?.value === v ? props.initial : null)) : null);
+  const find = (v: string) =>
+    v ? (options?.find((o) => o.value === v) ?? (props.initial?.value === v ? props.initial : null)) : null;
   const [own, setOwn] = useState<ComboOption | null>(() => props.initial ?? find(field.value));
   const selected = controlled ? find(props.value!) : own;
 
@@ -79,7 +80,9 @@ export function Combobox(props: Props) {
   }, [remoteSearch, query, open]);
 
   const q = fold(query.trim());
-  const results = remoteSearch ? remote : (options ?? []).filter((o) => !q || fold(o.label).includes(q)).slice(0, SHOWN);
+  const results = remoteSearch
+    ? remote
+    : (options ?? []).filter((o) => !q || fold(o.label).includes(q)).slice(0, SHOWN);
 
   useEffect(() => {
     listRef.current?.querySelector(`[data-index="${active}"]`)?.scrollIntoView({ block: "nearest" });
@@ -122,7 +125,14 @@ export function Combobox(props: Props) {
           aria-autocomplete="list"
           aria-activedescendant={open && results[active] ? `${id}-opt-${active}` : undefined}
           aria-invalid={!!error}
-          aria-describedby={[error ? `${props.name ?? id}-error` : props.help ? `${props.name ?? id}-help` : "", props.describedBy ?? ""].filter(Boolean).join(" ") || undefined}
+          aria-describedby={
+            [
+              error ? `${props.name ?? id}-error` : props.help ? `${props.name ?? id}-help` : "",
+              props.describedBy ?? "",
+            ]
+              .filter(Boolean)
+              .join(" ") || undefined
+          }
           aria-required={!props.optional}
           autoComplete="off"
           disabled={props.disabled}
@@ -161,11 +171,23 @@ export function Combobox(props: Props) {
         )}
       </div>
       <p className="sr-only" aria-live="polite">
-        {open ? (results.length ? `${results.length} ${results.length === 1 ? "resultado" : "resultados"}` : (props.emptyText ?? "Nenhum resultado.")) : ""}
+        {open
+          ? results.length
+            ? `${results.length} ${results.length === 1 ? "resultado" : "resultados"}`
+            : (props.emptyText ?? "Nenhum resultado.")
+          : ""}
       </p>
       {open && (
-        <ul ref={listRef} id={listId} role="listbox" aria-label={props.label} className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
-          {results.length === 0 && <li className="px-3 py-2.5 text-sm text-gray-600">{props.emptyText ?? "Nenhum resultado."}</li>}
+        <ul
+          ref={listRef}
+          id={listId}
+          role="listbox"
+          aria-label={props.label}
+          className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+        >
+          {results.length === 0 && (
+            <li className="px-3 py-2.5 text-sm text-gray-600">{props.emptyText ?? "Nenhum resultado."}</li>
+          )}
           {results.map((o, i) => (
             <li
               key={o.value}
@@ -187,7 +209,9 @@ export function Combobox(props: Props) {
                   <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-gray-600">
                     {/* Separators inside the spans so screen readers don't run the parts together */}
                     {o.hint && <span>{` ${o.hint}`}</span>}
-                    {o.badge && <span className="rounded bg-red-50 px-1.5 py-0.5 font-medium text-red-800">{` ${o.badge}`}</span>}
+                    {o.badge && (
+                      <span className="rounded bg-red-50 px-1.5 py-0.5 font-medium text-red-800">{` ${o.badge}`}</span>
+                    )}
                   </span>
                 )}
               </span>

@@ -16,9 +16,19 @@ const CHECKED = {
 } as const;
 const SHORT = { P: "Presente", F: "Falta", J: "Justificada" } as const;
 
-export function AttendanceForm({ sessionId, rows, cancelHref }: { sessionId: number; rows: Row[]; cancelHref: string }) {
+export function AttendanceForm({
+  sessionId,
+  rows,
+  cancelHref,
+}: {
+  sessionId: number;
+  rows: Row[];
+  cancelHref: string;
+}) {
   const [state, action, pending] = useActionState(saveAttendance.bind(null, sessionId), {});
-  const [statuses, setStatuses] = useState<Record<number, string>>(() => Object.fromEntries(rows.map((r) => [r.id, r.status])));
+  const [statuses, setStatuses] = useState<Record<number, string>>(() =>
+    Object.fromEntries(rows.map((r) => [r.id, r.status])),
+  );
   if (!rows.length) return <p className="text-gray-600">Nenhum aluno inscrito no itinerário na data desta aula.</p>;
 
   const count = (s: string) => rows.filter((r) => statuses[r.id] === s).length;
@@ -29,7 +39,8 @@ export function AttendanceForm({ sessionId, rows, cancelHref }: { sessionId: num
       <FormFields state={state}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm text-gray-600 tabular-nums" aria-live="polite">
-            {count("P")} presentes · {absent} {absent === 1 ? "falta" : "faltas"} · {excused} {excused === 1 ? "justificada" : "justificadas"}
+            {count("P")} presentes · {absent} {absent === 1 ? "falta" : "faltas"} · {excused}{" "}
+            {excused === 1 ? "justificada" : "justificadas"}
           </p>
           <Button
             size="sm"

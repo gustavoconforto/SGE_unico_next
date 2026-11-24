@@ -4,11 +4,21 @@
   "title": "Design System: Gestão Escolar",
   "extensions": {
     "colorMeta": {
-      "action-blue": { "role": "primary", "displayName": "Action Blue", "canonical": "#1a56db", "tonalRamp": ["#233876", "#1e429f", "#1a56db", "#1c64f2", "#3f83f8", "#76a9fa", "#c3ddfd", "#ebf5ff"] },
+      "action-blue": {
+        "role": "primary",
+        "displayName": "Action Blue",
+        "canonical": "#1a56db",
+        "tonalRamp": ["#233876", "#1e429f", "#1a56db", "#1c64f2", "#3f83f8", "#76a9fa", "#c3ddfd", "#ebf5ff"]
+      },
       "action-blue-deep": { "role": "primary", "displayName": "Action Blue Deep", "canonical": "#1e429f" },
       "focus-blue": { "role": "primary", "displayName": "Focus Blue", "canonical": "#3f83f8" },
       "selection-blue": { "role": "primary", "displayName": "Selection Blue", "canonical": "#ebf5ff" },
-      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#111827", "tonalRamp": ["#111827", "#1f2937", "#374151", "#4b5563", "#6b7280", "#9ca3af", "#e5e7eb", "#f9fafb"] },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#111827",
+        "tonalRamp": ["#111827", "#1f2937", "#374151", "#4b5563", "#6b7280", "#9ca3af", "#e5e7eb", "#f9fafb"]
+      },
       "ink-soft": { "role": "neutral", "displayName": "Ink Soft", "canonical": "#374151" },
       "ink-muted": { "role": "neutral", "displayName": "Ink Muted", "canonical": "#6b7280" },
       "paper": { "role": "neutral", "displayName": "Paper", "canonical": "#f9fafb" },
@@ -16,12 +26,27 @@
       "hover-gray": { "role": "neutral", "displayName": "Hover Gray", "canonical": "#f3f4f6" },
       "hairline": { "role": "neutral", "displayName": "Hairline", "canonical": "#e5e7eb" },
       "field-border": { "role": "neutral", "displayName": "Field Border", "canonical": "#d1d5db" },
-      "alert-red": { "role": "state", "displayName": "Alert Red", "canonical": "#e02424", "tonalRamp": ["#771d1d", "#9b1c1c", "#c81e1e", "#e02424", "#f05252", "#f98080", "#fbd5d5", "#fdf2f2"] },
+      "alert-red": {
+        "role": "state",
+        "displayName": "Alert Red",
+        "canonical": "#e02424",
+        "tonalRamp": ["#771d1d", "#9b1c1c", "#c81e1e", "#e02424", "#f05252", "#f98080", "#fbd5d5", "#fdf2f2"]
+      },
       "alert-red-deep": { "role": "state", "displayName": "Alert Red Deep", "canonical": "#c81e1e" },
       "alert-red-wash": { "role": "state", "displayName": "Alert Red Wash", "canonical": "#fdf2f2" },
-      "ok-green": { "role": "state", "displayName": "OK Green", "canonical": "#046c4e", "tonalRamp": ["#014737", "#03543f", "#046c4e", "#057a55", "#0e9f6e", "#31c48d", "#bcf0da", "#f3faf7"] },
+      "ok-green": {
+        "role": "state",
+        "displayName": "OK Green",
+        "canonical": "#046c4e",
+        "tonalRamp": ["#014737", "#03543f", "#046c4e", "#057a55", "#0e9f6e", "#31c48d", "#bcf0da", "#f3faf7"]
+      },
       "ok-green-wash": { "role": "state", "displayName": "OK Green Wash", "canonical": "#def7ec" },
-      "caution-brown": { "role": "state", "displayName": "Caution Brown", "canonical": "#723b13", "tonalRamp": ["#633112", "#723b13", "#8e4b10", "#9f580a", "#c27803", "#e3a008", "#fce96a", "#fdfdea"] }
+      "caution-brown": {
+        "role": "state",
+        "displayName": "Caution Brown",
+        "canonical": "#723b13",
+        "tonalRamp": ["#633112", "#723b13", "#8e4b10", "#9f580a", "#c27803", "#e3a008", "#fce96a", "#fdfdea"]
+      }
     },
     "typographyMeta": {
       "headline": { "displayName": "Headline", "purpose": "Page title, one per page." },
@@ -31,11 +56,23 @@
       "caption": { "displayName": "Caption", "purpose": "Field labels in summaries, help text, record counts." }
     },
     "shadows": [
-      { "name": "panel-lift", "value": "drop-shadow(0 3px 3px rgba(0,0,0,0.12))", "purpose": "White surface behind every data table (applied as a filter)." },
-      { "name": "overlay", "value": "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)", "purpose": "Dropdowns, combobox lists, mobile drawer." }
+      {
+        "name": "panel-lift",
+        "value": "drop-shadow(0 3px 3px rgba(0,0,0,0.12))",
+        "purpose": "White surface behind every data table (applied as a filter)."
+      },
+      {
+        "name": "overlay",
+        "value": "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)",
+        "purpose": "Dropdowns, combobox lists, mobile drawer."
+      }
     ],
     "motion": [
-      { "name": "tip-fade", "value": "opacity 150ms ease-out", "purpose": "Icon-action tooltip fade on hover and focus." }
+      {
+        "name": "tip-fade",
+        "value": "opacity 150ms ease-out",
+        "purpose": "Icon-action tooltip fade on hover and focus."
+      }
     ],
     "breakpoints": [
       { "name": "sm", "value": "640px" },
@@ -104,12 +141,36 @@
       "Desktop-first density; lists reflow to stacked rows on phones."
     ],
     "rules": [
-      { "name": "The One Blue Rule", "body": "Blue means \"you can act here\" (buttons, focus, the caret, the row being edited). It is never a decorative accent or a section color.", "section": "colors" },
-      { "name": "The Tenant Color Rule", "body": "The school's brand colors (Único's red logo) appear only in the school's own logo and letterhead, never in buttons, nav or highlights. Another school must be able to drop in its logo without the UI clashing.", "section": "colors" },
-      { "name": "The State Earns Color Rule", "body": "Green, red and amber are reserved for the state of a record. A row is red because it is overdue or below passing, never for emphasis.", "section": "colors" },
-      { "name": "The Tabular Numbers Rule", "body": "Any column or input of grades, money, dates or CPF uses `tabular-nums` so digits line up.", "section": "typography" },
-      { "name": "The pt-BR Rule", "body": "Everything shown is Brazilian Portuguese: comma decimals (2,50), R$ with a thousands dot, dd/mm/aaaa dates, formatted CPF/CEP.", "section": "typography" },
-      { "name": "The Soft Panel Rule", "body": "Data lives on a white panel with the panel-lift shadow, never on a bordered box or a nested card. Inside a panel, separate groups with hairline dividers, not more shadows.", "section": "elevation" }
+      {
+        "name": "The One Blue Rule",
+        "body": "Blue means \"you can act here\" (buttons, focus, the caret, the row being edited). It is never a decorative accent or a section color.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tenant Color Rule",
+        "body": "The school's brand colors (Único's red logo) appear only in the school's own logo and letterhead, never in buttons, nav or highlights. Another school must be able to drop in its logo without the UI clashing.",
+        "section": "colors"
+      },
+      {
+        "name": "The State Earns Color Rule",
+        "body": "Green, red and amber are reserved for the state of a record. A row is red because it is overdue or below passing, never for emphasis.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Numbers Rule",
+        "body": "Any column or input of grades, money, dates or CPF uses `tabular-nums` so digits line up.",
+        "section": "typography"
+      },
+      {
+        "name": "The pt-BR Rule",
+        "body": "Everything shown is Brazilian Portuguese: comma decimals (2,50), R$ with a thousands dot, dd/mm/aaaa dates, formatted CPF/CEP.",
+        "section": "typography"
+      },
+      {
+        "name": "The Soft Panel Rule",
+        "body": "Data lives on a white panel with the panel-lift shadow, never on a bordered box or a nested card. Inside a panel, separate groups with hairline dividers, not more shadows.",
+        "section": "elevation"
+      }
     ],
     "dos": [
       "**Do** keep one primary (blue) button per view; everything else uses the alternative button.",

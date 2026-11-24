@@ -83,9 +83,20 @@ export function reportRow(byPeriod: Map<number, Score[]>) {
   const bimesters = BIMESTERS.map((b) => bimesterGrade(byPeriod.get(b) ?? []));
   const average = finalAverage(bimesters);
   const recovery = recoveryScore(byPeriod.get(FINAL_RECOVERY) ?? []);
-  return { bimesters, average, recovery, final: finalGrade(average, recovery), needsRecovery: needsRecovery(average), passed: passed(average, recovery) };
+  return {
+    bimesters,
+    average,
+    recovery,
+    final: finalGrade(average, recovery),
+    needsRecovery: needsRecovery(average),
+    passed: passed(average, recovery),
+  };
 }
 
 /** "7,5" as the report card shows grades; "—" for none. */
 export const formatGrade = (g: Decimal.Value | null | undefined) =>
-  g === null || g === undefined ? "—" : new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(new Decimal(g).toNumber());
+  g === null || g === undefined
+    ? "—"
+    : new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+        new Decimal(g).toNumber(),
+      );

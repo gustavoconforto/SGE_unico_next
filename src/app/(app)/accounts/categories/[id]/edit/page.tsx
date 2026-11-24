@@ -13,7 +13,10 @@ export const metadata: Metadata = { title: "Editar categoria" };
 export default async function EditCategoryPage({ params }: PageProps<"/accounts/categories/[id]/edit">) {
   await requirePermission("finance", "edit");
   const id = await idParam(params);
-  const [[row], inUse] = await Promise.all([db.select().from(accountType).where(eq(accountType.id, id)), accountsInCategory(id)]);
+  const [[row], inUse] = await Promise.all([
+    db.select().from(accountType).where(eq(accountType.id, id)),
+    accountsInCategory(id),
+  ]);
   if (!row) notFound();
   return (
     <div className="flex flex-col gap-4">

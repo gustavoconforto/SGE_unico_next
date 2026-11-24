@@ -58,7 +58,13 @@ if (password.length < 8) {
 const { auth } = await import("../src/lib/auth");
 const login = username.trim().toLowerCase();
 const { user } = await auth.api.createUser({
-  body: { email: (email ?? `${login}@gestao.local`).toLowerCase(), password, name, role: "admin", data: { username: login, displayUsername: username.trim() } },
+  body: {
+    email: (email ?? `${login}@gestao.local`).toLowerCase(),
+    password,
+    name,
+    role: "admin",
+    data: { username: login, displayUsername: username.trim() },
+  },
 });
 console.log(`Admin "${user.name}" created: log in as ${login}.`);
 process.exit(0);

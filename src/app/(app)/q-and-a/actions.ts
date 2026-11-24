@@ -20,7 +20,8 @@ export async function saveQandA(id: number | null, _prev: FormState, formData: F
   if (!data) return state;
   const [current] = id ? await db.select({ enrollmentId: qa.enrollmentId }).from(qa).where(eq(qa.id, id)) : [];
   // Only active enrollments of the current school year, keeping the saved one when editing
-  if (!(await enrollmentAllowed(data.enrollmentId, current?.enrollmentId, (await currentSchoolYear())?.id ?? null))) return { errors: INVALID_ENROLLMENT, values };
+  if (!(await enrollmentAllowed(data.enrollmentId, current?.enrollmentId, (await currentSchoolYear())?.id ?? null)))
+    return { errors: INVALID_ENROLLMENT, values };
   if (id === null) {
     const [row] = await db.insert(qa).values(data).returning({ id: qa.id });
     const next = anotherUrl("/q-and-a/new", formData, ["subjectId", "qAndADate"], row.id);

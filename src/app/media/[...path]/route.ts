@@ -11,7 +11,9 @@ export async function GET(_request: Request, ctx: RouteContext<"/media/[...path]
   if (!type) return new Response("Not found", { status: 404 });
   try {
     const body = await readFile(mediaPath(name));
-    return new Response(body, { headers: { "Content-Type": type, "Cache-Control": "private, max-age=300", "X-Content-Type-Options": "nosniff" } });
+    return new Response(body, {
+      headers: { "Content-Type": type, "Cache-Control": "private, max-age=300", "X-Content-Type-Options": "nosniff" },
+    });
   } catch {
     return new Response("Not found", { status: 404 });
   }

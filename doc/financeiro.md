@@ -20,13 +20,13 @@ Categoria ──▶ Conta (contrato) ──▶ Parcelas ──▶ Baixas (pagame
 
 ### Situação das parcelas
 
-| Situação | Significado |
-|---|---|
-| **Aberto** | Nada pago ainda. |
-| **Parcial** | Parte do valor foi paga; ainda há saldo. |
-| **Quitado** | Pago por completo. |
-| **Cancelado** | Não é mais devido (ex.: matrícula cancelada). |
-| **Expirado** | O banco baixou o boleto por falta de pagamento. **A parcela continua devida.** |
+| Situação      | Significado                                                                    |
+| ------------- | ------------------------------------------------------------------------------ |
+| **Aberto**    | Nada pago ainda.                                                               |
+| **Parcial**   | Parte do valor foi paga; ainda há saldo.                                       |
+| **Quitado**   | Pago por completo.                                                             |
+| **Cancelado** | Não é mais devido (ex.: matrícula cancelada).                                  |
+| **Expirado**  | O banco baixou o boleto por falta de pagamento. **A parcela continua devida.** |
 
 Parcelas abertas, parciais e expiradas contam como **pendentes**. Uma parcela
 pendente com vencimento antes de hoje aparece como **Vencida**, com a linha em
@@ -48,9 +48,9 @@ Energia, Salários.
 
 **Pesquisa:** nome. **Filtro:** natureza (A receber / A pagar).
 
-| Campo | Descrição |
-|---|---|
-| Nome | Não pode repetir. |
+| Campo    | Descrição                                                                                |
+| -------- | ---------------------------------------------------------------------------------------- |
+| Nome     | Não pode repetir.                                                                        |
 | Natureza | **A receber** ou **A pagar**. Só pode ser trocada enquanto a categoria não tiver contas. |
 
 Contas a receber só aceitam categorias "A receber", e contas a pagar só
@@ -63,11 +63,11 @@ Empresas e pessoas para quem a escola paga contas.
 
 **Pesquisa:** nome, CPF/CNPJ, telefone, e-mail ou observações.
 
-| Campo | Descrição |
-|---|---|
-| Nome | |
-| CPF/CNPJ | Somente números: 11 dígitos (CPF) ou 14 (CNPJ). Opcional, mas não pode repetir. |
-| Telefone, E-mail, Observações | |
+| Campo                         | Descrição                                                                       |
+| ----------------------------- | ------------------------------------------------------------------------------- |
+| Nome                          |                                                                                 |
+| CPF/CNPJ                      | Somente números: 11 dígitos (CPF) ou 14 (CNPJ). Opcional, mas não pode repetir. |
+| Telefone, E-mail, Observações |                                                                                 |
 
 Um fornecedor com contas lançadas não pode ser excluído.
 
@@ -84,17 +84,17 @@ período de emissão.
 
 ### Cadastrar
 
-| Campo | Descrição |
-|---|---|
-| Descrição | Ex.: "Material didático 2027 – Maria". |
-| Categoria | Somente categorias "A receber". |
-| Responsável financeiro | Quem vai pagar. |
-| Data de emissão | Padrão: hoje. |
-| Valor bruto | Valor total. |
-| Desconto (R$) | Não pode passar do valor bruto. |
-| Número de parcelas | De 1 a 120. |
-| Primeiro vencimento | As demais parcelas vencem mês a mês a partir dessa data. |
-| Observações | |
+| Campo                  | Descrição                                                |
+| ---------------------- | -------------------------------------------------------- |
+| Descrição              | Ex.: "Material didático 2027 – Maria".                   |
+| Categoria              | Somente categorias "A receber".                          |
+| Responsável financeiro | Quem vai pagar.                                          |
+| Data de emissão        | Padrão: hoje.                                            |
+| Valor bruto            | Valor total.                                             |
+| Desconto (R$)          | Não pode passar do valor bruto.                          |
+| Número de parcelas     | De 1 a 120.                                              |
+| Primeiro vencimento    | As demais parcelas vencem mês a mês a partir dessa data. |
+| Observações            |                                                          |
 
 O valor líquido (bruto − desconto) é dividido igualmente entre as parcelas; os
 centavos que sobram vão para a primeira.
@@ -129,15 +129,15 @@ mensalidade paga em PIX, dinheiro ou cartão no balcão.
 > importação do arquivo de retorno faz isso (veja
 > [cobranca-bancaria.md](cobranca-bancaria.md#retornos)).
 
-| Campo | Descrição |
-|---|---|
-| Parcela | Digite parte da descrição da conta ou o nome do responsável e escolha a parcela na lista. Só aparecem parcelas pendentes. |
-| Data do pagamento | |
-| Valor pago | **Total recebido**, já incluindo multa, juros e correção. |
-| Multa, Juros, Correção monetária | A parte do valor pago que é encargo. |
-| Desconto | Valor abatido sem ser recebido (ex.: desconto de pontualidade). Opcional. |
-| Forma de pagamento | PIX, Boleto, Dinheiro, Cartão de crédito, Cartão de débito, Transferência, Cheque. |
-| Observações | |
+| Campo                            | Descrição                                                                                                                 |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Parcela                          | Digite parte da descrição da conta ou o nome do responsável e escolha a parcela na lista. Só aparecem parcelas pendentes. |
+| Data do pagamento                |                                                                                                                           |
+| Valor pago                       | **Total recebido**, já incluindo multa, juros e correção.                                                                 |
+| Multa, Juros, Correção monetária | A parte do valor pago que é encargo.                                                                                      |
+| Desconto                         | Valor abatido sem ser recebido (ex.: desconto de pontualidade). Opcional.                                                 |
+| Forma de pagamento               | PIX, Boleto, Dinheiro, Cartão de crédito, Cartão de débito, Transferência, Cheque.                                        |
+| Observações                      |                                                                                                                           |
 
 **Como o sistema calcula o que foi abatido da parcela:**
 

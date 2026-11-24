@@ -18,8 +18,8 @@ test("SHIFT_PERIODS covers the class shifts", () => {
 });
 
 test("fullAddress skips blank parts and formats the CEP", () => {
-  expect(fullAddress({ address: "SQS 106", neighborhood: "Asa Sul", city: "Brasília", state: "DF", zipCode: "70345000" })).toBe(
-    "SQS 106, Asa Sul, Brasília - DF CEP: 70345-000",
-  );
+  expect(
+    fullAddress({ address: "SQS 106", neighborhood: "Asa Sul", city: "Brasília", state: "DF", zipCode: "70345000" }),
+  ).toBe("SQS 106, Asa Sul, Brasília - DF CEP: 70345-000");
   expect(fullAddress({ address: "SQS 106", neighborhood: "", city: "", state: "", zipCode: "" })).toBe("SQS 106");
 });

@@ -89,7 +89,9 @@ export async function deleteEmployee(id: number) {
 /** The roles picked on the list's multiselect replace the login's roles; none picked leaves it plain "user". */
 export async function setUserRoles(userId: string, formData: FormData) {
   const session = await requireAdmin();
-  const picked = formData.getAll("role").filter((r): r is AssignableRole => typeof r === "string" && Object.hasOwn(ROLE_LABELS, r));
+  const picked = formData
+    .getAll("role")
+    .filter((r): r is AssignableRole => typeof r === "string" && Object.hasOwn(ROLE_LABELS, r));
   if (userId === session.user.id && !picked.includes("admin")) redirect("/employees?msg=own_admin");
   await auth.api.setRole({ body: { userId, role: picked.length ? picked : "user" }, headers: await headers() });
   redirect("/employees?msg=updated");

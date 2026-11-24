@@ -20,9 +20,7 @@ const latest = (column: SQL) =>
   >`(select ${column} from enrollments_enrollment e left join classes_class c on c.id = e.school_class_id
     where e.student_id = ${ref(student.id)} order by e.enrolled_at desc, e.id desc limit 1)`;
 
-export default async function StudentListPage({
-  searchParams,
-}: PageProps<"/students">) {
+export default async function StudentListPage({ searchParams }: PageProps<"/students">) {
   await requirePermission("students", "view");
 
   const sp = await searchParams;
@@ -30,12 +28,7 @@ export default async function StudentListPage({
   const situation = param(sp, "situation");
   const status = latest(sql`e.status`);
   const where = and(
-    searchWhere(param(sp, "q"), [
-      student.name,
-      student.socialName,
-      student.registration,
-      student.cpf,
-    ]),
+    searchWhere(param(sp, "q"), [student.name, student.socialName, student.registration, student.cpf]),
     situation === "N"
       ? isNull(status)
       : ENROLLMENT_STATUSES.some(([code]) => code === situation)
@@ -69,11 +62,7 @@ export default async function StudentListPage({
       newLabel="Novo aluno"
       searchPlaceholder="Pesquisar por nome, matrícula ou CPF..."
       filters={
-        <FilterSelect
-          name="situation"
-          label="Situação"
-          options={[...ENROLLMENT_STATUSES, ["N", "Sem matrícula"]]}
-        />
+        <FilterSelect name="situation" label="Situação" options={[...ENROLLMENT_STATUSES, ["N", "Sem matrícula"]]} />
       }
       headers={["Nome", "Matrícula", "Turma", "Situação"]}
       empty="Nenhum aluno encontrado. Confira a grafia, ou busque pela matrícula ou pelo CPF."
@@ -89,9 +78,7 @@ export default async function StudentListPage({
             ) : (
               <span key="n">
                 {s.name}
-                <span className="block text-xs font-normal text-gray-500">
-                  Nome civil: {s.civilName}
-                </span>
+                <span className="block text-xs font-normal text-gray-500">Nome civil: {s.civilName}</span>
               </span>
             ),
             s.registration,

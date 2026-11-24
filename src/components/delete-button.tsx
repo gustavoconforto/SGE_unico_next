@@ -22,7 +22,14 @@ export function DeleteButton({ action, label, note }: { action: () => Promise<vo
   return (
     <>
       {/* Quiet until pointed at: on a list of 25 rows, 25 red buttons outweigh editing */}
-      <Button size="xs" color="alternative" className="px-2 text-gray-500 hover:bg-red-50 hover:text-red-700 focus:text-red-700" onClick={() => setOpen(true)} aria-label={`Excluir ${label}`} data-tip="Excluir">
+      <Button
+        size="xs"
+        color="alternative"
+        className="px-2 text-gray-500 hover:bg-red-50 hover:text-red-700 focus:text-red-700"
+        onClick={() => setOpen(true)}
+        aria-label={`Excluir ${label}`}
+        data-tip="Excluir"
+      >
         <span className="material-symbols-outlined" aria-hidden="true">
           delete
         </span>

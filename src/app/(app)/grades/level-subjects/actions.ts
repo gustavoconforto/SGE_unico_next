@@ -30,21 +30,41 @@ export async function saveLevelSubject(id: number | null, _prev: FormState, form
   const [taken] = await db
     .select({ id: levelSubject.id })
     .from(levelSubject)
-    .where(and(eq(levelSubject.gradeLevel, data.gradeLevel), eq(levelSubject.subjectId, data.subjectId), id ? ne(levelSubject.id, id) : undefined));
+    .where(
+      and(
+        eq(levelSubject.gradeLevel, data.gradeLevel),
+        eq(levelSubject.subjectId, data.subjectId),
+        id ? ne(levelSubject.id, id) : undefined,
+      ),
+    );
   if (taken) return { errors: { subjectId: ["Esta matéria já está cadastrada nesta série."] }, values };
   // Only the teachers of the subject's department can be picked
-  const [s] = await db.select({ departmentId: subject.departmentId }).from(subject).where(eq(subject.id, data.subjectId));
+  const [s] = await db
+    .select({ departmentId: subject.departmentId })
+    .from(subject)
+    .where(eq(subject.id, data.subjectId));
   const allowed = s?.departmentId
-    ? new Set((await db.select({ id: departmentTeachers.employeeId }).from(departmentTeachers).where(eq(departmentTeachers.departmentId, s.departmentId))).map((t) => t.id))
+    ? new Set(
+        (
+          await db
+            .select({ id: departmentTeachers.employeeId })
+            .from(departmentTeachers)
+            .where(eq(departmentTeachers.departmentId, s.departmentId))
+        ).map((t) => t.id),
+      )
     : new Set<number>();
   if (teacherIds.some((t) => !allowed.has(t))) return { errors: { teachers: [INVALID_CHOICE] }, values };
 
   await db.transaction(async (tx) => {
     let levelSubjectId = id;
-    if (levelSubjectId === null) [{ id: levelSubjectId }] = await tx.insert(levelSubject).values(data).returning({ id: levelSubject.id });
+    if (levelSubjectId === null)
+      [{ id: levelSubjectId }] = await tx.insert(levelSubject).values(data).returning({ id: levelSubject.id });
     else await tx.update(levelSubject).set(data).where(eq(levelSubject.id, levelSubjectId));
     await tx.delete(levelSubjectTeachers).where(eq(levelSubjectTeachers.gradelevelsubjectId, levelSubjectId));
-    if (teacherIds.length) await tx.insert(levelSubjectTeachers).values(teacherIds.map((employeeId) => ({ gradelevelsubjectId: levelSubjectId!, employeeId })));
+    if (teacherIds.length)
+      await tx
+        .insert(levelSubjectTeachers)
+        .values(teacherIds.map((employeeId) => ({ gradelevelsubjectId: levelSubjectId!, employeeId })));
   });
   redirect(`/grades/level-subjects?msg=${id === null ? "created" : "updated"}`);
 }

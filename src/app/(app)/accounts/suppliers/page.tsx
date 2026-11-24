@@ -14,7 +14,13 @@ export const metadata: Metadata = { title: "Fornecedores" };
 export default async function SupplierListPage({ searchParams }: PageProps<"/accounts/suppliers">) {
   await requirePermission("finance", "view");
   const sp = await searchParams;
-  const where = searchWhere(param(sp, "q"), [supplier.name, supplier.document, supplier.phone, supplier.email, supplier.notes]);
+  const where = searchWhere(param(sp, "q"), [
+    supplier.name,
+    supplier.document,
+    supplier.phone,
+    supplier.email,
+    supplier.notes,
+  ]);
   const page = pageParam(sp);
   const [rows, [{ total }]] = await Promise.all([
     db

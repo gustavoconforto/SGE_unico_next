@@ -7,7 +7,13 @@ import { updateLecture } from "./actions";
 
 type Options = [number, string][];
 
-export function LectureForm(props: { id: number; defaults: Record<string, unknown>; classLabel: string; subjects: Options; teachers: Options }) {
+export function LectureForm(props: {
+  id: number;
+  defaults: Record<string, unknown>;
+  classLabel: string;
+  subjects: Options;
+  teachers: Options;
+}) {
   const [state, action, pending] = useActionState(updateLecture.bind(null, props.id), {});
   return (
     <form action={action} className="flex max-w-lg flex-col gap-4">

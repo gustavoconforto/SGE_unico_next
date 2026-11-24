@@ -39,7 +39,12 @@ export const NAV: NavGroup[] = [
       { href: "/accounts/payable", label: "A pagar", icon: "money_off", permission: ["finance", "view"] },
       { href: "/accounts/payments", label: "Baixas", icon: "price_check", permission: ["payments", "view"] },
       { href: "/accounts/installments", label: "Parcelas", icon: "balance", permission: ["finance", "view"] },
-      { href: "/accounts/categories", label: "Categoria financeira", icon: "category", permission: ["finance", "view"] },
+      {
+        href: "/accounts/categories",
+        label: "Categoria financeira",
+        icon: "category",
+        permission: ["finance", "view"],
+      },
       { href: "/accounts/suppliers", label: "Fornecedores", icon: "storefront", permission: ["finance", "view"] },
     ],
   },
@@ -50,7 +55,12 @@ export const NAV: NavGroup[] = [
       { href: "/grades/entry", label: "Lançamento de notas", icon: "edit_note", permission: ["grades", "edit"] },
       { href: "/grades/student", label: "Notas do aluno", icon: "grading", permission: ["grades", "view"] },
       { href: "/grades/locks", label: "Bloqueio de notas", icon: "lock", permission: ["grades", "manage"] },
-      { href: "/lessons/timetable", label: "Grade horária", icon: "calendar_view_week", permission: ["lessons", "view"] },
+      {
+        href: "/lessons/timetable",
+        label: "Grade horária",
+        icon: "calendar_view_week",
+        permission: ["lessons", "view"],
+      },
       { href: "/lessons/lectures", label: "Diário de classe", icon: "menu_book", permission: ["lessons", "view"] },
       { href: "/q-and-a", label: "Plantões", icon: "support_agent", permission: ["qAndA", "view"] },
     ],
@@ -60,12 +70,37 @@ export const NAV: NavGroup[] = [
         icon: "route",
         items: [
           { href: "/pathways", label: "Criar itinerário", icon: "add_road", permission: ["pathways", "view"] },
-          { href: "/pathways/offerings", label: "Turmas de itinerário", icon: "groups", permission: ["pathways", "view"] },
+          {
+            href: "/pathways/offerings",
+            label: "Turmas de itinerário",
+            icon: "groups",
+            permission: ["pathways", "view"],
+          },
           { href: "/pathways/enrollments", label: "Inscrições", icon: "how_to_reg", permission: ["pathways", "view"] },
-          { href: "/pathways/enrollments/by-student", label: "Inscrever aluno", icon: "person_add", permission: ["pathways", "edit"] },
-          { href: "/pathways/sessions", label: "Aulas e chamadas", icon: "fact_check", permission: ["pathways", "view"] },
-          { href: "/pathways/attendance", label: "Frequência do aluno", icon: "event_available", permission: ["pathways", "view"] },
-          { href: "/pathways/workload", label: "Carga horária do aluno", icon: "schedule", permission: ["pathways", "view"] },
+          {
+            href: "/pathways/enrollments/by-student",
+            label: "Inscrever aluno",
+            icon: "person_add",
+            permission: ["pathways", "edit"],
+          },
+          {
+            href: "/pathways/sessions",
+            label: "Aulas e chamadas",
+            icon: "fact_check",
+            permission: ["pathways", "view"],
+          },
+          {
+            href: "/pathways/attendance",
+            label: "Frequência do aluno",
+            icon: "event_available",
+            permission: ["pathways", "view"],
+          },
+          {
+            href: "/pathways/workload",
+            label: "Carga horária do aluno",
+            icon: "schedule",
+            permission: ["pathways", "view"],
+          },
           { href: "/pathways/grades", label: "Notas de itinerário", icon: "grading", permission: ["pathways", "edit"] },
           { href: "/pathways/extra-grades", label: "Nota extra", icon: "star", permission: ["grades", "manage"] },
         ],
@@ -103,11 +138,21 @@ export const NAV: NavGroup[] = [
     label: "Configuração de matrícula",
     icon: "settings",
     items: [
-      { href: "/enrollments/school-years", label: "Ano escolar", icon: "calendar_month", permission: ["enrollmentSetup", "view"] },
+      {
+        href: "/enrollments/school-years",
+        label: "Ano escolar",
+        icon: "calendar_month",
+        permission: ["enrollmentSetup", "view"],
+      },
       { href: "/programs", label: "Cursos oferecidos", icon: "auto_stories", permission: ["programs", "view"] },
       { href: "/enrollments/types", label: "Contratos", icon: "contract", permission: ["enrollmentSetup", "view"] },
       { href: "/enrollments/discounts", label: "Descontos", icon: "percent", permission: ["enrollmentSetup", "view"] },
-      { href: "/enrollments/documents", label: "Documentos", icon: "description", permission: ["enrollmentSetup", "view"] },
+      {
+        href: "/enrollments/documents",
+        label: "Documentos",
+        icon: "description",
+        permission: ["enrollmentSetup", "view"],
+      },
     ],
   },
   {
@@ -117,7 +162,12 @@ export const NAV: NavGroup[] = [
       { href: "/classes", label: "Turmas", icon: "class", permission: ["academicSetup", "view"] },
       { href: "/departments", label: "Departamentos", icon: "groups", permission: ["academicSetup", "view"] },
       { href: "/grades/subjects", label: "Matérias", icon: "menu_book", permission: ["academicSetup", "view"] },
-      { href: "/grades/level-subjects", label: "Matérias por série", icon: "library_books", permission: ["academicSetup", "view"] },
+      {
+        href: "/grades/level-subjects",
+        label: "Matérias por série",
+        icon: "library_books",
+        permission: ["academicSetup", "view"],
+      },
       { href: "/grades/exam-types", label: "Tipos de avaliação", icon: "quiz", permission: ["academicSetup", "view"] },
       { href: "/incidents/types", label: "Tipos de ocorrência", icon: "rule", permission: ["academicSetup", "view"] },
     ],
@@ -131,7 +181,6 @@ function isActive(pathname: string, href: string): boolean {
   return !NAV.flatMap(allItems).some((i) => i.href.length > href.length && matches(i.href));
 }
 
-
 function allItems(group: NavGroup): NavItem[] {
   return [...group.items, ...(group.groups ?? []).flatMap(allItems)];
 }
@@ -142,7 +191,9 @@ function visibleNav(groups: NavGroup[], role: RoleName): NavGroup[] {
   return groups
     .map((group) => ({
       ...group,
-      items: group.items.filter(({ permission: [resource, action] }) => authClient.admin.checkRolePermission({ role, permissions: { [resource]: [action] } })),
+      items: group.items.filter(({ permission: [resource, action] }) =>
+        authClient.admin.checkRolePermission({ role, permissions: { [resource]: [action] } }),
+      ),
       groups: group.groups && visibleNav(group.groups, role),
     }))
     .filter((group) => allItems(group).length > 0);
@@ -167,11 +218,34 @@ function groupIcon(name: string) {
 const ITEM_INDENT = ["pl-8", "pl-14"];
 const BUTTON_INDENT = ["", "pl-8"];
 
-function NavCollapse({ group, pathname, onNavigate, depth = 0 }: { group: NavGroup; pathname: string; onNavigate: () => void; depth?: number }) {
+function NavCollapse({
+  group,
+  pathname,
+  onNavigate,
+  depth = 0,
+}: {
+  group: NavGroup;
+  pathname: string;
+  onNavigate: () => void;
+  depth?: number;
+}) {
   return (
-    <SidebarCollapse label={group.label} icon={groupIcon(group.icon)} className={BUTTON_INDENT[depth]} open={allItems(group).some((item) => isActive(pathname, item.href))} renderChevronIcon={() => <Icon name="expand_more" />}>
+    <SidebarCollapse
+      label={group.label}
+      icon={groupIcon(group.icon)}
+      className={BUTTON_INDENT[depth]}
+      open={allItems(group).some((item) => isActive(pathname, item.href))}
+      renderChevronIcon={() => <Icon name="expand_more" />}
+    >
       {group.items.map((item) => (
-        <SidebarItem key={item.href} as={Link} href={item.href} active={isActive(pathname, item.href)} onClick={onNavigate} className={ITEM_INDENT[depth]}>
+        <SidebarItem
+          key={item.href}
+          as={Link}
+          href={item.href}
+          active={isActive(pathname, item.href)}
+          onClick={onNavigate}
+          className={ITEM_INDENT[depth]}
+        >
           <span className="flex items-center gap-2">
             <Icon name={item.icon} />
             {item.label}
@@ -224,12 +298,28 @@ export function AppSidebar({ name, role }: { name: string; role: string }) {
   return (
     <>
       {/* Phone top bar: the menu button and the school, so the button never floats over the page title */}
-      <div ref={topBar} className="fixed inset-x-0 top-0 z-30 flex h-14 items-center gap-2 border-b border-gray-200 bg-white px-2 lg:hidden">
-        <button ref={menuButton} type="button" onClick={() => setOpen(true)} className="rounded-lg p-2 hover:bg-gray-100" aria-label="Abrir menu" aria-expanded={open}>
+      <div
+        ref={topBar}
+        className="fixed inset-x-0 top-0 z-30 flex h-14 items-center gap-2 border-b border-gray-200 bg-white px-2 lg:hidden"
+      >
+        <button
+          ref={menuButton}
+          type="button"
+          onClick={() => setOpen(true)}
+          className="rounded-lg p-2 hover:bg-gray-100"
+          aria-label="Abrir menu"
+          aria-expanded={open}
+        >
           <Icon name="menu" />
         </button>
         <Link href="/" className="flex items-center gap-2 text-sm font-semibold">
-          <Image src="/img/unico_logo_pequeno.png" alt="" width={28} height={28} className="rounded-md border border-gray-200" />
+          <Image
+            src="/img/unico_logo_pequeno.png"
+            alt=""
+            width={28}
+            height={28}
+            className="rounded-md border border-gray-200"
+          />
           Único Educacional
         </Link>
       </div>
@@ -243,13 +333,25 @@ export function AppSidebar({ name, role }: { name: string; role: string }) {
         <div className="flex h-full flex-col">
           <div className="mb-4 flex items-center gap-2">
             <Link href="/" className="flex flex-1 items-center gap-3 px-2" onClick={() => setOpen(false)}>
-              <Image src="/img/unico_logo_pequeno.png" alt="" width={36} height={36} className="rounded-lg border border-gray-200" />
+              <Image
+                src="/img/unico_logo_pequeno.png"
+                alt=""
+                width={36}
+                height={36}
+                className="rounded-lg border border-gray-200"
+              />
               <span className="leading-tight">
                 <span className="block text-sm font-semibold">Único Educacional</span>
                 <span className="block text-xs text-gray-600">Gestão escolar</span>
               </span>
             </Link>
-            <button ref={closeButton} type="button" onClick={() => setOpen(false)} className="rounded-lg p-2 hover:bg-gray-100 lg:hidden" aria-label="Fechar menu">
+            <button
+              ref={closeButton}
+              type="button"
+              onClick={() => setOpen(false)}
+              className="rounded-lg p-2 hover:bg-gray-100 lg:hidden"
+              aria-label="Fechar menu"
+            >
               <Icon name="close" />
             </button>
           </div>
@@ -276,7 +378,11 @@ export function AppSidebar({ name, role }: { name: string; role: string }) {
               <Icon name="key" />
               Alterar senha
             </Link>
-            <button type="button" onClick={signOut} className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
+            <button
+              type="button"
+              onClick={signOut}
+              className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
               <Icon name="logout" />
               Sair
             </button>

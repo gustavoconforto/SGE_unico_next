@@ -1,7 +1,15 @@
 "use client";
 
 import { startTransition, useActionState, useState } from "react";
-import { CheckOption, FieldMessage, Fieldset, FormButtons, FormFields, SelectField, TextField } from "@/components/form-fields";
+import {
+  CheckOption,
+  FieldMessage,
+  Fieldset,
+  FormButtons,
+  FormFields,
+  SelectField,
+  TextField,
+} from "@/components/form-fields";
 import { GRADE_LEVELS } from "@/lib/grades";
 import { saveLevelSubject } from "./actions";
 
@@ -20,7 +28,11 @@ export function LevelSubjectForm({ id = null, defaults, teacherIds = [], subject
   const [checked, setChecked] = useState<number[]>(teacherIds);
   const s = subjects.find((x) => String(x.id) === subjectId);
   const teachers = s?.departmentId ? (teachersByDepartment[s.departmentId] ?? []) : [];
-  const help = !s ? "Selecione a matéria para ver os professores." : !s.departmentId ? `A matéria ${s.name} não está vinculada a um departamento.` : "Professores do departamento da matéria.";
+  const help = !s
+    ? "Selecione a matéria para ver os professores."
+    : !s.departmentId
+      ? `A matéria ${s.name} não está vinculada a um departamento.`
+      : "Professores do departamento da matéria.";
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -32,7 +44,13 @@ export function LevelSubjectForm({ id = null, defaults, teacherIds = [], subject
     <form onSubmit={onSubmit} className="flex max-w-lg flex-col gap-4">
       <FormFields state={state} defaults={defaults}>
         <SelectField name="gradeLevel" label="Série" options={GRADE_LEVELS} />
-        <SelectField name="subjectId" label="Matéria" options={subjects.map((x) => [x.id, x.name] as const)} value={subjectId} onChange={setSubjectId} />
+        <SelectField
+          name="subjectId"
+          label="Matéria"
+          options={subjects.map((x) => [x.id, x.name] as const)}
+          value={subjectId}
+          onChange={setSubjectId}
+        />
         <Fieldset legend="Professores (opcional)" description={help}>
           {teachers.map(([tid, name]) => (
             <CheckOption
@@ -49,7 +67,14 @@ export function LevelSubjectForm({ id = null, defaults, teacherIds = [], subject
             <FieldMessage name="teachers" error={state.errors?.teachers?.[0]} />
           </div>
         </Fieldset>
-        <TextField name="weeklyClasses" label="Aulas por semana" type="number" step="0.01" optional help="Média semanal; aceita frações (ex.: 1,5)" />
+        <TextField
+          name="weeklyClasses"
+          label="Aulas por semana"
+          type="number"
+          step="0.01"
+          optional
+          help="Média semanal; aceita frações (ex.: 1,5)"
+        />
       </FormFields>
       <FormButtons pending={pending} cancelHref="/grades/level-subjects" />
     </form>

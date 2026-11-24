@@ -15,7 +15,11 @@ export const metadata: Metadata = { title: "Editar plantão" };
 export default async function EditQandAPage({ params }: PageProps<"/q-and-a/[id]/edit">) {
   await requirePermission("qAndA", "edit");
   const id = await idParam(params);
-  const [[row], year, subjects] = await Promise.all([db.select().from(qa).where(eq(qa.id, id)), currentSchoolYear(), subjectOptions()]);
+  const [[row], year, subjects] = await Promise.all([
+    db.select().from(qa).where(eq(qa.id, id)),
+    currentSchoolYear(),
+    subjectOptions(),
+  ]);
   if (!row) notFound();
   const enrollments = await activeEnrollmentOptions(row.enrollmentId, year?.id ?? null);
   return (

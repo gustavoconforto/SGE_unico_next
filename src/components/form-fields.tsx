@@ -7,13 +7,28 @@ import type { FormState } from "@/lib/form";
 
 // Fields read their error and value from the nearest <FormFields>, so forms don't thread props.
 // `fixed`: fields edited since the failed submit, whose server error no longer describes them
-type Ctx = { state: FormState; defaults: Record<string, unknown>; fixed: Set<string>; markFixed: (name: string) => void };
+type Ctx = {
+  state: FormState;
+  defaults: Record<string, unknown>;
+  fixed: Set<string>;
+  markFixed: (name: string) => void;
+};
 const FormContext = createContext<Ctx>({ state: {}, defaults: {}, fixed: new Set(), markFixed: () => {} });
 
 const EMPTY = new Set<string>();
 
 /** `note` adds to the "required fields" line, so a form opens with one instruction, not a stack of them. */
-export function FormFields({ state, defaults = {}, note, children }: { state: FormState; defaults?: Record<string, unknown>; note?: React.ReactNode; children: React.ReactNode }) {
+export function FormFields({
+  state,
+  defaults = {},
+  note,
+  children,
+}: {
+  state: FormState;
+  defaults?: Record<string, unknown>;
+  note?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   const noteRef = useRef<HTMLParagraphElement>(null);
   const summaryRef = useRef<HTMLDivElement>(null);
   // Tied to the state it was collected for, so the next submit's errors start fresh
@@ -21,7 +36,8 @@ export function FormFields({ state, defaults = {}, note, children }: { state: Fo
   const fixed = edited.for === state ? edited.names : EMPTY;
   const markFixed = useCallback(
     (name: string) => {
-      if (state.errors?.[name]?.length) setEdited((e) => ({ for: state, names: new Set(e.for === state ? e.names : []).add(name) }));
+      if (state.errors?.[name]?.length)
+        setEdited((e) => ({ for: state, names: new Set(e.for === state ? e.names : []).add(name) }));
     },
     [state],
   );
@@ -62,7 +78,10 @@ export function FormFields({ state, defaults = {}, note, children }: { state: Fo
   const [invalidFields, setInvalidFields] = useState<{ id: string; label: string }[]>([]);
   useEffect(() => {
     const form = noteRef.current?.closest("form");
-    const fields = [...(form?.querySelectorAll<HTMLElement>('[aria-invalid="true"]') ?? [])].map((el) => ({ id: el.id, label: fieldLabel(el) }));
+    const fields = [...(form?.querySelectorAll<HTMLElement>('[aria-invalid="true"]') ?? [])].map((el) => ({
+      id: el.id,
+      label: fieldLabel(el),
+    }));
     setInvalidFields(fields.filter((f) => f.id && f.label));
   }, [state, fixed]);
 
@@ -77,12 +96,19 @@ export function FormFields({ state, defaults = {}, note, children }: { state: Fo
           <Alert color="failure">
             {state.formError}
             {state.formError && errorCount > 0 && " "}
-            {errorCount > 0 && (errorCount === 1 ? "Corrija também o campo destacado abaixo." : `Corrija os ${errorCount} campos destacados abaixo:`)}
+            {errorCount > 0 &&
+              (errorCount === 1
+                ? "Corrija também o campo destacado abaixo."
+                : `Corrija os ${errorCount} campos destacados abaixo:`)}
             {errorCount > 1 && invalidFields.length > 0 && (
               <ul className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
                 {invalidFields.map((f) => (
                   <li key={f.id}>
-                    <a href={`#${f.id}`} onClick={(e) => (e.preventDefault(), document.getElementById(f.id)?.focus())} className="font-medium underline underline-offset-2">
+                    <a
+                      href={`#${f.id}`}
+                      onClick={(e) => (e.preventDefault(), document.getElementById(f.id)?.focus())}
+                      className="font-medium underline underline-offset-2"
+                    >
                       {f.label}
                     </a>
                   </li>
@@ -138,7 +164,15 @@ export function useField(name: string, help?: string) {
 
 type Base = { name: string; label: React.ReactNode; optional?: boolean; className?: string };
 
-export function FieldLabel({ htmlFor, label, optional }: { htmlFor: string; label: React.ReactNode; optional?: boolean }) {
+export function FieldLabel({
+  htmlFor,
+  label,
+  optional,
+}: {
+  htmlFor: string;
+  label: React.ReactNode;
+  optional?: boolean;
+}) {
   return (
     <Label htmlFor={htmlFor} className="mb-1.5 block">
       {/* The space sits inside the span so the accessible name never reads "(R$)(opcional)" */}
@@ -163,7 +197,15 @@ export function FieldMessage({ name, error, help }: { name: string; error?: stri
   ) : null;
 }
 
-function Wrapper({ name, label, optional, className, error, help, children }: Base & { error?: string; help?: string; children: React.ReactNode }) {
+function Wrapper({
+  name,
+  label,
+  optional,
+  className,
+  error,
+  help,
+  children,
+}: Base & { error?: string; help?: string; children: React.ReactNode }) {
   return (
     <div className={className}>
       <FieldLabel htmlFor={name} label={label} optional={optional} />
@@ -197,7 +239,10 @@ export function TextField(
   // Decimal fields are text so pt-BR keyboards can type a comma; the server parses "1234,56".
   const decimal = props.type === "number" && props.step?.includes(".");
   const control = props.onChange
-    ? { value: props.value ?? "", onChange: (e: React.ChangeEvent<HTMLInputElement>) => props.onChange!(e.target.value) }
+    ? {
+        value: props.value ?? "",
+        onChange: (e: React.ChangeEvent<HTMLInputElement>) => props.onChange!(e.target.value),
+      }
     : { defaultValue: props.mask ? props.mask(value) : value, onInput: props.mask && applyMask(props.mask) };
   return (
     <Wrapper {...props} error={error}>
@@ -243,15 +288,35 @@ export function TextareaField(props: Base & { rows?: number; help?: string }) {
   const { error, value, a11y } = useField(props.name, props.help);
   return (
     <Wrapper {...props} error={error}>
-      <Textarea id={props.name} name={props.name} rows={props.rows ?? 4} defaultValue={value} required={!props.optional} color={error ? "failure" : undefined} {...a11y} />
+      <Textarea
+        id={props.name}
+        name={props.name}
+        rows={props.rows ?? 4}
+        defaultValue={value}
+        required={!props.optional}
+        color={error ? "failure" : undefined}
+        {...a11y}
+      />
     </Wrapper>
   );
 }
 
-export function SelectField(props: Base & { options: readonly (readonly [string | number, string])[]; disabled?: boolean; help?: string; emptyLabel?: string } & Partial<Controlled>) {
+export function SelectField(
+  props: Base & {
+    options: readonly (readonly [string | number, string])[];
+    disabled?: boolean;
+    help?: string;
+    emptyLabel?: string;
+  } & Partial<Controlled>,
+) {
   const { error, value, a11y } = useField(props.name, props.help);
   useFixWhenSet(props.name, props.value);
-  const control = props.onChange ? { value: props.value ?? "", onChange: (e: React.ChangeEvent<HTMLSelectElement>) => props.onChange!(e.target.value) } : { defaultValue: value };
+  const control = props.onChange
+    ? {
+        value: props.value ?? "",
+        onChange: (e: React.ChangeEvent<HTMLSelectElement>) => props.onChange!(e.target.value),
+      }
+    : { defaultValue: value };
   return (
     <Wrapper {...props} error={error}>
       {/* key: React won't re-apply a changed defaultValue on <select> after a failed submit */}
@@ -277,7 +342,11 @@ export function SelectField(props: Base & { options: readonly (readonly [string 
 }
 
 /** One checkbox whose whole line (box + text) is the click target. */
-export function CheckOption({ id, label, ...box }: { id: string; label: React.ReactNode } & React.ComponentProps<typeof Checkbox>) {
+export function CheckOption({
+  id,
+  label,
+  ...box
+}: { id: string; label: React.ReactNode } & React.ComponentProps<typeof Checkbox>) {
   return (
     <label
       htmlFor={id}
@@ -299,7 +368,15 @@ export function CheckboxField({ name, label, help }: { name: string; label: stri
   );
 }
 
-export function Fieldset({ legend, description, children }: { legend: string; description?: string; children: React.ReactNode }) {
+export function Fieldset({
+  legend,
+  description,
+  children,
+}: {
+  legend: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
   return (
     <fieldset className="grid gap-x-4 gap-y-5 rounded-lg border border-gray-200 bg-white p-4 sm:grid-cols-2 sm:p-5">
       <legend className="px-1.5 text-base font-semibold text-gray-900">{legend}</legend>
@@ -422,7 +499,14 @@ export function FormButtons({
   const ref = useRef<HTMLDivElement>(null);
   useUnsavedGuard(ref);
   return (
-    <div ref={ref} className={sticky ? "sticky bottom-0 z-10 -mx-4 flex flex-wrap gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3 lg:mx-0 lg:px-0" : "flex flex-wrap gap-2"}>
+    <div
+      ref={ref}
+      className={
+        sticky
+          ? "sticky bottom-0 z-10 -mx-4 flex flex-wrap gap-2 border-t border-gray-200 bg-gray-50 px-4 py-3 lg:mx-0 lg:px-0"
+          : "flex flex-wrap gap-2"
+      }
+    >
       {note && <div className="basis-full">{note}</div>}
       <Button type="submit" disabled={pending} aria-busy={pending}>
         {pending ? "Salvando…" : label}

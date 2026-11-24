@@ -3,7 +3,13 @@ import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
-import { classesClass as klass, enrollmentsEnrollment as enrollment, enrollmentsEnrollmenttype as enrollmentType, enrollmentsSchoolyear as year, studentsStudent as student } from "@/db/schema/app";
+import {
+  classesClass as klass,
+  enrollmentsEnrollment as enrollment,
+  enrollmentsEnrollmenttype as enrollmentType,
+  enrollmentsSchoolyear as year,
+  studentsStudent as student,
+} from "@/db/schema/app";
 import { idParam } from "@/lib/list";
 import { enrollmentWorkload } from "@/lib/pathways-db";
 import { classCell } from "../../../../../(app)/incidents/records";
@@ -18,7 +24,13 @@ export default async function WorkloadPrintPage({ params }: PageProps<"/pathways
   const id = await idParam(params);
   const [[e], rows] = await Promise.all([
     db
-      .select({ name: student.name, registration: student.registration, className: klass.name, gradeLevel: klass.gradeLevel, begins: year.begins })
+      .select({
+        name: student.name,
+        registration: student.registration,
+        className: klass.name,
+        gradeLevel: klass.gradeLevel,
+        begins: year.begins,
+      })
       .from(enrollment)
       .innerJoin(student, eq(enrollment.studentId, student.id))
       .leftJoin(klass, eq(enrollment.schoolClassId, klass.id))
@@ -39,7 +51,9 @@ export default async function WorkloadPrintPage({ params }: PageProps<"/pathways
           <tbody>
             <tr>
               <th className={box}>ALUNO(A):</th>
-              <td className={box} colSpan={3}>{e.name}</td>
+              <td className={box} colSpan={3}>
+                {e.name}
+              </td>
             </tr>
             <tr>
               <th className={box}>MATRÍCULA:</th>
@@ -49,7 +63,9 @@ export default async function WorkloadPrintPage({ params }: PageProps<"/pathways
             </tr>
             <tr>
               <th className={box}>ANO ESCOLAR:</th>
-              <td className={box} colSpan={3}>{e.begins.slice(0, 4)}</td>
+              <td className={box} colSpan={3}>
+                {e.begins.slice(0, 4)}
+              </td>
             </tr>
           </tbody>
         </table>

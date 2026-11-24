@@ -4,10 +4,18 @@ import "dotenv/config";
 import { and, eq, not } from "drizzle-orm";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { db } from "@/db";
-import { enrollmentsEnrollment as enrollment, enrollmentsEnrollmenttype as enrollmentType, releasesEarlyexit as exit, releasesExitreason as reason } from "@/db/schema/app";
+import {
+  enrollmentsEnrollment as enrollment,
+  enrollmentsEnrollmenttype as enrollmentType,
+  releasesEarlyexit as exit,
+  releasesExitreason as reason,
+} from "@/db/schema/app";
 import { saveBatchExits } from "./actions";
 
-vi.mock("@/lib/authorization", () => ({ requirePermission: async () => ({ user: { role: "admin" } }), hasPermission: async () => true }));
+vi.mock("@/lib/authorization", () => ({
+  requirePermission: async () => ({ user: { role: "admin" } }),
+  hasPermission: async () => true,
+}));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT ${url}`);
@@ -36,7 +44,12 @@ describe.skipIf(!local)("saveBatchExits", async () => {
           .where(not(and(eq(enrollment.status, "A"), eq(enrollmentType.schoolYearId, year))!))
           .limit(1)
       : [];
-  const [{ id: reasonId }] = local ? await db.insert(reason).values({ reason: `teste ${Date.now()}` }).returning({ id: reason.id }) : [{ id: 0 }];
+  const [{ id: reasonId }] = local
+    ? await db
+        .insert(reason)
+        .values({ reason: `teste ${Date.now()}` })
+        .returning({ id: reason.id })
+    : [{ id: 0 }];
 
   afterAll(async () => {
     if (!local) return;
@@ -53,7 +66,8 @@ describe.skipIf(!local)("saveBatchExits", async () => {
     for (const id of ids) f.append("enrollmentId", String(id));
     return saveBatchExits({}, f).catch((e: Error) => e.message);
   };
-  const saved = async () => (await db.select({ id: exit.enrollmentId }).from(exit).where(eq(exit.reasonId, reasonId))).map((r) => r.id).sort();
+  const saved = async () =>
+    (await db.select({ id: exit.enrollmentId }).from(exit).where(eq(exit.reasonId, reasonId))).map((r) => r.id).sort();
   const sameYear = active.filter((a) => a.year === year).map((a) => a.id);
 
   it.skipIf(!sameYear.length)("saves one exit per student, and skips the ones already saved", async () => {
@@ -68,7 +82,9 @@ describe.skipIf(!local)("saveBatchExits", async () => {
 
   it.skipIf(!other)("saves nothing when a student isn't active in that school year", async () => {
     const before = await saved();
-    expect(await save([sameYear[0], other.id])).toMatchObject({ formError: expect.stringContaining("matrícula ativa") });
+    expect(await save([sameYear[0], other.id])).toMatchObject({
+      formError: expect.stringContaining("matrícula ativa"),
+    });
     expect(await saved()).toEqual(before);
   });
 });

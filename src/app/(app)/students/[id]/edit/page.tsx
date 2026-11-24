@@ -31,7 +31,13 @@ export default async function EditStudentPage({ params }: PageProps<"/students/[
     db.select().from(link).where(eq(link.studentId, id)).orderBy(asc(link.id)),
     guardianOptions(),
     db
-      .select({ id: enrollment.id, status: enrollment.status, program: program.name, level: enrollmentType.level, schoolYear: yearOf })
+      .select({
+        id: enrollment.id,
+        status: enrollment.status,
+        program: program.name,
+        level: enrollmentType.level,
+        schoolYear: yearOf,
+      })
       .from(enrollment)
       .innerJoin(enrollmentType, eq(enrollment.enrollmentTypeId, enrollmentType.id))
       .innerJoin(program, eq(enrollmentType.programId, program.id))
@@ -61,7 +67,10 @@ export default async function EditStudentPage({ params }: PageProps<"/students/[
               <ul className="flex flex-col gap-1">
                 {enrollments.map((e) => (
                   <li key={e.id} className="flex flex-wrap items-center gap-2">
-                    <Link href={`/enrollments/${e.id}/edit`} className="font-medium text-gray-900 underline underline-offset-2 hover:text-primary-700">
+                    <Link
+                      href={`/enrollments/${e.id}/edit`}
+                      className="font-medium text-gray-900 underline underline-offset-2 hover:text-primary-700"
+                    >
                       {enrollmentTypeLabel(e.program, e.level, e.schoolYear)}
                     </Link>
                     <EnrollmentStatusBadge status={e.status} />

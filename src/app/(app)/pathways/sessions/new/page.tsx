@@ -14,7 +14,11 @@ export default async function NewSessionPage({ searchParams }: PageProps<"/pathw
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">Nova aula</h1>
-      <SessionForm back={known ? `/pathways/sessions?offering=${known}` : "/pathways/sessions"} defaults={known ? { offeringId: known } : undefined} offerings={offerings.map((o) => [o.id, o.label])} />
+      <SessionForm
+        back={known ? `/pathways/sessions?offering=${known}` : "/pathways/sessions"}
+        defaults={known ? { offeringId: known } : undefined}
+        offerings={offerings.map((o) => [o.id, o.label])}
+      />
     </div>
   );
 }

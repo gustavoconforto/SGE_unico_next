@@ -18,7 +18,12 @@ export default async function EditMemberPage({ params }: PageProps<"/pathways/en
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">Editar inscrição em itinerário</h1>
-      <MemberForm id={id} back={`/pathways/enrollments?offering=${row.offeringId}`} defaults={row} {...await memberFormOptions(row.offeringId, row.enrollmentId)} />
+      <MemberForm
+        id={id}
+        back={`/pathways/enrollments?offering=${row.offeringId}`}
+        defaults={row}
+        {...await memberFormOptions(row.offeringId, row.enrollmentId)}
+      />
     </div>
   );
 }

@@ -16,42 +16,85 @@ import {
   studentsStudent as student,
 } from "@/db/schema/app";
 import { UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
-import { ENDED_EARLY, ENROLLMENT_STATUSES, contractValues, enrollmentInstallments, label, lopsidedInstallment, money, today } from "@/lib/finance";
-import { type Tx, cancelFutureInstallments, createEnrollmentAccount, financialGuardians, hasOverdueDebt, syncDocuments } from "@/lib/finance-db";
-import { type FormErrors, type FormState, REQUIRED, decimalField, foreignKey, formIds, formValues, intField, optionalForeignKey } from "@/lib/form";
+import {
+  ENDED_EARLY,
+  ENROLLMENT_STATUSES,
+  contractValues,
+  enrollmentInstallments,
+  label,
+  lopsidedInstallment,
+  money,
+  today,
+} from "@/lib/finance";
+import {
+  type Tx,
+  cancelFutureInstallments,
+  createEnrollmentAccount,
+  financialGuardians,
+  hasOverdueDebt,
+  syncDocuments,
+} from "@/lib/finance-db";
+import {
+  type FormErrors,
+  type FormState,
+  REQUIRED,
+  decimalField,
+  foreignKey,
+  formIds,
+  formValues,
+  intField,
+  optionalForeignKey,
+} from "@/lib/form";
 import { requirePermission } from "@/lib/authorization";
 import { enrollmentTypeLabel, studentName } from "./data";
 
 const statusField = z.enum(ENROLLMENT_STATUSES.map(([code]) => code) as [string, ...string[]], { error: REQUIRED });
 
 /** Enrollment.clean(): the rules that need the database. Returns field errors (empty when valid). */
-async function enrollmentErrors(conn: typeof db | Tx, e: { studentId: number; enrollmentTypeId: number; schoolClassId: number | null; enrolledAt: string; adding: boolean }) {
+async function enrollmentErrors(
+  conn: typeof db | Tx,
+  e: { studentId: number; enrollmentTypeId: number; schoolClassId: number | null; enrolledAt: string; adding: boolean },
+) {
   const errors: FormErrors = {};
   const [[s], [type]] = await Promise.all([
     conn.select({ selfFinancial: student.isSelfFinancial }).from(student).where(eq(student.id, e.studentId)),
     conn
-      .select({ schoolYearId: enrollmentType.schoolYearId, programId: enrollmentType.programId, level: enrollmentType.level, begins: year.begins })
+      .select({
+        schoolYearId: enrollmentType.schoolYearId,
+        programId: enrollmentType.programId,
+        level: enrollmentType.level,
+        begins: year.begins,
+      })
       .from(enrollmentType)
       .innerJoin(year, eq(enrollmentType.schoolYearId, year.id))
       .where(eq(enrollmentType.id, e.enrollmentTypeId)),
   ]);
   if (!s) errors.studentId = ["Selecione uma opção válida."];
   else if (!s.selfFinancial && (await financialGuardians(conn, e.studentId).limit(1)).length === 0)
-    errors.studentId = ["O aluno precisa ter ao menos um responsável financeiro cadastrado ou ser marcado como o próprio responsável financeiro."];
+    errors.studentId = [
+      "O aluno precisa ter ao menos um responsável financeiro cadastrado ou ser marcado como o próprio responsável financeiro.",
+    ];
   else if (e.adding && (await hasOverdueDebt(conn, e.studentId)))
-    errors.studentId = ["O aluno possui parcelas vencidas em matrícula anterior. Regularize os débitos antes de realizar uma nova matrícula."];
+    errors.studentId = [
+      "O aluno possui parcelas vencidas em matrícula anterior. Regularize os débitos antes de realizar uma nova matrícula.",
+    ];
   if (!type) {
     errors.enrollmentTypeId = ["Selecione uma opção válida."];
     return errors;
   }
   // Its installments would all fall in a year that has already passed
-  if (Number(e.enrolledAt.slice(0, 4)) > Number(type.begins.slice(0, 4))) errors.enrollmentTypeId = ["Este tipo de contrato é de um ano letivo encerrado."];
+  if (Number(e.enrolledAt.slice(0, 4)) > Number(type.begins.slice(0, 4)))
+    errors.enrollmentTypeId = ["Este tipo de contrato é de um ano letivo encerrado."];
   if (e.schoolClassId) {
-    const [c] = await conn.select({ yearId: klass.yearId, programId: klass.programId, gradeLevel: klass.gradeLevel }).from(klass).where(eq(klass.id, e.schoolClassId));
+    const [c] = await conn
+      .select({ yearId: klass.yearId, programId: klass.programId, gradeLevel: klass.gradeLevel })
+      .from(klass)
+      .where(eq(klass.id, e.schoolClassId));
     if (!c) errors.schoolClassId = ["Selecione uma opção válida."];
     else if (c.yearId !== type.schoolYearId) errors.schoolClassId = ["A turma pertence a outro ano letivo."];
     else if (c.programId !== type.programId) errors.schoolClassId = ["A turma pertence a outro curso."];
-    else if (type.level && c.gradeLevel !== Number(type.level)) errors.schoolClassId = ["A turma pertence a outra série."];
+    else if (type.level && c.gradeLevel !== Number(type.level))
+      errors.schoolClassId = ["A turma pertence a outra série."];
   }
   return errors;
 }
@@ -76,10 +119,9 @@ const createSchema = z.object({
 export async function createEnrollment(_prev: FormState, formData: FormData): Promise<FormState> {
   await requirePermission("enrollments", "edit");
   const values = formValues(formData);
-  const selectedTypes = Object.fromEntries(GROUPS.map(([, prefix]) => [prefix, formIds(formData, `${prefix}DiscountTypes`)])) as Record<
-    "first" | "remaining",
-    number[]
-  >;
+  const selectedTypes = Object.fromEntries(
+    GROUPS.map(([, prefix]) => [prefix, formIds(formData, `${prefix}DiscountTypes`)]),
+  ) as Record<"first" | "remaining", number[]>;
   // Multi-value checkboxes don't fit formValues(); echo them back as CSV for the form
   for (const [, prefix] of GROUPS) values[`${prefix}DiscountTypes`] = selectedTypes[prefix].join(",");
 
@@ -97,14 +139,19 @@ export async function createEnrollment(_prev: FormState, formData: FormData): Pr
     const percentField = createSchema.shape[`${prefix}CustomPercent`].safeParse(values[`${prefix}CustomPercent`]);
     const percent = percentField.success ? percentField.data : null;
     const observation = values[`${prefix}CustomObservation`]?.trim() ?? "";
-    if (percent && !observation) errors[`${prefix}CustomObservation`] = ["Informe quem autorizou ou o motivo do desconto avulso."];
-    else if (observation && !percent && !errors[`${prefix}CustomPercent`]) errors[`${prefix}CustomPercent`] = ["Informe o percentual do desconto avulso."];
+    if (percent && !observation)
+      errors[`${prefix}CustomObservation`] = ["Informe quem autorizou ou o motivo do desconto avulso."];
+    else if (observation && !percent && !errors[`${prefix}CustomPercent`])
+      errors[`${prefix}CustomPercent`] = ["Informe o percentual do desconto avulso."];
     const groupDiscounts = [
-      ...types.filter((t) => selectedTypes[prefix].includes(t.id)).map((t) => ({ group, discountTypeId: t.id, percentage: t.percentage, observation: "" })),
+      ...types
+        .filter((t) => selectedTypes[prefix].includes(t.id))
+        .map((t) => ({ group, discountTypeId: t.id, percentage: t.percentage, observation: "" })),
       ...(percent ? [{ group, discountTypeId: null, percentage: percent, observation }] : []),
     ];
     const total = groupDiscounts.reduce((sum, d) => sum.plus(money(d.percentage)), money(0));
-    if (total.gt(100)) errors[`${prefix}DiscountTypes`] = [`A soma dos descontos (${total.toString()}%) não pode passar de 100%.`];
+    if (total.gt(100))
+      errors[`${prefix}DiscountTypes`] = [`A soma dos descontos (${total.toString()}%) não pode passar de 100%.`];
     discounts.push(...groupDiscounts);
   }
 
@@ -118,14 +165,26 @@ export async function createEnrollment(_prev: FormState, formData: FormData): Pr
   // Checked with the field errors, so a submit reports everything at once instead of rejecting twice.
   const typeId = createSchema.shape.enrollmentTypeId.safeParse(values.enrollmentTypeId);
   const dueDay = createSchema.shape.dueDay.safeParse(values.dueDay);
-  if (values.confirmLopsided !== "on" && typeId.success && dueDay.success && !errors.firstDiscountTypes && !errors.remainingDiscountTypes) {
+  if (
+    values.confirmLopsided !== "on" &&
+    typeId.success &&
+    dueDay.success &&
+    !errors.firstDiscountTypes &&
+    !errors.remainingDiscountTypes
+  ) {
     const [priced] = await db
       .select({ totalPrice: enrollmentType.totalPrice, begins: year.begins })
       .from(enrollmentType)
       .innerJoin(year, eq(enrollmentType.schoolYearId, year.id))
       .where(eq(enrollmentType.id, typeId.data));
     const planned = priced && contractValues(priced.totalPrice, sum("F"), sum("R"));
-    if (planned && lopsidedInstallment(enrollmentInstallments(planned, enrolledAt, Number(priced.begins.slice(0, 4)), dueDay.data), planned.net))
+    if (
+      planned &&
+      lopsidedInstallment(
+        enrollmentInstallments(planned, enrolledAt, Number(priced.begins.slice(0, 4)), dueDay.data),
+        planned.net,
+      )
+    )
       errors.confirmLopsided = ["Marque a confirmação depois de conferir os valores com o responsável."];
   }
   if (!parsed.success || Object.keys(errors).length) return { errors, values };
@@ -137,12 +196,20 @@ export async function createEnrollment(_prev: FormState, formData: FormData): Pr
   try {
     id = await db.transaction(async (tx) => {
       const [type] = await tx
-        .select({ totalPrice: enrollmentType.totalPrice, level: enrollmentType.level, program: program.name, begins: year.begins })
+        .select({
+          totalPrice: enrollmentType.totalPrice,
+          level: enrollmentType.level,
+          program: program.name,
+          begins: year.begins,
+        })
         .from(enrollmentType)
         .innerJoin(program, eq(enrollmentType.programId, program.id))
         .innerJoin(year, eq(enrollmentType.schoolYearId, year.id))
         .where(eq(enrollmentType.id, data.enrollmentTypeId));
-      const [s] = await tx.select({ name: studentName, selfFinancial: student.isSelfFinancial }).from(student).where(eq(student.id, data.studentId));
+      const [s] = await tx
+        .select({ name: studentName, selfFinancial: student.isSelfFinancial })
+        .from(student)
+        .where(eq(student.id, data.studentId));
       const firstDiscountPercent = sum("F");
       const remainingDiscountPercent = sum("R");
       const [{ id: enrollmentId }] = await tx
@@ -179,7 +246,8 @@ export async function createEnrollment(_prev: FormState, formData: FormData): Pr
       return enrollmentId;
     });
   } catch (error) {
-    if (pgErrorCode(error) === UNIQUE_VIOLATION) return { formError: "Matrícula com este Aluno e Tipo de contrato já existe.", values };
+    if (pgErrorCode(error) === UNIQUE_VIOLATION)
+      return { formError: "Matrícula com este Aluno e Tipo de contrato já existe.", values };
     throw error;
   }
   redirect(`/enrollments/${id}/edit?msg=enrollment_created`);
@@ -206,14 +274,19 @@ export async function updateEnrollment(id: number, _prev: FormState, formData: F
   });
   // Ending the enrollment cancelled its future installments, and nothing brings them back
   if (ENDED_EARLY.includes(current.status) && !ENDED_EARLY.includes(data.status))
-    errors.status = [`A matrícula está ${label(ENROLLMENT_STATUSES, current.status).toLowerCase()} e suas parcelas futuras foram canceladas; ela não pode voltar a ficar ativa ou concluída.`];
+    errors.status = [
+      `A matrícula está ${label(ENROLLMENT_STATUSES, current.status).toLowerCase()} e suas parcelas futuras foram canceladas; ela não pode voltar a ficar ativa ou concluída.`,
+    ];
   if (Object.keys(errors).length) return { errors, values };
 
   const delivered = new Set(formData.getAll("delivered").map(Number));
   await db.transaction(async (tx) => {
     await tx.update(enrollment).set(data).where(eq(enrollment.id, id));
     if (ENDED_EARLY.includes(data.status)) await cancelFutureInstallments(tx, id);
-    const docs = await tx.select({ id: enrollmentDocument.id, isDelivered: enrollmentDocument.isDelivered }).from(enrollmentDocument).where(eq(enrollmentDocument.enrollmentId, id));
+    const docs = await tx
+      .select({ id: enrollmentDocument.id, isDelivered: enrollmentDocument.isDelivered })
+      .from(enrollmentDocument)
+      .where(eq(enrollmentDocument.enrollmentId, id));
     for (const doc of docs) {
       const isDelivered = delivered.has(doc.id);
       if (isDelivered !== doc.isDelivered)

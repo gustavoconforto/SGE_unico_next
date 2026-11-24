@@ -13,7 +13,11 @@ export const metadata: Metadata = { title: "Editar turma" };
 export default async function EditClassPage({ params }: PageProps<"/classes/[id]/edit">) {
   await requirePermission("academicSetup", "edit");
   const id = await idParam(params);
-  const [[row], programs, years] = await Promise.all([db.select().from(classesClass).where(eq(classesClass.id, id)), programOptions(), yearOptions()]);
+  const [[row], programs, years] = await Promise.all([
+    db.select().from(classesClass).where(eq(classesClass.id, id)),
+    programOptions(),
+    yearOptions(),
+  ]);
   if (!row) notFound();
   return (
     <div className="flex flex-col gap-4">

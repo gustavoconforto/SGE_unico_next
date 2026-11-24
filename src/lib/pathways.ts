@@ -40,10 +40,13 @@ export function lessonDays(weekdays: number[], begins: string, ends: string): st
 }
 
 /** The extra grade: the bimester's pathway grades added up, capped at the EX exam's maximum. */
-export const extraGrade = (pathwayPoints: Decimal.Value, maxScore: Decimal.Value) => Decimal.min(new Decimal(pathwayPoints), new Decimal(maxScore));
+export const extraGrade = (pathwayPoints: Decimal.Value, maxScore: Decimal.Value) =>
+  Decimal.min(new Decimal(pathwayPoints), new Decimal(maxScore));
 
 /** Whether a membership (joined..left) covers `day`. */
-export const isMemberOn = (m: { joinedAt: string; leftAt: string | null }, day: string) => m.joinedAt <= day && (m.leftAt === null || day <= m.leftAt);
+export const isMemberOn = (m: { joinedAt: string; leftAt: string | null }, day: string) =>
+  m.joinedAt <= day && (m.leftAt === null || day <= m.leftAt);
 
 /** "1,5" hours. */
-export const formatHours = (h: Decimal.Value) => new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(new Decimal(h).toNumber());
+export const formatHours = (h: Decimal.Value) =>
+  new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(new Decimal(h).toNumber());

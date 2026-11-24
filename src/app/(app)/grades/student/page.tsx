@@ -18,11 +18,18 @@ export default async function StudentGradesPage({ searchParams }: PageProps<"/gr
   const [options, card] = await Promise.all([activeEnrollmentOptions(), id ? loadReportCard(id) : null]);
   const active = card && card.enrollment.status === "A" ? card : null;
   await requirePermission("grades", "view");
-  const [staff, canEdit, locks] = active ? await Promise.all([hasPermission("grades", "manage"), hasPermission("grades", "edit"), allLocks()]) : [true, true, new Set<string>()];
+  const [staff, canEdit, locks] = active
+    ? await Promise.all([hasPermission("grades", "manage"), hasPermission("grades", "edit"), allLocks()])
+    : [true, true, new Set<string>()];
   // The score inputs this user can't edit in a subject's row (view-only user, locked bimester or staff-only exam)
   const readOnly = (subjectId: number) =>
-    [...[1, 2, 3, 4].map((b) => [b, active!.examTypes] as const), [FINAL_RECOVERY, active!.recoveryTypes] as const].flatMap(([b, types]) =>
-      types.filter((t) => !canEdit || gradeEditError(staff, locks.has(`${subjectId}:${b}`), t)).map((t) => `score_${b}_${t.id}`),
+    [
+      ...[1, 2, 3, 4].map((b) => [b, active!.examTypes] as const),
+      [FINAL_RECOVERY, active!.recoveryTypes] as const,
+    ].flatMap(([b, types]) =>
+      types
+        .filter((t) => !canEdit || gradeEditError(staff, locks.has(`${subjectId}:${b}`), t))
+        .map((t) => `score_${b}_${t.id}`),
     );
   const fix = (v: { toFixed(n: number): string } | null) => v?.toFixed(2) ?? null;
   return (
@@ -53,7 +60,10 @@ export default async function StudentGradesPage({ searchParams }: PageProps<"/gr
               Imprimir boletim
             </LinkButton>
           </div>
-          <p className="text-sm text-gray-500">Clique em Editar para alterar as notas de uma matéria. Use vírgula nos decimais (ex.: 2,5) e apague o valor para remover uma nota.</p>
+          <p className="text-sm text-gray-500">
+            Clique em Editar para alterar as notas de uma matéria. Use vírgula nos decimais (ex.: 2,5) e apague o valor
+            para remover uma nota.
+          </p>
           <div className="overflow-x-auto">
             <Table hoverable>
               <TableHead>
@@ -62,7 +72,11 @@ export default async function StudentGradesPage({ searchParams }: PageProps<"/gr
                     Matéria
                   </TableHeadCell>
                   {[1, 2, 3, 4].map((b) => (
-                    <TableHeadCell key={b} colSpan={active.examTypes.length + 1} className={`${GROUP} px-2 pb-1 text-center whitespace-nowrap`}>
+                    <TableHeadCell
+                      key={b}
+                      colSpan={active.examTypes.length + 1}
+                      className={`${GROUP} px-2 pb-1 text-center whitespace-nowrap`}
+                    >
                       {b}º bimestre
                     </TableHeadCell>
                   ))}
@@ -85,7 +99,11 @@ export default async function StudentGradesPage({ searchParams }: PageProps<"/gr
                 <TableRow>
                   {[1, 2, 3, 4].flatMap((b) => [
                     ...active.examTypes.map((t, i) => (
-                      <TableHeadCell key={`${b}-${t.id}`} className={`${i === 0 ? GROUP : ""} px-2 pt-0 text-right font-medium text-gray-500`} title={t.name}>
+                      <TableHeadCell
+                        key={`${b}-${t.id}`}
+                        className={`${i === 0 ? GROUP : ""} px-2 pt-0 text-right font-medium text-gray-500`}
+                        title={t.name}
+                      >
                         {t.code}
                       </TableHeadCell>
                     )),

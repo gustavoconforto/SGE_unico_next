@@ -3,7 +3,12 @@ import { and, count, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { ListPage, ListRow } from "@/components/list-page";
 import { db } from "@/db";
-import { incidentsBathroompermission as t, classesClass as klass, enrollmentsEnrollment as enrollment, studentsStudent as student } from "@/db/schema/app";
+import {
+  incidentsBathroompermission as t,
+  classesClass as klass,
+  enrollmentsEnrollment as enrollment,
+  studentsStudent as student,
+} from "@/db/schema/app";
 import { formatDate } from "@/lib/finance";
 import { PAGE_SIZE, pageParam, param, searchWhere } from "@/lib/list";
 
@@ -30,7 +35,12 @@ export default async function RecordListPage({ searchParams }: PageProps<"/incid
       .orderBy(desc(t.incidentDate), desc(t.createdAt))
       .limit(PAGE_SIZE)
       .offset((page - 1) * PAGE_SIZE),
-    db.select({ total: count() }).from(t).innerJoin(enrollment, eq(t.enrollmentId, enrollment.id)).innerJoin(student, eq(enrollment.studentId, student.id)).where(where),
+    db
+      .select({ total: count() })
+      .from(t)
+      .innerJoin(enrollment, eq(t.enrollmentId, enrollment.id))
+      .innerJoin(student, eq(enrollment.studentId, student.id))
+      .where(where),
   ]);
   return (
     <ListPage

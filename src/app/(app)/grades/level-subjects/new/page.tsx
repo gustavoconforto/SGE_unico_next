@@ -12,7 +12,10 @@ export default async function NewLevelSubjectPage({ searchParams }: PageProps<"/
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">Nova matéria na série</h1>
-      <LevelSubjectForm {...await levelSubjectFormOptions()} defaults={[1, 2, 3].includes(level) ? { gradeLevel: level } : undefined} />
+      <LevelSubjectForm
+        {...await levelSubjectFormOptions()}
+        defaults={[1, 2, 3].includes(level) ? { gradeLevel: level } : undefined}
+      />
     </div>
   );
 }

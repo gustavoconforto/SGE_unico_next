@@ -13,9 +13,9 @@ ano da data de início.
 
 **Pesquisa:** data de início ou de fim.
 
-| Campo | Descrição |
-|---|---|
-| Data de início / Data de fim | Começo e fim do ano letivo. |
+| Campo                             | Descrição                           |
+| --------------------------------- | ----------------------------------- |
+| Data de início / Data de fim      | Começo e fim do ano letivo.         |
 | Início e fim do 1º ao 4º bimestre | Datas de cada bimestre (opcionais). |
 
 O ano escolar é usado em vários lugares:
@@ -43,15 +43,15 @@ contrato.
 
 **Pesquisa:** curso, descrição ou ano escolar.
 
-| Campo | Descrição |
-|---|---|
-| Curso | Curso do contrato. |
-| Série | 1ª, 2ª ou 3ª série. Deixe vazio para cursos sem série (ex.: pré-vestibular). |
-| Ano escolar | Ano letivo do contrato. |
-| Valor total | Valor do contrato no ano inteiro, antes de descontos. É dividido em mensalidades. |
+| Campo                    | Descrição                                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------------------- |
+| Curso                    | Curso do contrato.                                                                          |
+| Série                    | 1ª, 2ª ou 3ª série. Deixe vazio para cursos sem série (ex.: pré-vestibular).                |
+| Ano escolar              | Ano letivo do contrato.                                                                     |
+| Valor total              | Valor do contrato no ano inteiro, antes de descontos. É dividido em mensalidades.           |
 | Desconto de pontualidade | Valor em R$ abatido de **cada parcela paga por boleto até o vencimento** (padrão R$ 90,00). |
-| Descrição | Observação livre. |
-| Início / Fim do contrato | Preenchidos automaticamente com as datas do ano escolar. |
+| Descrição                | Observação livre.                                                                           |
+| Início / Fim do contrato | Preenchidos automaticamente com as datas do ano escolar.                                    |
 
 > Alterar o valor de um tipo de contrato **não muda** as matrículas já feitas:
 > cada matrícula guarda o valor e o desconto do dia em que foi criada.
@@ -63,9 +63,9 @@ Descontos que podem ser aplicados a uma matrícula, como "Irmãos", "Bolsa
 
 **Pesquisa:** descrição.
 
-| Campo | Descrição |
-|---|---|
-| Descrição | Nome do desconto. |
+| Campo      | Descrição                                                  |
+| ---------- | ---------------------------------------------------------- |
+| Descrição  | Nome do desconto.                                          |
 | Percentual | Entre 0 e 100. É aplicado sobre o valor total do contrato. |
 
 Assim como o valor do contrato, o percentual fica gravado na matrícula no

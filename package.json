@@ -17,7 +17,9 @@
     "predb:reset": "tsx scripts/start-db.mts",
     "db:reset": "tsx scripts/reset-db.mts",
     "db:wipe": "tsx scripts/wipe-db.mts",
-    "create-admin": "tsx scripts/create-admin.mts"
+    "create-admin": "tsx scripts/create-admin.mts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "better-auth": "^1.7.25",
@@ -39,6 +41,8 @@
     "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.10.1",
     "tailwindcss": "4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^5",

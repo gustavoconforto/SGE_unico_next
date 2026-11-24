@@ -1,7 +1,12 @@
 // Read helpers for the payment pages. Not in actions.ts: every export of a "use server" file is a public endpoint.
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { accountsAccount as account, accountsInstallment as installment, accountsSupplier as supplier, studentsGuardian as guardian } from "@/db/schema/app";
+import {
+  accountsAccount as account,
+  accountsInstallment as installment,
+  accountsSupplier as supplier,
+  studentsGuardian as guardian,
+} from "@/db/schema/app";
 import { money } from "@/lib/finance";
 import { outstandingSql } from "@/lib/finance-db";
 
@@ -10,7 +15,15 @@ export type InstallmentChoice = { id: number; label: string; dueDate: string; ba
 
 /** "Contrato Ana - 1ª Série - 2027 · 3ª parcela": due date, payer and balance are shown beside it, not repeated in it. */
 const installmentLabel = (i: { description: string; number: number }) => `${i.description} · ${i.number}ª parcela`;
-export const toChoice = (r: { id: number; description: string; number: number; dueDate: string; balance: string; guardian: string | null; supplier: string | null }): InstallmentChoice => ({
+export const toChoice = (r: {
+  id: number;
+  description: string;
+  number: number;
+  dueDate: string;
+  balance: string;
+  guardian: string | null;
+  supplier: string | null;
+}): InstallmentChoice => ({
   id: r.id,
   label: installmentLabel(r),
   dueDate: r.dueDate,

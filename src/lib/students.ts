@@ -48,7 +48,8 @@ export function guardianRowsError(rows: GuardianRow[], selfFinancial: boolean): 
   const ids = kept.map((r) => r.guardianId);
   if (new Set(ids).size !== ids.length) return "O mesmo responsável aparece mais de uma vez.";
   // No guardian at all: the problem is the missing person, not the missing "financeiro" tick
-  if (kept.length === 0 && !selfFinancial) return "Escolha o responsável do aluno, ou indique que o próprio aluno é o responsável financeiro.";
+  if (kept.length === 0 && !selfFinancial)
+    return "Escolha o responsável do aluno, ou indique que o próprio aluno é o responsável financeiro.";
   const financial = kept.filter((r) => r.isFinancial).length;
   if (financial > 1) return "Apenas um responsável pode ser o responsável financeiro.";
   if (financial && selfFinancial)

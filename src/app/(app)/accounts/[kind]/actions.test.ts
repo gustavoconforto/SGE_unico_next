@@ -14,7 +14,10 @@ import {
 } from "@/db/schema/app";
 import { createAccount } from "./actions";
 
-vi.mock("@/lib/authorization", () => ({ requirePermission: async () => ({ user: { role: "admin" } }), hasPermission: async () => true }));
+vi.mock("@/lib/authorization", () => ({
+  requirePermission: async () => ({ user: { role: "admin" } }),
+  hasPermission: async () => true,
+}));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT ${url}`);
@@ -26,8 +29,21 @@ const local = /@(localhost|127\.0\.0\.1)[:/]/.test(process.env.DATABASE_URL ?? "
 const unique = String(Date.now());
 
 const person = (n: number) => ({
-  name: `Test ${n}`, sex: "F", cpf: `${unique}${n}`.slice(-11), rg: `t${n}${unique}`, issuingAuthority: "", nationality: "", placeOfBirth: "",
-  phone: "", mobile: "", email: "", address: "", neighborhood: "", city: "", state: "", zipCode: "",
+  name: `Test ${n}`,
+  sex: "F",
+  cpf: `${unique}${n}`.slice(-11),
+  rg: `t${n}${unique}`,
+  issuingAuthority: "",
+  nationality: "",
+  placeOfBirth: "",
+  phone: "",
+  mobile: "",
+  email: "",
+  address: "",
+  neighborhood: "",
+  city: "",
+  state: "",
+  zipCode: "",
 });
 
 describe.skipIf(!local)("createAccount payer rules", () => {
@@ -39,11 +55,21 @@ describe.skipIf(!local)("createAccount payer rules", () => {
 
   const form = (fields: Record<string, string>) => {
     const f = new FormData();
-    const all = { description: "test account", categoryId: String(receivableCategory), issueDate: "2030-01-01", studentId: String(studentId), grossValue: "300,00", installmentsCount: "3", firstDueDate: "2030-01-10", ...fields };
+    const all = {
+      description: "test account",
+      categoryId: String(receivableCategory),
+      issueDate: "2030-01-01",
+      studentId: String(studentId),
+      grossValue: "300,00",
+      installmentsCount: "3",
+      firstDueDate: "2030-01-10",
+      ...fields,
+    };
     for (const [k, v] of Object.entries(all)) f.set(k, v);
     return f;
   };
-  const create = (fields: Record<string, string> = {}) => createAccount("receivable", {}, form(fields)).catch((e: Error) => e.message);
+  const create = (fields: Record<string, string> = {}) =>
+    createAccount("receivable", {}, form(fields)).catch((e: Error) => e.message);
 
   beforeAll(async () => {
     [{ id: receivableCategory }, { id: payableCategory }] = await db
@@ -55,7 +81,17 @@ describe.skipIf(!local)("createAccount payer rules", () => {
       .returning({ id: accountType.id });
     [{ id: studentId }] = await db
       .insert(student)
-      .values({ ...person(1), socialName: "", useSocialName: false, registration: `t${unique}`, photo: "", isSelfFinancial: false, bloodType: "O+", observations: "", schoolFrom: "" })
+      .values({
+        ...person(1),
+        socialName: "",
+        useSocialName: false,
+        registration: `t${unique}`,
+        photo: "",
+        isSelfFinancial: false,
+        bloodType: "O+",
+        observations: "",
+        schoolFrom: "",
+      })
       .returning({ id: student.id });
     [{ id: financialId }, { id: otherId }] = await db
       .insert(guardian)
@@ -87,16 +123,25 @@ describe.skipIf(!local)("createAccount payer rules", () => {
   });
 
   it("refuses a payable category and a guardian who isn't financial", async () => {
-    expect(await create({ categoryId: String(payableCategory) })).toMatchObject({ errors: { categoryId: [expect.any(String)] } });
-    expect(await create({ guardianId: String(otherId) })).toMatchObject({ errors: { guardianId: [expect.any(String)] } });
+    expect(await create({ categoryId: String(payableCategory) })).toMatchObject({
+      errors: { categoryId: [expect.any(String)] },
+    });
+    expect(await create({ guardianId: String(otherId) })).toMatchObject({
+      errors: { guardianId: [expect.any(String)] },
+    });
   });
 
   it("charges the student's financial guardian when none is picked", async () => {
     const result = await create();
     const id = Number(/\/accounts\/receivable\/(\d+)\/edit/.exec(String(result))?.[1]);
     expect(id).toBeGreaterThan(0);
-    const [acc] = await db.select({ guardianId: account.guardianId, studentId: account.studentId }).from(account).where(eq(account.id, id));
+    const [acc] = await db
+      .select({ guardianId: account.guardianId, studentId: account.studentId })
+      .from(account)
+      .where(eq(account.id, id));
     expect(acc).toEqual({ guardianId: financialId, studentId });
-    expect(await db.select({ id: installment.id }).from(installment).where(eq(installment.accountId, id))).toHaveLength(3);
+    expect(await db.select({ id: installment.id }).from(installment).where(eq(installment.accountId, id))).toHaveLength(
+      3,
+    );
   });
 });

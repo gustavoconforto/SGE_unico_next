@@ -37,11 +37,22 @@ export function SearchBox({ placeholder = "Pesquisar..." }: { placeholder?: stri
     return () => clearTimeout(timer);
   }, [value, current, setParams]);
 
-  return <TextInput type="search" aria-label="Pesquisar" placeholder={placeholder} value={value} onChange={(e) => setValue(e.target.value)} className="w-full sm:max-w-md" />;
+  return (
+    <TextInput
+      type="search"
+      aria-label="Pesquisar"
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      className="w-full sm:max-w-md"
+    />
+  );
 }
 
 // Flowbite's cyan active page is 3.5:1 on its tint; the app's navy passes 4.5:1
-const PAGINATION_THEME = { pages: { selector: { active: "bg-primary-50 text-primary-800 hover:bg-primary-100 hover:text-primary-900" } } };
+const PAGINATION_THEME = {
+  pages: { selector: { active: "bg-primary-50 text-primary-800 hover:bg-primary-100 hover:text-primary-900" } },
+};
 
 export function ListPagination({ page, totalPages }: { page: number; totalPages: number }) {
   const setParams = useSetParams();
@@ -55,13 +66,29 @@ export function ListPagination({ page, totalPages }: { page: number; totalPages:
         <span className="text-sm text-gray-700 tabular-nums">
           Página {page} de {totalPages}
         </span>
-        <Pagination layout="navigation" currentPage={page} totalPages={totalPages} onPageChange={go} previousLabel="Anterior" nextLabel="Próxima" showIcons theme={PAGINATION_THEME} />
+        <Pagination
+          layout="navigation"
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={go}
+          previousLabel="Anterior"
+          nextLabel="Próxima"
+          showIcons
+          theme={PAGINATION_THEME}
+        />
       </div>
       <Pagination
         className="hidden sm:block"
         // Flowbite marks the <li>; the button is what gets focus, so it carries "current page" too
         renderPaginationButton={(p) => <PaginationButton {...p} aria-current={p.active ? "page" : undefined} />}
-        currentPage={page} totalPages={totalPages} onPageChange={go} previousLabel="Anterior" nextLabel="Próxima" showIcons theme={PAGINATION_THEME} />
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={go}
+        previousLabel="Anterior"
+        nextLabel="Próxima"
+        showIcons
+        theme={PAGINATION_THEME}
+      />
     </div>
   );
 }
@@ -90,7 +117,13 @@ export function FilterSelect({
       <Label htmlFor={`filter-${name}`} className="text-xs">
         {label}
       </Label>
-      <Select id={`filter-${name}`} sizing="sm" className="min-w-32" value={value} onChange={(e) => setParams({ [name]: e.target.value === fallback ? "" : e.target.value, page: "" })}>
+      <Select
+        id={`filter-${name}`}
+        sizing="sm"
+        className="min-w-32"
+        value={value}
+        onChange={(e) => setParams({ [name]: e.target.value === fallback ? "" : e.target.value, page: "" })}
+      >
         <option value={fallback ? "all" : ""}>{allLabel}</option>
         {options.map(([key, text]) => (
           <option key={key} value={key}>
@@ -110,7 +143,13 @@ export function FilterDate({ name, label }: { name: string; label: string }) {
       <Label htmlFor={`filter-${name}`} className="text-xs">
         {label}
       </Label>
-      <TextInput id={`filter-${name}`} type="date" sizing="sm" value={value} onChange={(e) => setParams({ [name]: e.target.value, page: "" })} />
+      <TextInput
+        id={`filter-${name}`}
+        type="date"
+        sizing="sm"
+        value={value}
+        onChange={(e) => setParams({ [name]: e.target.value, page: "" })}
+      />
     </div>
   );
 }
@@ -121,9 +160,16 @@ export function SortHeader({ label, sortKey }: { label: string; sortKey: string 
   const current = useSearchParams().get("sort") ?? "";
   const icon = current === sortKey ? "arrow_upward" : current === `-${sortKey}` ? "arrow_downward" : "unfold_more";
   return (
-    <button type="button" onClick={() => setParams({ sort: current === sortKey ? `-${sortKey}` : sortKey, page: "" })} className="inline-flex items-center gap-1 uppercase hover:text-gray-900">
+    <button
+      type="button"
+      onClick={() => setParams({ sort: current === sortKey ? `-${sortKey}` : sortKey, page: "" })}
+      className="inline-flex items-center gap-1 uppercase hover:text-gray-900"
+    >
       {label}
-      <span className={`material-symbols-outlined text-base ${icon === "unfold_more" ? "text-gray-400" : ""}`} aria-hidden="true">
+      <span
+        className={`material-symbols-outlined text-base ${icon === "unfold_more" ? "text-gray-400" : ""}`}
+        aria-hidden="true"
+      >
         {icon}
       </span>
     </button>

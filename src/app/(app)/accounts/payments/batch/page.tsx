@@ -22,16 +22,37 @@ export default async function BatchPaymentPage({ searchParams }: PageProps<"/acc
   const book = await hasPermission("payments", "view");
   const rows = ids.length
     ? await db
-        .select({ id: installment.id, number: installment.number, dueDate: installment.dueDate, balance: outstandingSql, accountId: account.id, description: account.description, enrollmentId: account.enrollmentId })
+        .select({
+          id: installment.id,
+          number: installment.number,
+          dueDate: installment.dueDate,
+          balance: outstandingSql,
+          accountId: account.id,
+          description: account.description,
+          enrollmentId: account.enrollmentId,
+        })
         .from(installment)
         .innerJoin(account, eq(installment.accountId, account.id))
-        .where(and(inArray(installment.id, ids), inArray(installment.status, PENDING_STATUSES), eq(account.direction, "R"), book ? undefined : isNotNull(account.enrollmentId)))
+        .where(
+          and(
+            inArray(installment.id, ids),
+            inArray(installment.status, PENDING_STATUSES),
+            eq(account.direction, "R"),
+            book ? undefined : isNotNull(account.enrollmentId),
+          ),
+        )
         .orderBy(asc(installment.number))
     : [];
   // One account per batch: the enrollment page only offers its contract's installments
   const accountId = rows[0]?.accountId;
   const valid = rows.filter((r) => r.accountId === accountId);
-  const backHref = valid[0]?.enrollmentId ? `/enrollments/${valid[0].enrollmentId}/edit` : enrollment ? `/enrollments/${enrollment}/edit` : accountId ? `/accounts/receivable/${accountId}/edit` : "/enrollments";
+  const backHref = valid[0]?.enrollmentId
+    ? `/enrollments/${valid[0].enrollmentId}/edit`
+    : enrollment
+      ? `/enrollments/${enrollment}/edit`
+      : accountId
+        ? `/accounts/receivable/${accountId}/edit`
+        : "/enrollments";
 
   return (
     <div className="flex flex-col gap-4">
@@ -47,7 +68,15 @@ export default async function BatchPaymentPage({ searchParams }: PageProps<"/acc
           </Link>
         </p>
       ) : (
-        <BatchPaymentForm rows={valid.map((r) => ({ id: r.id, number: r.number, dueDate: r.dueDate, balance: money(r.balance).toFixed(2) }))} cancelHref={backHref} />
+        <BatchPaymentForm
+          rows={valid.map((r) => ({
+            id: r.id,
+            number: r.number,
+            dueDate: r.dueDate,
+            balance: money(r.balance).toFixed(2),
+          }))}
+          cancelHref={backHref}
+        />
       )}
     </div>
   );

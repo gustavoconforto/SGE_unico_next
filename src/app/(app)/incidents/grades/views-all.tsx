@@ -25,8 +25,17 @@ export async function GradesAll({ kind, sp }: { kind: GradeKind; sp: Record<stri
   const code = kind === "extra" ? EXTRA_CODE : CONCEPT_CODE;
   const bimester = [1, 2, 3, 4].find((b) => b === Number(param(sp, "bimester"))) ?? null;
   const page = pageParam(sp);
-  const [y, [concept]] = await Promise.all([currentSchoolYear(), db.select().from(examType).where(eq(examType.code, code))]);
-  const where = y ? and(eq(enrollment.status, "A"), eq(enrollmentType.schoolYearId, y.id), searchWhere(param(sp, "q"), [student.name, student.socialName, klass.name])) : undefined;
+  const [y, [concept]] = await Promise.all([
+    currentSchoolYear(),
+    db.select().from(examType).where(eq(examType.code, code)),
+  ]);
+  const where = y
+    ? and(
+        eq(enrollment.status, "A"),
+        eq(enrollmentType.schoolYearId, y.id),
+        searchWhere(param(sp, "q"), [student.name, student.socialName, klass.name]),
+      )
+    : undefined;
   const base = () =>
     db
       .select({ id: enrollment.id, name: student.name, className: klass.name, gradeLevel: klass.gradeLevel })
@@ -70,7 +79,9 @@ export async function GradesAll({ kind, sp }: { kind: GradeKind; sp: Record<stri
       : [];
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">{kind === "extra" ? "Nota extra" : "Notas de conceito"} — todos os alunos</h1>
+      <h1 className="text-2xl font-semibold">
+        {kind === "extra" ? "Nota extra" : "Notas de conceito"} — todos os alunos
+      </h1>
       {!y && <Alert color="warning">Cadastre o ano letivo de {today().slice(0, 4)} para calcular.</Alert>}
       {!concept && (
         <Alert color="warning">
@@ -98,7 +109,13 @@ export async function GradesAll({ kind, sp }: { kind: GradeKind; sp: Record<stri
                   <TableRow key={r.id}>
                     <TableCell>{r.name}</TableCell>
                     <TableCell>{classCell(r)}</TableCell>
-                    <TableCell className="text-right">{!range ? "—" : range.low === range.high ? formatGrade(range.low) : `${formatGrade(range.low)} a ${formatGrade(range.high)}`}</TableCell>
+                    <TableCell className="text-right">
+                      {!range
+                        ? "—"
+                        : range.low === range.high
+                          ? formatGrade(range.low)
+                          : `${formatGrade(range.low)} a ${formatGrade(range.high)}`}
+                    </TableCell>
                   </TableRow>
                 );
               })}

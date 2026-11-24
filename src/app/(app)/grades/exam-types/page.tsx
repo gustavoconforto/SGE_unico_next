@@ -17,13 +17,33 @@ export default async function ExamTypeListPage({ searchParams }: PageProps<"/gra
   const where = searchWhere(param(sp, "q"), [examType.name, examType.code]);
   const page = pageParam(sp);
   const [rows, [{ total }]] = await Promise.all([
-    db.select().from(examType).where(where).orderBy(asc(examType.order), asc(examType.name)).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE),
+    db
+      .select()
+      .from(examType)
+      .where(where)
+      .orderBy(asc(examType.order), asc(examType.name))
+      .limit(PAGE_SIZE)
+      .offset((page - 1) * PAGE_SIZE),
     db.select({ total: count() }).from(examType).where(where),
   ]);
   return (
-    <ListPage title="Tipos de avaliação" newHref="/grades/exam-types/new" newLabel="Novo tipo de avaliação" searchPlaceholder="Pesquisar por nome ou sigla..." headers={["Sigla", "Nome", "Tipo", "Nota máxima", "Ordem"]} page={page} total={total}>
+    <ListPage
+      title="Tipos de avaliação"
+      newHref="/grades/exam-types/new"
+      newLabel="Novo tipo de avaliação"
+      searchPlaceholder="Pesquisar por nome ou sigla..."
+      headers={["Sigla", "Nome", "Tipo", "Nota máxima", "Ordem"]}
+      page={page}
+      total={total}
+    >
       {rows.map((t) => (
-        <ListRow key={t.id} cells={[t.code, t.name, label(EXAM_KINDS, t.kind), t.maxScore, t.order]} label={`${t.code} - ${t.name}`} editHref={`/grades/exam-types/${t.id}/edit`} deleteAction={deleteExamType.bind(null, t.id)} />
+        <ListRow
+          key={t.id}
+          cells={[t.code, t.name, label(EXAM_KINDS, t.kind), t.maxScore, t.order]}
+          label={`${t.code} - ${t.name}`}
+          editHref={`/grades/exam-types/${t.id}/edit`}
+          deleteAction={deleteExamType.bind(null, t.id)}
+        />
       ))}
     </ListPage>
   );

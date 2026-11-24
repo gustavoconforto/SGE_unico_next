@@ -46,10 +46,23 @@ export default async function EnrollmentPrintPage({ params }: PageProps<"/enroll
   const r = await loadEnrollmentReport(id);
   if (!r) notFound();
 
-  if (!r.payer) return <Missing id={id} studentId={r.student.id} message="O aluno não possui responsável financeiro cadastrado; cadastre-o antes de gerar o documento." />;
+  if (!r.payer)
+    return (
+      <Missing
+        id={id}
+        studentId={r.student.id}
+        message="O aluno não possui responsável financeiro cadastrado; cadastre-o antes de gerar o documento."
+      />
+    );
   // The ficha must certify both parents, as the law requires
   if (doc === "ficha" && !(r.father && r.mother))
-    return <Missing id={id} studentId={r.student.id} message="Cadastre o pai e a mãe do aluno como responsáveis antes de gerar a ficha de matrícula." />;
+    return (
+      <Missing
+        id={id}
+        studentId={r.student.id}
+        message="Cadastre o pai e a mãe do aluno como responsáveis antes de gerar a ficha de matrícula."
+      />
+    );
 
   return (
     <>

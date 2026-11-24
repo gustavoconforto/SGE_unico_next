@@ -3,7 +3,13 @@
 import { Label, Select } from "flowbite-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-type Field = { name: string; label: string; empty: string; options: readonly (readonly [string | number, string])[]; clears?: string[] };
+type Field = {
+  name: string;
+  label: string;
+  empty: string;
+  options: readonly (readonly [string | number, string])[];
+  clears?: string[];
+};
 
 /** Selects kept in the URL (Django's GET pick forms); a field can clear the ones that depend on it. */
 export function UrlPicker({ fields }: { fields: Field[] }) {

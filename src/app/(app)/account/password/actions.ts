@@ -19,7 +19,10 @@ const schema = z
     confirmPassword: z.string(),
   })
   .refine((v) => v.confirmPassword === v.newPassword, { path: ["confirmPassword"], message: "As senhas não conferem." })
-  .refine((v) => v.newPassword !== v.currentPassword, { path: ["newPassword"], message: "Escolha uma senha diferente da atual." });
+  .refine((v) => v.newPassword !== v.currentPassword, {
+    path: ["newPassword"],
+    message: "Escolha uma senha diferente da atual.",
+  });
 
 export async function changePassword(_prev: FormState, formData: FormData): Promise<FormState> {
   const session = await requireSession();
@@ -32,7 +35,8 @@ export async function changePassword(_prev: FormState, formData: FormData): Prom
       headers: await headers(),
     });
   } catch (error) {
-    if (error instanceof APIError && error.body?.code === "INVALID_PASSWORD") return { errors: { currentPassword: ["Senha atual incorreta."] } };
+    if (error instanceof APIError && error.body?.code === "INVALID_PASSWORD")
+      return { errors: { currentPassword: ["Senha atual incorreta."] } };
     throw error;
   }
   await db.update(user).set({ mustChangePassword: false }).where(eq(user.id, session.user.id));
