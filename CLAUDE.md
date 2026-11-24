@@ -125,4 +125,4 @@ Ported rules keep their Django names in camelCase; find them in the `src/lib/` m
 ## Tests
 
 Add Vitest tests next to the rule (`src/lib/<module>.test.ts`) for every new or changed rule. Run
-`npm test && npm run typecheck && npm run lint` after every change.
+`npm run format && npm test && npm run typecheck && npm run lint` after every change.
