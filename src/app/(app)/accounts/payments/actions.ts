@@ -116,12 +116,16 @@ export async function savePayment(
     interest: data.interest ?? "0.00",
     monetaryAdjust: data.monetaryAdjust ?? "0.00",
   };
-  const paid = principal(fields);
-  if (paid.lte(0))
+  if (principal(fields).lte(0))
     return {
       errors: { amount: ["O valor pago mais o desconto deve ser maior que a soma de multa, juros e correção."] },
       values,
     };
+  // A new payment split across methods: the main fields are the first method, each other method is one more row
+  const split = id ? null : splitParts(formData, fields);
+  if (split && "errors" in split) return { errors: split.errors, values };
+  const rows = split?.rows ?? [fields];
+  const paid = rows.reduce((sum, r) => sum.plus(principal(r)), money(0));
 
   if (id && !(await db.select({ id: payment.id }).from(payment).where(eq(payment.id, id))).length)
     redirect("/accounts/payments");
@@ -164,7 +168,7 @@ export async function savePayment(
     // shortcut: two edits moving payments between the same two installments in opposite directions deadlock; Postgres aborts one and the user resubmits
     if (previous && !sameAsBefore) await lockInstallment(tx, previous.installmentId);
     if (id) await tx.update(payment).set(fields).where(eq(payment.id, id));
-    else await tx.insert(payment).values(fields);
+    else await tx.insert(payment).values(rows);
     await refreshInstallmentStatus(tx, data.installmentId);
     if (previous && !sameAsBefore) await refreshInstallmentStatus(tx, previous.installmentId);
     return { accountId: target.accountId, enrollmentId: acc.enrollmentId };
@@ -177,6 +181,33 @@ export async function savePayment(
   if (returnTo)
     redirect(`/accounts/${direction === "R" ? "receivable" : "payable"}/${result.accountId}/edit?msg=${msg}`);
   redirect(`/accounts/payments${direction === "P" ? "?direction=P&" : "?"}msg=${msg}`);
+}
+
+type PaymentFields = z.infer<typeof paymentSchema> & {
+  penalty: string;
+  interest: string;
+  monetaryAdjust: string;
+  discount: string;
+};
+const splitAmount = decimalField({ min: 0.01, minMessage: "Informe um valor maior que zero." });
+
+/**
+ * The other methods of a split payment (`split` = row keys, `splitMethod_<k>` / `splitAmount_<k>`). Not in Django:
+ * the guardian pays part in cash, part by PIX. Each method is its own payment; charges and discount stay on the
+ * first (the main fields), so the total principal is the same as one payment of the sum.
+ */
+function splitParts(formData: FormData, fields: PaymentFields) {
+  const errors: FormErrors = {};
+  const parts = formIds(formData, "split").map((k) => {
+    const method = paymentSchema.shape.method.safeParse(formData.get(`splitMethod_${k}`) ?? "");
+    const amount = splitAmount.safeParse(formData.get(`splitAmount_${k}`) ?? "");
+    if (!method.success) errors[`splitMethod_${k}`] = [REQUIRED];
+    if (!amount.success) errors[`splitAmount_${k}`] = [amount.error.issues[0].message];
+    return { method: method.data ?? "", amount: amount.data ?? "0" };
+  });
+  if (Object.keys(errors).length) return { errors };
+  const zero = { penalty: "0.00", interest: "0.00", monetaryAdjust: "0.00", discount: "0.00" };
+  return { rows: [fields, ...parts.map((p) => ({ ...fields, ...zero, ...p }))] };
 }
 
 const batchSchema = paymentSchema.pick({ paidAt: true, method: true, notes: true });

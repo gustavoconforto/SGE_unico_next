@@ -110,6 +110,60 @@ describe.skipIf(!local)("savePayment / deletePayment", () => {
     expect(await status()).toBe("A");
   });
 
+  it("splits a new payment across methods: one row each, charges on the first, all or nothing", async () => {
+    const rows = () => db.select().from(payment).where(eq(payment.installmentId, installmentId));
+    // Valor pago is the first method's share; the other methods add to it
+    const split = (first: string, fields: Record<string, string>) => {
+      const f = form(first);
+      f.set("penalty", "2,00");
+      f.append("split", "1");
+      f.append("split", "2");
+      for (const [k, v] of Object.entries(fields)) f.set(k, v);
+      return savePayment(null, "P", null, {}, f).catch((e: Error) => e.message);
+    };
+    // A part with no method: nothing saved
+    expect(
+      await split("52,00", { splitAmount_1: "30,00", splitMethod_2: "DIN", splitAmount_2: "20,00" }),
+    ).toMatchObject({ errors: { splitMethod_1: [expect.any(String)] } });
+    // The first method's 2,00 is all multa
+    expect(
+      await split("2,00", {
+        splitMethod_1: "DIN",
+        splitAmount_1: "60,00",
+        splitMethod_2: "CRE",
+        splitAmount_2: "40,00",
+      }),
+    ).toMatchObject({ errors: { amount: [expect.any(String)] } });
+    // 50 + 30 + 30 settles 110 of a 100 balance: the sum is what's checked
+    expect(
+      await split("52,00", {
+        splitMethod_1: "DIN",
+        splitAmount_1: "30,00",
+        splitMethod_2: "CRE",
+        splitAmount_2: "30,00",
+      }),
+    ).toMatchObject({ errors: { amount: [expect.stringContaining("quitaria R$ 110,00")] } });
+    expect(await rows()).toHaveLength(0);
+
+    expect(
+      await split("52,00", {
+        splitMethod_1: "DIN",
+        splitAmount_1: "30,00",
+        splitMethod_2: "CRE",
+        splitAmount_2: "20,00",
+      }),
+    ).toMatch(/^REDIRECT/);
+    const saved = (await rows()).sort((a, b) => a.id - b.id);
+    expect(saved.map((r) => [r.method, r.amount, r.penalty])).toEqual([
+      ["PIX", "52.00", "2.00"],
+      ["DIN", "30.00", "0.00"],
+      ["CRE", "20.00", "0.00"],
+    ]);
+    expect(await status()).toBe("Q");
+    await db.delete(payment).where(eq(payment.installmentId, installmentId));
+    await db.update(installment).set({ status: "A" }).where(eq(installment.id, installmentId));
+  });
+
   it("without payments.view, only takes new payments of enrollment installments", async () => {
     expect(await save(null, "10,00")).toMatch(/^REDIRECT/);
     const [{ id }] = await db.select({ id: payment.id }).from(payment).where(eq(payment.installmentId, installmentId));

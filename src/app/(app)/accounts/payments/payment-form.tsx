@@ -1,9 +1,19 @@
 "use client";
 
+import { Button } from "flowbite-react";
 import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import { type ComboOption, Combobox } from "@/components/combobox";
 import { Fieldset, FormButtons, FormFields, SelectField, TextField } from "@/components/form-fields";
-import { PAYMENT_METHODS, type PaymentValues, formatDate, formatMoney, money, principal, today } from "@/lib/finance";
+import {
+  type Money,
+  PAYMENT_METHODS,
+  type PaymentValues,
+  formatDate,
+  formatMoney,
+  money,
+  principal,
+  today,
+} from "@/lib/finance";
 import { parseMoney as parse } from "@/lib/form";
 import { savePayment, searchInstallments } from "./actions";
 import type { InstallmentChoice } from "./data";
@@ -103,6 +113,12 @@ export function PaymentForm({ id, direction, returnTo, defaults = {}, selected, 
 
   useLastMethod(!id);
 
+  // Other methods of a split payment (new payments only); the main method takes what they leave
+  const [parts, setParts] = useState<{ key: number; method: string; amount: string }[]>([]);
+  const nextKey = useRef(1);
+  const setPart = (key: number, change: Partial<{ method: string; amount: string }>) =>
+    setParts((all) => all.map((p) => (p.key === key ? { ...p, ...change } : p)));
+
   // On edit, the server's balance already excludes this payment: add it back while the installment is unchanged
   const original =
     id && selected && installment?.id === selected.id
@@ -117,12 +133,18 @@ export function PaymentForm({ id, direction, returnTo, defaults = {}, selected, 
       ? charges.reduce((sum, c) => sum!.plus(c!), balance)!.minus(discount)
       : null;
   const hasCharges = charges.some((c) => c && !c.isZero());
-  const amountValue = !amountTyped && total?.gt(0) ? typed(total.toFixed(2)) : values.amount;
+  // The other methods of a split: Valor pago is then the first method's share, and follows what they leave
+  const partAmounts = parts.map((p) => parse(p.amount));
+  const others = partAmounts.every(Boolean) ? partAmounts.reduce<Money>((sum, a) => sum.plus(a!), money(0)) : null;
+  const firstShare = total && others ? total.minus(others) : null;
+  const amountValue = !amountTyped && firstShare?.gt(0) ? typed(firstShare.toFixed(2)) : values.amount;
 
   const parsed = Object.fromEntries(MONEY_FIELDS.map((k) => [k, parse(k === "amount" ? amountValue : values[k])]));
-  const settles = MONEY_FIELDS.every((k) => parsed[k]) ? principal(parsed as PaymentValues) : null;
+  const settles =
+    others && MONEY_FIELDS.every((k) => parsed[k]) ? principal(parsed as PaymentValues).plus(others) : null;
   const after = balance && settles ? balance.minus(settles) : null;
-  const amount = parsed.amount;
+  // Everything received, all methods together
+  const amount = parsed.amount && others ? parsed.amount.plus(others) : null;
 
   // Submitted by hand so React doesn't reset the installment search
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -196,7 +218,7 @@ export function PaymentForm({ id, direction, returnTo, defaults = {}, selected, 
           <SelectField name="method" label="Forma de pagamento" options={PAYMENT_METHODS} />
           <TextField
             name="amount"
-            label="Valor pago (R$)"
+            label={parts.length ? "Valor na 1ª forma (R$)" : "Valor pago (R$)"}
             type="number"
             step="0.01"
             value={amountValue}
@@ -204,8 +226,70 @@ export function PaymentForm({ id, direction, returnTo, defaults = {}, selected, 
               setAmountTyped(true);
               set("amount")(v);
             }}
-            help="Total recebido. Acompanha o saldo, os acréscimos e o desconto até você digitar outro valor"
+            help={
+              parts.length
+                ? "Quanto foi pago na forma de pagamento acima. Acompanha o que falta até você digitar outro valor"
+                : "Total recebido. Acompanha o saldo, os acréscimos e o desconto até você digitar outro valor"
+            }
           />
+          {parts.length > 0 && (
+            <div className="flex flex-col gap-3 rounded-md border border-gray-200 p-3 sm:col-span-2">
+              {parts.map((p, i) => (
+                <div
+                  key={p.key}
+                  role="group"
+                  aria-label={`Forma ${i + 2}`}
+                  className="grid items-end gap-4 sm:grid-cols-[1fr_1fr_auto]"
+                >
+                  <input type="hidden" name="split" value={p.key} />
+                  <SelectField
+                    name={`splitMethod_${p.key}`}
+                    label={`Forma ${i + 2}`}
+                    options={PAYMENT_METHODS}
+                    value={p.method}
+                    onChange={(v) => setPart(p.key, { method: v })}
+                  />
+                  <TextField
+                    name={`splitAmount_${p.key}`}
+                    label="Valor (R$)"
+                    type="number"
+                    step="0.01"
+                    value={p.amount}
+                    onChange={(v) => setPart(p.key, { amount: v })}
+                  />
+                  <Button
+                    size="sm"
+                    color="alternative"
+                    className="mb-0.5 enabled:hover:text-red-700"
+                    aria-label={`Remover forma ${i + 2}`}
+                    onClick={() => setParts((all) => all.filter((x) => x.key !== p.key))}
+                  >
+                    Remover
+                  </Button>
+                </div>
+              ))}
+              <p aria-live="polite" className="text-sm text-gray-700">
+                Total recebido nas {parts.length + 1} formas:{" "}
+                <strong className="font-semibold text-gray-900 tabular-nums">
+                  {amount ? `R$ ${formatMoney(amount)}` : "—"}
+                </strong>
+              </p>
+            </div>
+          )}
+          {!id && (
+            <div className="sm:col-span-2">
+              <Button
+                size="sm"
+                color="alternative"
+                onClick={() => setParts((all) => [...all, { key: nextKey.current++, method: "", amount: "" }])}
+              >
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  add
+                </span>{" "}
+                Dividir em outra forma de pagamento
+              </Button>
+            </div>
+          )}
           <TextField
             name="discount"
             label="Desconto (R$)"
