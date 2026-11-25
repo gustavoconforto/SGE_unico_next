@@ -78,6 +78,14 @@ export default async function ReceiptPage({ params, searchParams }: PageProps<"/
     return { ...r, balanceAfter: installmentBalance(r.installmentAmount, "A", paid) };
   });
   const total = lines.reduce((s, r) => s.plus(money(r.p.amount)), ZERO);
+  // One cheque may pay several installments (batch): list each cheque once
+  const cheques = [
+    ...new Map(
+      lines
+        .filter((r) => r.p.checkNumber)
+        .map((r) => [[r.p.checkBank, r.p.checkBranch, r.p.checkAccount, r.p.checkNumber].join("|"), r.p]),
+    ).values(),
+  ];
   const byMethod = new Map<string, ReturnType<typeof money>>();
   for (const r of lines) byMethod.set(r.p.method, (byMethod.get(r.p.method) ?? ZERO).plus(money(r.p.amount)));
 
@@ -131,6 +139,20 @@ export default async function ReceiptPage({ params, searchParams }: PageProps<"/
                     ))}
               </td>
             </tr>
+            {cheques.length > 0 && (
+              <tr>
+                <td className="pr-4 align-top">{cheques.length > 1 ? "Cheques:" : "Cheque:"}</td>
+                <td>
+                  {cheques.map((c) => (
+                    <span key={c.id} className="block">
+                      nº {c.checkNumber} · banco {c.checkBank} · ag. {c.checkBranch} · conta {c.checkAccount}
+                      {c.checkDate && ` · bom para ${formatDate(c.checkDate)}`} · titular {c.checkHolderName} (CPF{" "}
+                      {formatDocument(c.checkHolderCpf)})
+                    </span>
+                  ))}
+                </td>
+              </tr>
+            )}
             <tr>
               <td className="pr-4">Lançamento Nº:</td>
               <td>{a.id}</td>

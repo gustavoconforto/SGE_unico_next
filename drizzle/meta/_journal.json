@@ -78,6 +78,20 @@
       "when": 1795607021562,
       "tag": "0010_calendar",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795615074673,
+      "tag": "0011_payment_check",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1795615692521,
+      "tag": "0012_payment_check_bank",
+      "breakpoints": true
     }
   ]
 }

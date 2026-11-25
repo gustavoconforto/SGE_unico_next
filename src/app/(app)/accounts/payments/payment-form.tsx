@@ -16,6 +16,7 @@ import {
 } from "@/lib/finance";
 import { parseMoney as parse } from "@/lib/form";
 import { savePayment, searchInstallments } from "./actions";
+import { CheckFields } from "./check-fields";
 import type { InstallmentChoice } from "./data";
 
 type Props = {
@@ -31,14 +32,18 @@ const PLACEHOLDERS = { R: "Buscar por conta ou responsável…", P: "Buscar por 
 const LAST_METHOD = "gestao:last-payment-method";
 
 /** A new payment starts with the method this person used last (per browser; nothing else depends on it). */
-export function useLastMethod(enabled: boolean) {
+export function useLastMethod(enabled: boolean, onRestore?: (method: string) => void) {
   useEffect(() => {
     const select = document.getElementById("method") as HTMLSelectElement | null;
     if (!enabled || !select || select.value) return;
     try {
       const last = localStorage.getItem(LAST_METHOD);
-      if (last && PAYMENT_METHODS.some(([code]) => code === last)) select.value = last;
+      if (last && PAYMENT_METHODS.some(([code]) => code === last)) {
+        select.value = last;
+        onRestore?.(last);
+      }
     } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- restores once on mount
   }, [enabled]);
 }
 
@@ -111,7 +116,9 @@ export function PaymentForm({ id, direction, returnTo, defaults = {}, selected, 
   const showAdjustments =
     !!late || !!state.errors?.amount || ADJUSTMENTS.some(([name]) => state.errors?.[name] || values[name]);
 
-  useLastMethod(!id);
+  // The cheque details show only for CHQ on receivables
+  const [method, setMethod] = useState(String(defaults.method ?? ""));
+  useLastMethod(!id, setMethod);
 
   // Other methods of a split payment (new payments only); the main method takes what they leave
   const [parts, setParts] = useState<{ key: number; method: string; amount: string }[]>([]);
@@ -215,7 +222,13 @@ export function PaymentForm({ id, direction, returnTo, defaults = {}, selected, 
         </Fieldset>
         <Fieldset legend="Valores">
           <TextField name="paidAt" label="Data do pagamento" type="date" />
-          <SelectField name="method" label="Forma de pagamento" options={PAYMENT_METHODS} />
+          <SelectField
+            name="method"
+            label="Forma de pagamento"
+            options={PAYMENT_METHODS}
+            value={method}
+            onChange={setMethod}
+          />
           <TextField
             name="amount"
             label={parts.length ? "Valor na 1ª forma (R$)" : "Valor pago (R$)"}
@@ -339,6 +352,7 @@ export function PaymentForm({ id, direction, returnTo, defaults = {}, selected, 
           </details>
           <TextField name="notes" label="Observações" maxLength={200} optional className="sm:col-span-2" />
         </Fieldset>
+        {method === "CHQ" && direction === "R" && <CheckFields defaults={defaults} />}
       </FormFields>
       <FormButtons
         pending={pending}

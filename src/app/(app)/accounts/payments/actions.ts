@@ -30,9 +30,13 @@ import {
   decimalField,
   foreignKey,
   formIds,
+  optionalDate,
   parseForm,
   requiredDate,
+  requiredText,
 } from "@/lib/form";
+import { looksLikeCmc7 } from "@/lib/cmc7";
+import { personFields } from "@/lib/person";
 import { foldSql, likePattern, stripAccents } from "@/lib/list";
 import { hasPermission, requirePermission } from "@/lib/authorization";
 import { type InstallmentChoice, toChoice } from "./data";
@@ -49,6 +53,33 @@ const paymentSchema = z.object({
   method: z.enum(PAYMENT_METHODS.map(([c]) => c) as [string, ...string[]], { error: REQUIRED }),
   notes: z.string().trim().max(200).default(""),
 });
+
+/** Cheque details (not in Django), asked only when the method is CHQ; the date is only for a pre-dated cheque. */
+const checkSchema = z.object({
+  // A whole CMC-7 line reaches here only when the form couldn't split it: its check digits don't match
+  checkNumber: requiredText(40)
+    .refine((v) => !looksLikeCmc7(v), "Código do cheque não confere: verifique os dígitos da linha de baixo do cheque.")
+    .pipe(requiredText(20)),
+  checkBank: z
+    .string({ error: REQUIRED })
+    .trim()
+    .min(1, REQUIRED)
+    .regex(/^\d{3}$/, "Informe os 3 dígitos do código do banco."),
+  checkBranch: requiredText(10),
+  checkAccount: requiredText(20),
+  checkDate: optionalDate,
+  checkHolderName: requiredText(200),
+  checkHolderCpf: personFields.cpf,
+});
+const NO_CHECK = {
+  checkNumber: "",
+  checkBank: "",
+  checkBranch: "",
+  checkAccount: "",
+  checkDate: null,
+  checkHolderName: "",
+  checkHolderCpf: "",
+};
 
 /** The installment search box: pending installments of one direction (ReceivableInstallmentLookupView). */
 export async function searchInstallments(direction: "R" | "P", q: string): Promise<InstallmentChoice[]> {
@@ -107,10 +138,27 @@ export async function savePayment(
   // Without the book (payments.view) only new payments of enrollment installments: the desk at signing
   const book = await hasPermission("payments", "view");
   if (id && !book) redirect("/forbidden");
+  const [stored] = id
+    ? await db
+        .select({ checkNumber: payment.checkNumber, method: payment.method })
+        .from(payment)
+        .where(eq(payment.id, id))
+    : [];
+  if (id && !stored) redirect("/accounts/payments");
   const { data, values, state } = parseForm(paymentSchema, formData);
-  if (!data) return state;
+  // Cheque details are the payer's cheque, so receivables only; another method clears them.
+  // A cheque payment saved before this screen asked for them (or from Django) stays editable while they stay blank.
+  const blankCheck = Object.keys(NO_CHECK).every((k) => !String(formData.get(k) ?? "").trim());
+  const askCheck =
+    direction === "R" &&
+    formData.get("method") === "CHQ" &&
+    !(stored?.method === "CHQ" && !stored.checkNumber && blankCheck);
+  const check = askCheck ? parseForm(checkSchema, formData) : { data: NO_CHECK };
+  if (!data || !check.data)
+    return { errors: { ...state?.errors, ...("state" in check ? check.state?.errors : {}) }, values };
   const fields = {
     ...data,
+    ...check.data,
     discount: data.discount ?? "0.00",
     penalty: data.penalty ?? "0.00",
     interest: data.interest ?? "0.00",
@@ -126,9 +174,6 @@ export async function savePayment(
   if (split && "errors" in split) return { errors: split.errors, values };
   const rows = split?.rows ?? [fields];
   const paid = rows.reduce((sum, r) => sum.plus(principal(r)), money(0));
-
-  if (id && !(await db.select({ id: payment.id }).from(payment).where(eq(payment.id, id))).length)
-    redirect("/accounts/payments");
 
   const result = await db.transaction(async (tx) => {
     const target = await lockInstallment(tx, data.installmentId);
@@ -183,12 +228,13 @@ export async function savePayment(
   redirect(`/accounts/payments${direction === "P" ? "?direction=P&" : "?"}msg=${msg}`);
 }
 
-type PaymentFields = z.infer<typeof paymentSchema> & {
-  penalty: string;
-  interest: string;
-  monetaryAdjust: string;
-  discount: string;
-};
+type PaymentFields = z.infer<typeof paymentSchema> &
+  z.infer<typeof checkSchema> & {
+    penalty: string;
+    interest: string;
+    monetaryAdjust: string;
+    discount: string;
+  };
 const splitAmount = decimalField({ min: 0.01, minMessage: "Informe um valor maior que zero." });
 
 /**
@@ -207,7 +253,8 @@ function splitParts(formData: FormData, fields: PaymentFields) {
   });
   if (Object.keys(errors).length) return { errors };
   const zero = { penalty: "0.00", interest: "0.00", monetaryAdjust: "0.00", discount: "0.00" };
-  return { rows: [fields, ...parts.map((p) => ({ ...fields, ...zero, ...p }))] };
+  // shortcut: the cheque details belong to the first method only; a cheque in another split method has none
+  return { rows: [fields, ...parts.map((p) => ({ ...fields, ...zero, ...NO_CHECK, ...p }))] };
 }
 
 const batchSchema = paymentSchema.pick({ paidAt: true, method: true, notes: true });
@@ -223,10 +270,12 @@ export async function saveBatchPayment(_prev: FormState, formData: FormData): Pr
   await requirePermission("payments", "edit");
   const book = await hasPermission("payments", "view");
   const { data, values, state } = parseForm(batchSchema, formData);
+  // Batches are receivables: one cheque can pay them all, and each payment row keeps its details
+  const check = formData.get("method") === "CHQ" ? parseForm(checkSchema, formData) : { data: NO_CHECK };
   // Ascending, so two batches over the same installments lock them in the same order and can't deadlock
   const ids = formIds(formData, "installment").sort((a, b) => a - b);
   if (!ids.length) return { formError: "Selecione ao menos uma parcela.", values };
-  const errors: FormErrors = { ...state?.errors };
+  const errors: FormErrors = { ...state?.errors, ...("state" in check ? check.state?.errors : {}) };
   const rows = ids.map((id) => {
     const row = { id, shown: values[`balance_${id}`] ?? "", penalty: "0.00", interest: "0.00", discount: "0.00" };
     for (const k of ROW_FIELDS) {
@@ -236,7 +285,7 @@ export async function saveBatchPayment(_prev: FormState, formData: FormData): Pr
     }
     return row;
   });
-  if (!data || Object.keys(errors).length) return { errors, values };
+  if (!data || !check.data || Object.keys(errors).length) return { errors, values };
 
   const result = await db.transaction(async (tx) => {
     // Check every installment before inserting anything: an early return commits what was already written
@@ -279,6 +328,7 @@ export async function saveBatchPayment(_prev: FormState, formData: FormData): Pr
         paidAt: data.paidAt,
         method: data.method,
         notes: data.notes,
+        ...check.data,
         amount: row.amount,
         penalty: row.penalty,
         interest: row.interest,

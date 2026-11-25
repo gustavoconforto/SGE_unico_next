@@ -376,6 +376,14 @@ export const accountsPayment = pgTable("accounts_payment", {
 	discount: numeric({ precision: 10, scale:  2 }).notNull(),
 	method: varchar({ length: 3 }).notNull(),
 	notes: varchar({ length: 200 }).notNull(),
+	// Cheque details (not in Django): filled only when method is CHQ, blank otherwise
+	checkNumber: varchar("check_number", { length: 20 }).notNull().default(""),
+	checkBank: varchar("check_bank", { length: 3 }).notNull().default(""),
+	checkBranch: varchar("check_branch", { length: 10 }).notNull().default(""),
+	checkAccount: varchar("check_account", { length: 20 }).notNull().default(""),
+	checkDate: date("check_date"),
+	checkHolderName: varchar("check_holder_name", { length: 200 }).notNull().default(""),
+	checkHolderCpf: varchar("check_holder_cpf", { length: 11 }).notNull().default(""),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	installmentId: bigint("installment_id", { mode: "number" }).notNull(),
 }, (table) => [

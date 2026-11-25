@@ -28,7 +28,14 @@ export default async function PaymentListPage({ searchParams }: PageProps<"/acco
   const from = param(sp, "paid_from");
   const to = param(sp, "paid_to");
   const where = and(
-    searchWhere(param(sp, "q"), [account.description, guardian.name, supplier.name, payment.notes]),
+    searchWhere(param(sp, "q"), [
+      account.description,
+      guardian.name,
+      supplier.name,
+      payment.notes,
+      payment.checkNumber,
+      payment.checkHolderName,
+    ]),
     ["R", "P"].includes(direction) ? eq(account.direction, direction) : undefined,
     PAYMENT_METHODS.some(([c]) => c === method) ? eq(payment.method, method) : undefined,
     DATE_RE.test(from) ? gte(payment.paidAt, from) : undefined,
@@ -42,6 +49,8 @@ export default async function PaymentListPage({ searchParams }: PageProps<"/acco
         paidAt: payment.paidAt,
         amount: payment.amount,
         method: payment.method,
+        checkNumber: payment.checkNumber,
+        checkDate: payment.checkDate,
         dueDate: installment.dueDate,
         number: installment.number,
         direction: account.direction,
@@ -75,7 +84,7 @@ export default async function PaymentListPage({ searchParams }: PageProps<"/acco
         title="Baixas"
         newHref={`/accounts/payments/new${direction === "P" ? "?direction=P" : ""}`}
         newLabel={direction === "P" ? "Novo pagamento" : "Nova baixa"}
-        searchPlaceholder="Pesquisar por conta, responsável, fornecedor ou observação..."
+        searchPlaceholder="Pesquisar por conta, responsável, fornecedor, observação ou cheque..."
         filters={
           <>
             <FilterSelect name="direction" label="Natureza" options={DIRECTIONS} />
@@ -109,7 +118,9 @@ export default async function PaymentListPage({ searchParams }: PageProps<"/acco
               <AccountName key="c" text={p.description} />,
               p.number,
               <Clip key="r" text={p.counterpart ?? p.supplier ?? "—"} className="max-w-36" />,
-              label(PAYMENT_METHODS, p.method),
+              p.checkNumber
+                ? `Cheque nº ${p.checkNumber}${p.checkDate ? ` · bom para ${formatDate(p.checkDate)}` : ""}`
+                : label(PAYMENT_METHODS, p.method),
               <MoneyCell key="a">{formatMoney(p.amount)}</MoneyCell>,
             ]}
             label={`a baixa de ${formatDate(p.paidAt)} (${p.description})`}

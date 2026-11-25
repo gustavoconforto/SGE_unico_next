@@ -5,6 +5,7 @@ import { Fieldset, FormButtons, FormFields, SelectField, TextField } from "@/com
 import { type Money, PAYMENT_METHODS, formatDate, formatMoney, money, today } from "@/lib/finance";
 import { parseMoney as parse } from "@/lib/form";
 import { saveBatchPayment } from "./actions";
+import { CheckFields } from "./check-fields";
 import { rememberMethod, useLastMethod } from "./payment-form";
 
 type Row = { id: number; number: number; dueDate: string; balance: string };
@@ -20,7 +21,9 @@ export function BatchPaymentForm({ rows, cancelHref }: { rows: Row[]; cancelHref
   // The charge fields drive the totals, so they live in state
   const [values, setValues] = useState<Record<string, string>>({});
   const set = (name: string) => (v: string) => setValues((all) => ({ ...all, [name]: v }));
-  useLastMethod(true);
+  // One cheque may pay every installment below: its details show for CHQ
+  const [method, setMethod] = useState("");
+  useLastMethod(true, setMethod);
 
   const totals = rows.map((r) => {
     const [penalty, interest, discount] = CHARGES.map(([k]) => parse(values[`${k}_${r.id}`] ?? ""));
@@ -43,9 +46,16 @@ export function BatchPaymentForm({ rows, cancelHref }: { rows: Row[]; cancelHref
           description="Vale para todas as parcelas abaixo; cada uma é quitada pelo saldo total."
         >
           <TextField name="paidAt" label="Data do pagamento" type="date" />
-          <SelectField name="method" label="Forma de pagamento" options={PAYMENT_METHODS} />
+          <SelectField
+            name="method"
+            label="Forma de pagamento"
+            options={PAYMENT_METHODS}
+            value={method}
+            onChange={setMethod}
+          />
           <TextField name="notes" label="Observações" maxLength={200} optional className="sm:col-span-2" />
         </Fieldset>
+        {method === "CHQ" && <CheckFields />}
         {rows.map((r, i) => (
           <fieldset
             key={r.id}
