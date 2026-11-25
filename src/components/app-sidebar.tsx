@@ -63,6 +63,12 @@ export const NAV: NavGroup[] = [
         permission: ["timetable", "view"],
       },
       { href: "/lessons/lectures", label: "Diário de classe", icon: "menu_book", permission: ["lessons", "view"] },
+      {
+        href: "/lessons/attendance",
+        label: "Chamada da turma",
+        icon: "how_to_reg",
+        permission: ["attendance", "edit"],
+      },
       { href: "/q-and-a", label: "Plantões", icon: "support_agent", permission: ["qAndA", "view"] },
     ],
     groups: [

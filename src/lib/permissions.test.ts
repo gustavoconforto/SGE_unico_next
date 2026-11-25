@@ -35,6 +35,12 @@ describe("roles", () => {
     expect(roles.coordenacao.authorize({ timetable: ["edit"], lessons: ["edit"] }).success).toBe(true);
   });
 
+  it("lets the secretaria and coordination take the class roll call, not teachers", () => {
+    expect(roles.secretaria.authorize({ attendance: ["view", "edit"] }).success).toBe(true);
+    expect(roles.coordenacao.authorize({ attendance: ["view", "edit"] }).success).toBe(true);
+    expect(roles.professor.authorize({ attendance: ["view"] }).success).toBe(false);
+  });
+
   it("never lets a department role manage users or roles", () => {
     for (const role of [roles.secretaria, roles.financeiro, roles.coordenacao, roles.professor])
       expect(role.authorize({ user: ["set-role"] }).success).toBe(false);

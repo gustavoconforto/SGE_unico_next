@@ -1,14 +1,10 @@
 import { requirePermission } from "@/lib/authorization";
-import { and, eq } from "drizzle-orm";
 import { Alert } from "flowbite-react";
 import type { Metadata } from "next";
-import { db } from "@/db";
-import { lessonsLecture as lecture, lessonsTimetableslot as slot } from "@/db/schema/app";
-import { isoWeekday } from "@/lib/dates";
-import { lectureDateError, weekdayPeriods } from "@/lib/lessons";
+import { lectureDateError } from "@/lib/lessons";
 import { param } from "@/lib/list";
 import { ClassDatePicker } from "../../class-picker";
-import { levelSubjects, levelTeachers, seriesClasses } from "../../data";
+import { dayLessons, levelSubjects, levelTeachers, seriesClasses } from "../../data";
 import { DaySheet } from "../day-sheet";
 
 export const metadata: Metadata = { title: "Lançamento do dia" };
@@ -21,23 +17,11 @@ export default async function LectureDayPage({ searchParams }: PageProps<"/lesso
   const dateError = c && date ? lectureDateError(date, c.begins, c.ends) : null;
   let sheet = null;
   if (c && date && !dateError) {
-    const weekday = isoWeekday(date);
-    const [subjects, saved, planned] = await Promise.all([
-      levelSubjects(c.gradeLevel),
-      db
-        .select()
-        .from(lecture)
-        .where(and(eq(lecture.schoolClassId, c.id), eq(lecture.date, date))),
-      db
-        .select()
-        .from(slot)
-        .where(and(eq(slot.schoolClassId, c.id), eq(slot.weekday, weekday))),
-    ]);
+    const [subjects, lessons] = await Promise.all([levelSubjects(c.gradeLevel), dayLessons(c.id, date)]);
     const teachers = await levelTeachers(subjects);
     // Prefilled from the saved lecture or, when none, from the timetable
-    const rows = weekdayPeriods(weekday).map(([period, label]) => {
-      const l = saved.find((x) => x.period === period);
-      const source = l ?? planned.find((x) => x.period === period);
+    const rows = lessons.map(({ period, label, lecture: l, slot: planned }) => {
+      const source = l ?? planned;
       return {
         period,
         label,

@@ -9,8 +9,11 @@ import {
   gradesGradelevelsubject as levelSubject,
   gradesGradelevelsubjectTeachers as levelSubjectTeachers,
   gradesSubject as subject,
+  lessonsLecture as lecture,
   lessonsTimetableslot as slot,
 } from "@/db/schema/app";
+import { isoWeekday } from "@/lib/dates";
+import { weekdayPeriods } from "@/lib/lessons";
 import { yearOf } from "../enrollments/data";
 
 /** Classes with a series: only they have subjects, so only they have lessons. */
@@ -101,6 +104,27 @@ export async function levelTeachers(subjects: LevelSubject[]) {
     )
     .orderBy(asc(employee.name));
   return ids.size || departmentIds.length ? rows : [];
+}
+
+/** The class's periods on `date`, each with its lecture in the diary and its timetable slot (either may be missing). */
+export async function dayLessons(classId: number, date: string) {
+  const weekday = isoWeekday(date);
+  const [lectures, slots] = await Promise.all([
+    db
+      .select()
+      .from(lecture)
+      .where(and(eq(lecture.schoolClassId, classId), eq(lecture.date, date))),
+    db
+      .select()
+      .from(slot)
+      .where(and(eq(slot.schoolClassId, classId), eq(slot.weekday, weekday))),
+  ]);
+  return weekdayPeriods(weekday).map(([period, label]) => ({
+    period,
+    label,
+    lecture: lectures.find((l) => l.period === period),
+    slot: slots.find((s) => s.period === period),
+  }));
 }
 
 export async function classSlots(classId: number) {
