@@ -14,6 +14,8 @@ const nextConfig: NextConfig = {
     instantInsights: { validationLevel: "manual-warning" },
   },
   partialPrefetching: true,
+  // The declaração's .docx route reads the logo from disk; Vercel would otherwise serve it only from its CDN
+  outputFileTracingIncludes: { "/enrollments/*/print/*/docx": ["./public/img/unico_logo_stamp.png"] },
   turbopack: {
     rules: {
       "*.css": {

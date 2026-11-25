@@ -1,9 +1,10 @@
 /* eslint-disable @next/next/no-img-element -- print pages */
 import { enrollmentTypeLabel } from "@/app/(app)/enrollments/data";
 import { SHIFT_PERIODS, fullAddress, longDate } from "@/lib/enrollment-report";
-import { formatDate, formatMoney, label } from "@/lib/finance";
+import { formatDate, formatMoney, label, today } from "@/lib/finance";
 import { formatDocument, formatZipCode } from "@/lib/format";
 import { SEX_CHOICES, formatPhone } from "@/lib/person";
+import { ExamBlank } from "./[doc]/exam-request-form";
 import type { EnrollmentReport, Person } from "./report";
 
 // Ported from Django's print_base.html / preview_enrollment.html styles, scoped to .enr
@@ -41,6 +42,11 @@ const REQUERIMENTO_CSS = `
 .enr .date { text-align: right; }
 .enr .salutation { margin: 56px 0 32px; }
 .enr .body p { text-align: justify; line-height: 2; margin-bottom: 1em; }
+/* One-page document: fill the A4 sheet and push the signatures to its foot */
+.enr { display: flex; flex-direction: column; min-height: 297mm; }
+.enr .signatures { margin-top: auto; padding-top: 64px; }
+/* 297mm - 2 x 14mm @page margin, minus 2mm so rounding never spills a blank second page */
+@media print { .enr { min-height: 267mm; } }
 `;
 
 const CONTRACT_CSS = `
@@ -74,6 +80,47 @@ const CONTRACT_CSS = `
 .enr .blank { display: inline-block; width: calc(100% - 48px); border-bottom: 1px solid #111827; }
 @media (max-width: 640px) { .enr .contract-signatures, .enr .witnesses { grid-template-columns: 1fr; } .enr .price-table { font-size: 9pt; } }
 `;
+
+const DECLARATION_CSS = `
+.enr.declaration-page { display: flex; flex-direction: column; min-height: 297mm; font-size: 12pt; }
+/* The paper model's letterhead is Consolas (slashed zeros): one centered block per line, wrapping naturally */
+.enr .heading { text-align: center; font-family: Consolas, Menlo, "DejaVu Sans Mono", monospace; font-size: 7pt; line-height: 1.25; }
+.enr .heading img { display: block; margin: 0 auto 24px; }
+.enr .heading p { margin: 0; }
+.enr h1 { margin: 56px 0 64px; font-size: 14pt; }
+.enr .body p { margin: 0; text-align: justify; text-indent: 2.5em; line-height: 2; }
+.enr .date { margin: 56px 0 0; text-align: right; }
+.enr .signature { width: 60%; margin: 88px auto 0; padding-top: 4px; border-top: 1px solid #111827; text-align: center; }
+.enr footer { margin-top: auto; padding-top: 6px; border-top: 2px solid #4b5563; text-align: center; font-size: 9pt; color: #4b5563; }
+.enr footer p { margin: 0; }
+@media print { .enr.declaration-page { min-height: 267mm; } }
+`;
+
+const EXAM_REQUEST_CSS = `
+.enr.exam-request { font-size: 11pt; }
+.enr .logo-row { text-align: center; }
+.enr .logo-row img { display: inline-block; }
+.enr h1 { margin: 16px 0 32px; font-size: 13pt; }
+.enr .exam-request-body { margin: 0; text-align: justify; line-height: 1.8; }
+.enr dl { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; margin: 0; }
+.enr dl div { display: flex; gap: 6px; }
+.enr dl .wide { grid-column: 1 / -1; }
+.enr dt { font-weight: bold; text-transform: uppercase; }
+.enr dd { margin: 0; }
+.enr .exam { margin: 28px 0 0; }
+.enr .date { margin: 28px 0 0; text-align: right; }
+.enr .signature { width: 60%; margin: 64px auto 0; padding-top: 4px; border-top: 1px solid #111827; text-align: center; font-size: 10pt; }
+.enr .cut { margin: 32px 0; border: 0; border-top: 1px dashed #111827; }
+`;
+
+/** The declaração's letterhead and footer, as on the secretaria's paper model (also in the .docx). */
+export const DECLARATION_HEADING = [
+  "SGAS 606 BLOCO F PARTE A, ASA SUL - Brasília DISTRITO FEDERAL - CEP 70200-660",
+  "Mantenedora: Único Educacional JAM e M de Ensino Ltda",
+  "Portaria de Recredenciamento nº 1.202, de 16 de dezembro de 2022 - SEDF, DODF nº 233, de 19 de dezembro de 2022. " +
+    "Fundamentação Legal: Lei nº 9394/96, Resolução nº 01/2020 CEDF. Parecer nº 240/2022-CEDF de 29 de novembro de 2022.",
+];
+export const DECLARATION_FOOTER = ["ASA SUL", "End: SGAS II St. de Grandes Áreas Sul 606"];
 
 const LOGO = "/img/unico_logo_stamp.png";
 const upper = (s: string | null | undefined) => (s ?? "").toUpperCase();
@@ -787,6 +834,103 @@ export function Contract({ r, payer }: { r: EnrollmentReport; payer: Person }) {
           ))}
         </div>
       </section>
+    </main>
+  );
+}
+
+/** A declaração on the letterhead (escolaridade, comparecimento): title, body, date and the secretária's signature. */
+export function Declaracao({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <main className="enr declaration-page">
+      <style>{BASE_CSS + DECLARATION_CSS}</style>
+      <div className="heading">
+        <img className="logo" src={LOGO} alt="Único Educacional" />
+        {DECLARATION_HEADING.map((line) => (
+          <p key={line}>{line}</p>
+        ))}
+      </div>
+      <h1>{title}</h1>
+      <div className="body">{children}</div>
+      <p className="date">Brasília, {longDate(today())}.</p>
+      <p className="signature">Assinatura da Secretária Escolar</p>
+      <footer>
+        <p>
+          <b>{DECLARATION_FOOTER[0]}</b>
+        </p>
+        <p>{DECLARATION_FOOTER[1]}</p>
+      </footer>
+    </main>
+  );
+}
+
+/**
+ * The requerimento de prova substitutiva (the student's request) and, below the cut line, its protocolo (the
+ * student's copy with the new exam's date, time and fee). The blanks come from the toolbar form (`ExamBlank`).
+ */
+export function ProvaSubstitutiva({ r }: { r: EnrollmentReport }) {
+  const name = upper(r.student.name);
+  const grade = `${r.grade}ª Série`;
+  const klass = upper(r.schoolClass?.name);
+  const date = <p className="date">Brasília, {longDate(today())}.</p>;
+  return (
+    <main className="enr exam-request">
+      <style>{BASE_CSS + EXAM_REQUEST_CSS}</style>
+      <div className="logo-row">
+        <img className="logo" src={LOGO} alt="Único Educacional" />
+      </div>
+      <h1>Requerimento de Prova Substitutiva</h1>
+      <p className="exam-request-body">
+        Eu, {name}, matrícula: {r.student.registration}, Série: {grade}
+        {klass && `, Turma: ${klass}`}, venho solicitar a realização de prova substitutiva, ocorrida no dia{" "}
+        <ExamBlank name="missedOn" />.
+      </p>
+      <p className="exam">
+        Prova: <ExamBlank name="exam" />
+      </p>
+      {date}
+      <p className="signature">Assinatura do(a) responsável e/ou aluno(a)</p>
+      <hr className="cut" />
+      <h1>Protocolo de Prova Substitutiva</h1>
+      <dl>
+        <div className="wide">
+          <dt>Aluno(a):</dt>
+          <dd>{name}</dd>
+        </div>
+        <div>
+          <dt>Série:</dt>
+          <dd>{grade}</dd>
+        </div>
+        <div>
+          <dt>Turma:</dt>
+          <dd>{klass}</dd>
+        </div>
+        <div className="wide">
+          <dt>Prova:</dt>
+          <dd>
+            <ExamBlank name="exam" />
+          </dd>
+        </div>
+        <div>
+          <dt>Data da prova substitutiva:</dt>
+          <dd>
+            <ExamBlank name="date" />
+          </dd>
+        </div>
+        <div>
+          <dt>Horário:</dt>
+          <dd>
+            <ExamBlank name="time" />
+          </dd>
+        </div>
+        <div className="wide">
+          <dt>Valor:</dt>
+          <dd>
+            <ExamBlank name="value" />
+          </dd>
+        </div>
+      </dl>
+      {date}
+      <p className="signature">Assinatura</p>
     </main>
   );
 }

@@ -29,6 +29,7 @@ export const NAV: NavGroup[] = [
       { href: "/guardians", label: "Responsáveis", icon: "family_restroom", permission: ["students", "view"] },
       { href: "/enrollments", label: "Matrículas", icon: "how_to_reg", permission: ["enrollments", "view"] },
       { href: "/classes/detail", label: "Alunos da turma", icon: "groups", permission: ["academicSetup", "view"] },
+      { href: "/calendar", label: "Calendário", icon: "calendar_month", permission: ["academicSetup", "view"] },
     ],
   },
   {

@@ -2,16 +2,24 @@ import { requirePermission } from "@/lib/authorization";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LinkButton } from "@/components/link-button";
+import { attendanceFields } from "@/lib/enrollment-report";
+import { today } from "@/lib/finance";
 import { idParam } from "@/lib/list";
 import { PrintToolbar } from "../../../../print-toolbar";
-import { Contract, Ficha, Requerimento } from "../documents";
-import { loadEnrollmentReport } from "../report";
+import { Paragraphs } from "../paragraphs";
+import { ExamRequestForm, ExamRequestProvider } from "./exam-request-form";
+import { AttendanceBody, AttendanceForm, AttendanceProvider } from "./attendance-form";
+import { Contract, Declaracao, Ficha, ProvaSubstitutiva, Requerimento } from "../documents";
+import { declarationParagraphs, examSubjects, loadEnrollmentReport, studentFacts } from "../report";
 
 // slug in the URL -> title (Django's PRINT_DOCUMENTS)
 const DOCUMENTS: Record<string, string> = {
   contrato: "Contrato de Prestação de Serviços Educacionais",
   requerimento: "Requerimento de Matrícula",
   ficha: "Ficha de Matrícula",
+  declaracao: "Declaração de Escolaridade",
+  comparecimento: "Declaração de Comparecimento",
+  substitutiva: "Requerimento de Prova Substitutiva",
 };
 
 export async function generateMetadata({ params }: PageProps<"/enrollments/[id]/print/[doc]">): Promise<Metadata> {
@@ -45,6 +53,55 @@ export default async function EnrollmentPrintPage({ params }: PageProps<"/enroll
   const id = await idParam(params);
   const r = await loadEnrollmentReport(id);
   if (!r) notFound();
+
+  // The secretaria signs the declaração, so it needs no payer; it certifies a current enrollment (the menu says so)
+  if (doc === "declaracao") {
+    if (r.enrollment.status !== "A") notFound();
+    return (
+      <>
+        <PrintToolbar>
+          <a
+            href={`/enrollments/${id}/print/declaracao/docx`}
+            className="rounded-md bg-gray-600 px-4 py-2 text-sm font-semibold text-white"
+          >
+            Baixar Word
+          </a>
+        </PrintToolbar>
+        <Declaracao title={DOCUMENTS.declaracao}>
+          <Paragraphs paragraphs={declarationParagraphs(r)} />
+        </Declaracao>
+      </>
+    );
+  }
+
+  // The secretaria fills in the event, date, shift and hours in the toolbar; the text follows in the browser
+  if (doc === "comparecimento") {
+    if (r.enrollment.status !== "A") notFound();
+    const initial = attendanceFields(() => null, { date: today(), shift: r.schoolClass?.shift });
+    return (
+      <AttendanceProvider facts={studentFacts(r)} initial={initial}>
+        <PrintToolbar>
+          <AttendanceForm docx={`/enrollments/${id}/print/comparecimento/docx`} />
+        </PrintToolbar>
+        <Declaracao title={DOCUMENTS.comparecimento}>
+          <AttendanceBody />
+        </Declaracao>
+      </AttendanceProvider>
+    );
+  }
+
+  // The student (or a guardian) signs the request; the secretaria fills in the blanks in the toolbar
+  if (doc === "substitutiva") {
+    if (r.enrollment.status !== "A") notFound();
+    return (
+      <ExamRequestProvider>
+        <PrintToolbar>
+          <ExamRequestForm subjects={await examSubjects(r)} />
+        </PrintToolbar>
+        <ProvaSubstitutiva r={r} />
+      </ExamRequestProvider>
+    );
+  }
 
   if (!r.payer)
     return (

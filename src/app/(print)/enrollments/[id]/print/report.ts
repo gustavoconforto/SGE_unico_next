@@ -8,11 +8,20 @@ import {
   enrollmentsEnrollmentneededdocument as enrollmentDocument,
   enrollmentsEnrollmenttype as enrollmentType,
   enrollmentsNeededdocumenttype as documentType,
+  enrollmentsSchoolyear as schoolYear,
+  gradesGradelevelsubject as levelSubject,
+  gradesSubject as subject,
   studentsGuardian as guardian,
   studentsGuardianassociation as guardianLink,
   studentsStudent as student,
 } from "@/db/schema/app";
-import { reportGrade } from "@/lib/enrollment-report";
+import {
+  type StudentFacts,
+  SHIFT_PERIODS,
+  fullAddress,
+  reportGrade,
+  schoolingDeclaration,
+} from "@/lib/enrollment-report";
 import { contractValues } from "@/lib/finance";
 import { financialGuardians } from "@/lib/finance-db";
 
@@ -23,7 +32,7 @@ export async function loadEnrollmentReport(id: number) {
   const row = await getEnrollment(id);
   if (!row) return null;
   const e = row.e;
-  const [[pupil], [type], [cls], links, documents, installments] = await Promise.all([
+  const [[pupil], [type], [cls], links, documents, installments, [year]] = await Promise.all([
     db.select().from(student).where(eq(student.id, e.studentId)),
     db
       .select({ startDate: enrollmentType.startDate, endDate: enrollmentType.endDate })
@@ -54,6 +63,7 @@ export async function loadEnrollmentReport(id: number) {
       .innerJoin(account, eq(installment.accountId, account.id))
       .where(eq(account.enrollmentId, id))
       .orderBy(asc(installment.number)),
+    db.select({ ends: schoolYear.ends }).from(schoolYear).where(eq(schoolYear.id, row.schoolYearId)),
   ]);
 
   // Django's Student.financial_payer: the student, or the first financial guardian
@@ -78,6 +88,7 @@ export async function loadEnrollmentReport(id: number) {
     schoolClass: cls ?? null,
     startDate: type.startDate,
     endDate: type.endDate,
+    yearEnds: year.ends,
     payer,
     father: parent("PAI"),
     mother: parent("MAE"),
@@ -90,3 +101,33 @@ export async function loadEnrollmentReport(id: number) {
 }
 
 export type EnrollmentReport = NonNullable<Awaited<ReturnType<typeof loadEnrollmentReport>>>;
+
+/** The student's data both declarações print. */
+export const studentFacts = (r: EnrollmentReport): StudentFacts => ({
+  name: r.student.name,
+  registration: r.student.registration,
+  birthDate: r.student.birthDate,
+  parents: [r.father, r.mother].flatMap((p) => (p ? [p.name] : [])),
+  placeOfBirth: r.student.placeOfBirth,
+  address: fullAddress(r.student),
+  shift: r.schoolClass ? SHIFT_PERIODS[r.schoolClass.shift] : undefined,
+  grade: r.grade,
+});
+
+/** The declaração de escolaridade's text, shared by its print page and its .docx. */
+export const declarationParagraphs = (r: EnrollmentReport) =>
+  schoolingDeclaration({ ...studentFacts(r), program: r.program, yearEnds: r.yearEnds });
+
+/** The subjects of the student's series for the prova substitutiva; every subject when the series has none set. */
+export async function examSubjects(r: EnrollmentReport): Promise<string[]> {
+  const series = await db
+    .select({ name: subject.name })
+    .from(levelSubject)
+    .innerJoin(subject, eq(levelSubject.subjectId, subject.id))
+    .where(eq(levelSubject.gradeLevel, Number(r.grade)))
+    .orderBy(asc(subject.name));
+  const rows = series.length
+    ? series
+    : await db.select({ name: subject.name }).from(subject).orderBy(asc(subject.name));
+  return rows.map((s) => s.name);
+}
