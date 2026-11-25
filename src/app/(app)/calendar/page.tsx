@@ -1,5 +1,5 @@
 import { requirePermission } from "@/lib/authorization";
-import { and, eq, sql } from "drizzle-orm";
+import { and, count, eq, sql } from "drizzle-orm";
 import { Button, Checkbox, Label, TextInput } from "flowbite-react";
 import type { Metadata } from "next";
 import { db } from "@/db";
@@ -18,9 +18,15 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
   const sp = await searchParams;
   const yearParam = param(sp, "school_year");
   const yearId = /^\d+$/.test(yearParam) ? Number(yearParam) : null;
-  const [years, [year]] = await Promise.all([
+  const [years, [year], [stored]] = await Promise.all([
     yearOptions(),
     yearId ? db.select().from(schoolYear).where(eq(schoolYear.id, yearId)) : [],
+    yearId
+      ? db
+          .select({ schoolDays: count() })
+          .from(calendarDay)
+          .where(and(eq(calendarDay.schoolYearId, yearId), eq(calendarDay.isSchoolDay, true)))
+      : [],
   ]);
   const months = year ? yearMonths(year.begins, year.ends) : [];
   const month = months.find((m) => m === param(sp, "month")) ?? null;
@@ -39,6 +45,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
         years={years}
         months={months.map((m) => [m, monthName(m)])}
         yearId={year?.id ?? null}
+        schoolDays={year ? stored.schoolDays : null}
         month={month}
       />
       {month && (

@@ -57,6 +57,7 @@ describe.skipIf(!local)("saveCalendarMonth", async () => {
     expect(html).toContain("Prova de matemática");
     expect(html.match(/name="school_day"/g)).toHaveLength(3);
     expect(html).toContain("segunda-feira");
+    expect(html).toMatch(/Dias letivos<\/p><p[^>]*>1<\/p>/); // only the 26th was checked
     expect(await days()).toEqual([
       { day: "1990-02-26", isSchoolDay: true, note: "" },
       { day: "1990-02-27", isSchoolDay: false, note: "Prova de matemática" },
