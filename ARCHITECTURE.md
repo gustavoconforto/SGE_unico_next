@@ -189,6 +189,13 @@ it points at an **enrollment**, and its forms list only active enrollments.
 (name filter, check several) and saves one exit each; one already recorded is skipped (`onConflictDoNothing`).
 Permission area `releases`.
 
+### School calendar (`enrollments_calendarday`, not in Django)
+
+`/calendar` picks a school year, then a month inside its `begins`–`ends`, and lists the month's days in the year
+with a "letivo" checkbox and a note (tests, events for students and guardians). Saving upserts every shown day;
+unique (school year, `day`), deleted with its year. A day without a row counts as a school day Monday to Friday
+(`defaultSchoolDay`, `src/lib/calendar.ts`). Permission area `academicSetup`.
+
 ### Q&A session model (`q_and_a/models.py`)
 
 `QandA` (plantão) records that a student attended a subject's Q&A session:

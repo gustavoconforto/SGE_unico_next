@@ -161,6 +161,24 @@ export const enrollmentsSchoolyear = pgTable("enrollments_schoolyear", {
 	check("school_year_total_hours_positive", sql`(total_hours IS NULL) OR (total_hours >= 1)`),
 ]);
 
+// Not in Django: one school year's day on the calendar (src/app/(app)/calendar/); a day without a row uses the default (calendar.ts).
+export const enrollmentsCalendarday = pgTable("enrollments_calendarday", {
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).notNull().$defaultFn(() => new Date().toISOString()),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).notNull().$defaultFn(() => new Date().toISOString()).$onUpdate(() => new Date().toISOString()),
+	schoolYearId: bigint("school_year_id", { mode: "number" }).notNull(),
+	day: date().notNull(),
+	isSchoolDay: boolean("is_school_day").notNull(),
+	note: text().notNull().default(""),
+}, (table) => [
+	foreignKey({
+			columns: [table.schoolYearId],
+			foreignColumns: [enrollmentsSchoolyear.id],
+			name: "enrollments_calendarday_school_year_id_fk_enrollments_schoolyear_id"
+		}).onDelete("cascade"),
+	unique("unique_calendar_day").on(table.schoolYearId, table.day),
+]);
+
 export const enrollmentsEnrollmenttype = pgTable("enrollments_enrollmenttype", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
