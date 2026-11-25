@@ -4,7 +4,7 @@ import { Button, Checkbox, Label, TextInput } from "flowbite-react";
 import type { Metadata } from "next";
 import { db } from "@/db";
 import { enrollmentsCalendarday as calendarDay, enrollmentsSchoolyear as schoolYear } from "@/db/schema/app";
-import { defaultSchoolDay, monthDays, NOTE_MAX, monthName, weekdayName, yearMonths } from "@/lib/calendar";
+import { isSchoolDay, monthDays, NOTE_MAX, monthName, weekdayName, yearMonths } from "@/lib/calendar";
 import { isoWeekday } from "@/lib/dates";
 import { param } from "@/lib/list";
 import { yearOptions } from "../classes/options";
@@ -66,7 +66,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
                       id={`school_day_${day}`}
                       name="school_day"
                       value={day}
-                      defaultChecked={row?.isSchoolDay ?? defaultSchoolDay(day)}
+                      defaultChecked={isSchoolDay(row, day)}
                     />
                     <Label htmlFor={`school_day_${day}`}>
                       Letivo<span className="sr-only"> (dia {day.slice(8)})</span>

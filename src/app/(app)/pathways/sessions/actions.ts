@@ -11,6 +11,7 @@ import {
 } from "@/db/schema/app";
 import { UNIQUE_VIOLATION, pgErrorCode } from "@/lib/db-error";
 import { type FormState, INVALID_CHOICE, foreignKey, optionalText, parseForm, requiredDate } from "@/lib/form";
+import { isAttendanceStatus } from "@/lib/attendance";
 import { requirePermission } from "@/lib/authorization";
 import { getOffering, membersBetween } from "../data";
 
@@ -88,8 +89,7 @@ export async function saveAttendance(sessionId: number, _prev: FormState, formDa
         )
     : [];
   const statuses = members.map((m) => ({ id: m.id, status: String(formData.get(`status_${m.id}`) ?? "") }));
-  if (statuses.some((x) => !["P", "F", "J"].includes(x.status)))
-    return { formError: "Escolha a presença de cada aluno." };
+  if (statuses.some((x) => !isAttendanceStatus(x.status))) return { formError: "Escolha a presença de cada aluno." };
   try {
     await db.transaction(async (tx) => {
       for (const x of statuses) {

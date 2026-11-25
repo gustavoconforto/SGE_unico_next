@@ -1,4 +1,5 @@
 import { requirePermission } from "@/lib/authorization";
+import { Alert } from "flowbite-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { idParam } from "@/lib/list";
@@ -8,7 +9,7 @@ import { TimetableForm } from "../../timetable-form";
 export const metadata: Metadata = { title: "Editar grade horária" };
 
 export default async function EditTimetablePage({ params }: PageProps<"/lessons/timetable/[id]/edit">) {
-  await requirePermission("lessons", "edit");
+  await requirePermission("timetable", "edit");
   const c = await seriesClass(await idParam(params));
   if (!c) notFound();
   const [subjects, slots] = await Promise.all([levelSubjects(c.gradeLevel), classSlots(c.id)]);
@@ -22,7 +23,14 @@ export default async function EditTimetablePage({ params }: PageProps<"/lessons/
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">Editar grade horária — {c.label}</h1>
-      <TimetableForm classId={c.id} choices={choices} initial={initial} />
+      {choices.length ? (
+        <TimetableForm classId={c.id} choices={choices} initial={initial} />
+      ) : (
+        <Alert color="warning">
+          Nenhuma matéria do {c.gradeLevel}º ano tem professor. Cadastre as matérias e seus professores em Matérias por
+          série para montar a grade.
+        </Alert>
+      )}
     </div>
   );
 }

@@ -11,11 +11,6 @@ export const WORKLOAD_TYPES = [
   ["F", "Fixa"],
   ["P", "Por presença"],
 ] as const;
-export const ATTENDANCE_STATUSES = [
-  ["P", "Presente"],
-  ["F", "Falta"],
-  ["J", "Falta justificada"],
-] as const;
 
 /** Hours a pathway membership earns: the fixed hours, or 45 minutes per lesson attended (excused earns nothing). */
 export function workload(workloadType: string, workloadHours: Decimal.Value, present: number): Decimal {

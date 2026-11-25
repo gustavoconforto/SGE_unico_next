@@ -29,6 +29,18 @@ describe("roles", () => {
     expect(roles.secretaria.authorize({ payables: ["view"] }).success).toBe(false);
   });
 
+  it("lets the secretaria edit the timetable but not the class diary", () => {
+    expect(roles.secretaria.authorize({ timetable: ["view", "edit"] }).success).toBe(true);
+    expect(roles.secretaria.authorize({ lessons: ["edit"] }).success).toBe(false);
+    expect(roles.coordenacao.authorize({ timetable: ["edit"], lessons: ["edit"] }).success).toBe(true);
+  });
+
+  it("lets the secretaria and coordination take the class roll call, not teachers", () => {
+    expect(roles.secretaria.authorize({ attendance: ["view", "edit"] }).success).toBe(true);
+    expect(roles.coordenacao.authorize({ attendance: ["view", "edit"] }).success).toBe(true);
+    expect(roles.professor.authorize({ attendance: ["view"] }).success).toBe(false);
+  });
+
   it("never lets a department role manage users or roles", () => {
     for (const role of [roles.secretaria, roles.financeiro, roles.coordenacao, roles.professor])
       expect(role.authorize({ user: ["set-role"] }).success).toBe(false);

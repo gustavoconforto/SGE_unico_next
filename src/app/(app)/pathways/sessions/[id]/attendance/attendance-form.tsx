@@ -3,18 +3,11 @@
 import { Button, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow } from "flowbite-react";
 import { useActionState, useState } from "react";
 import { FormButtons, FormFields } from "@/components/form-fields";
-import { ATTENDANCE_STATUSES } from "@/lib/pathways";
+import { STATUS_COLOR, STATUS_SHORT } from "@/components/attendance-status";
+import { ATTENDANCE_STATUSES } from "@/lib/attendance";
 import { saveAttendance } from "../../actions";
 
 type Row = { id: number; student: string; className: string; status: string };
-
-// Checked colour per status: Presente is the quiet default, so absences stand out when scanning the list
-const CHECKED = {
-  P: "peer-checked:border-primary-600 peer-checked:bg-primary-50 peer-checked:text-primary-800",
-  F: "peer-checked:border-red-700 peer-checked:bg-red-700 peer-checked:text-white",
-  J: "peer-checked:border-amber-600 peer-checked:bg-amber-100 peer-checked:text-amber-900",
-} as const;
-const SHORT = { P: "Presente", F: "Falta", J: "Justificada" } as const;
 
 export function AttendanceForm({
   sessionId,
@@ -85,9 +78,9 @@ export function AttendanceForm({
                             className="peer sr-only"
                           />
                           <span
-                            className={`flex min-h-10 cursor-pointer items-center border border-gray-300 bg-white px-2.5 text-sm sm:px-3 font-medium text-gray-700 hover:bg-gray-100 peer-focus-visible:z-10 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-600 peer-focus-visible:ring-offset-1 ${CHECKED[v]} ${i === 0 ? "rounded-l-lg" : "-ml-px"} ${i === ATTENDANCE_STATUSES.length - 1 ? "rounded-r-lg" : ""}`}
+                            className={`flex min-h-10 cursor-pointer items-center border px-2.5 text-sm sm:px-3 font-medium peer-focus-visible:z-10 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-600 peer-focus-visible:ring-offset-1 ${statuses[r.id] === v ? STATUS_COLOR[v] : "border-gray-300 bg-white text-gray-700 hover:bg-gray-100"} ${i === 0 ? "rounded-l-lg" : "-ml-px"} ${i === ATTENDANCE_STATUSES.length - 1 ? "rounded-r-lg" : ""}`}
                           >
-                            {SHORT[v]}
+                            {STATUS_SHORT[v]}
                           </span>
                         </label>
                       ))}

@@ -1,4 +1,4 @@
-import { requirePermission } from "@/lib/authorization";
+import { hasPermission, requirePermission } from "@/lib/authorization";
 import { eq } from "drizzle-orm";
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeadCell, TableRow } from "flowbite-react";
 import type { Metadata } from "next";
@@ -14,8 +14,8 @@ import { levelSubjects, seriesClasses } from "../data";
 export const metadata: Metadata = { title: "Grade horária" };
 
 export default async function TimetablePage({ searchParams }: PageProps<"/lessons/timetable">) {
-  await requirePermission("lessons", "view");
-  const [classes, sp] = await Promise.all([seriesClasses(), searchParams]);
+  await requirePermission("timetable", "view");
+  const [classes, sp, canEdit] = await Promise.all([seriesClasses(), searchParams, hasPermission("timetable", "edit")]);
   const c = classes.find((x) => x.id === Number(param(sp, "school_class"))) ?? null;
   const [subjects, slots] = c
     ? await Promise.all([
@@ -32,7 +32,7 @@ export default async function TimetablePage({ searchParams }: PageProps<"/lesson
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">Grade horária</h1>
-        {c && <LinkButton href={`/lessons/timetable/${c.id}/edit`}>Editar grade</LinkButton>}
+        {c && canEdit && <LinkButton href={`/lessons/timetable/${c.id}/edit`}>Editar grade</LinkButton>}
       </div>
       <ClassDatePicker classes={classes.map((x) => [x.id, x.label])} classId={c?.id ?? null} />
       {!c ? (

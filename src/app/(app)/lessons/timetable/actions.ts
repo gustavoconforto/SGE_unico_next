@@ -13,7 +13,7 @@ import { classSlots, levelSubjects, seriesClass, teacherClash } from "../data";
 
 /** The class's whole timetable (TimetableForm): "subject-teacher" per weekday and period; blank = no lesson. */
 export async function saveTimetable(classId: number, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("lessons", "edit");
+  await requirePermission("timetable", "edit");
   const c = await seriesClass(classId);
   if (!c) redirect("/lessons/timetable");
   const [subjects, existing] = await Promise.all([levelSubjects(c.gradeLevel), classSlots(classId)]);

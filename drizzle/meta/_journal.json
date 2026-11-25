@@ -92,6 +92,13 @@
       "when": 1795615692521,
       "tag": "0012_payment_check_bank",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795630142680,
+      "tag": "0013_attendance",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultSchoolDay, monthDays, monthName, weekdayName, yearMonths } from "./calendar";
+import { defaultSchoolDay, isSchoolDay, monthDays, monthName, weekdayName, yearMonths } from "./calendar";
 
 describe("calendar", () => {
   it("lists the months a year touches, across a year boundary", () => {
@@ -22,6 +22,12 @@ describe("calendar", () => {
     expect(defaultSchoolDay("2026-11-27")).toBe(true); // Friday
     expect(defaultSchoolDay("2026-11-28")).toBe(false); // Saturday
     expect(defaultSchoolDay("2026-11-29")).toBe(false); // Sunday
+  });
+
+  it("takes a day's calendar row over the default", () => {
+    expect(isSchoolDay(undefined, "2026-11-27")).toBe(true);
+    expect(isSchoolDay({ isSchoolDay: false }, "2026-11-27")).toBe(false);
+    expect(isSchoolDay({ isSchoolDay: true }, "2026-11-28")).toBe(true);
   });
 
   it("names days and months in Portuguese", () => {

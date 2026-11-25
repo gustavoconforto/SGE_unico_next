@@ -48,7 +48,7 @@ and a `*-db.ts` sibling (the ones that need the database).
 | `incidents`         | `incidents/`, `incidents/types/`, `incidents/delays/`, `incidents/bathroom/`, `incidents/grades/` (concept grade)                            | `incidents.ts`, `concept-db.ts`                                                                                                                                                |
 | `q_and_a`           | `q-and-a/`                                                                                                                                   |                                                                                                                                                                                |
 | `pathways`          | `pathways/` (+ `offerings/`, `enrollments/`, `sessions/`, `attendance/`, `workload/`, `grades/`, `extra-grades/`)                            | `pathways.ts` (= `pathways/services.py`), `pathways-db.ts`                                                                                                                     |
-| `lessons`           | `lessons/timetable/`, `lessons/lectures/`                                                                                                    | `lessons.ts` (`weekdayPeriods`, `periodError`, `lectureDateError`)                                                                                                             |
+| `lessons`           | `lessons/timetable/`, `lessons/lectures/`, `lessons/attendance/`                                                                             | `lessons.ts` (`weekdayPeriods`, `periodError`, `lectureDateError`), `attendance.ts` (`attendanceDateError`, `nextStatus`)                                                      |
 | `billing`           | **not migrated yet** (the tables exist in `src/db/schema/app.ts`)                                                                            |                                                                                                                                                                                |
 
 Printable pages (report card, receipt, pathway diary, workload report) live in
@@ -194,7 +194,7 @@ Permission area `releases`.
 `/calendar` picks a school year, then a month inside its `begins`–`ends`, and lists the month's days in the year
 with a "letivo" checkbox and a note (tests, events for students and guardians). Saving upserts every shown day;
 unique (school year, `day`), deleted with its year. A day without a row counts as a school day Monday to Friday
-(`defaultSchoolDay`, `src/lib/calendar.ts`). Permission area `academicSetup`.
+(`defaultSchoolDay` / `isSchoolDay`, `src/lib/calendar.ts`). Permission area `academicSetup`.
 
 ### Q&A session model (`q_and_a/models.py`)
 
@@ -315,8 +315,17 @@ the periods scheduled per subject against `GradeLevelSubject.weekly_classes`
 - **Class diary** (`lessons/lectures/list/`): filters by year, class, subject,
   teacher and date range; search by topic. Edit and delete one lecture.
 
-Attendance per lecture is not built yet; it would be a
-`LectureAttendance(lecture, enrollment, status)` deleted with its lecture.
+### Class roll call (`lessons_attendance`, `lessons_attendancenote`, not in Django)
+
+`/lessons/attendance?school_class=<pk>&date=<iso>` ("Chamada da turma") is a grid of the class's students × that
+day's lessons, filled by the staff at the end of the day. A lesson is a period with a subject: the diary's lecture,
+else the timetable slot; the subject is stored on each row, so later timetable changes don't rewrite the past.
+Each cell is `P` / `F` / `J` (`ATTENDANCE_STATUSES`, `src/lib/attendance.ts`, shared with the pathway roll call),
+unique (enrollment, `date`, `period`); one optional note per student and day, unique (enrollment, `date`). The day
+must pass `attendanceDateError`: Monday to Saturday inside the school year, not in the future, and a school day on
+the calendar (`isSchoolDay`). Called students: the class's active enrollments enrolled by that date, plus anyone
+already called that day. Saving upserts the whole day in one transaction and drops rows of periods no longer
+taught. Permission area `attendance`.
 
 ### Financial models (`accounts/models.py`)
 
