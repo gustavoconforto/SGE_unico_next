@@ -4,14 +4,15 @@ import { notFound } from "next/navigation";
 import { LinkButton } from "@/components/link-button";
 import { idParam } from "@/lib/list";
 import { PrintToolbar } from "../../../../print-toolbar";
-import { Contract, Ficha, Requerimento } from "../documents";
-import { loadEnrollmentReport } from "../report";
+import { Contract, Declaracao, Ficha, Requerimento } from "../documents";
+import { declarationParagraphs, loadEnrollmentReport } from "../report";
 
 // slug in the URL -> title (Django's PRINT_DOCUMENTS)
 const DOCUMENTS: Record<string, string> = {
   contrato: "Contrato de Prestação de Serviços Educacionais",
   requerimento: "Requerimento de Matrícula",
   ficha: "Ficha de Matrícula",
+  declaracao: "Declaração de Escolaridade",
 };
 
 export async function generateMetadata({ params }: PageProps<"/enrollments/[id]/print/[doc]">): Promise<Metadata> {
@@ -45,6 +46,24 @@ export default async function EnrollmentPrintPage({ params }: PageProps<"/enroll
   const id = await idParam(params);
   const r = await loadEnrollmentReport(id);
   if (!r) notFound();
+
+  // The secretaria signs the declaração, so it needs no payer; it certifies a current enrollment (the menu says so)
+  if (doc === "declaracao") {
+    if (r.enrollment.status !== "A") notFound();
+    return (
+      <>
+        <PrintToolbar>
+          <a
+            href={`/enrollments/${id}/print/declaracao/docx`}
+            className="rounded-md bg-gray-600 px-4 py-2 text-sm font-semibold text-white"
+          >
+            Baixar Word
+          </a>
+        </PrintToolbar>
+        <Declaracao paragraphs={declarationParagraphs(r)} />
+      </>
+    );
+  }
 
   if (!r.payer)
     return (

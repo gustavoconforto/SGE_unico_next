@@ -212,6 +212,7 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
               contrato: hasPayer ? null : "Requer responsável financeiro",
               requerimento: hasPayer ? null : "Requer responsável financeiro",
               ficha: !hasPayer ? "Requer responsável financeiro" : hasParents ? null : "Requer pai e mãe cadastrados",
+              declaracao: row.e.status === "A" ? null : "Requer matrícula ativa",
             }}
           />
           <LinkButton href={`/grades/report-card/${id}`} color="alternative">

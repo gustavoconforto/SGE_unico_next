@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- print pages */
 import { enrollmentTypeLabel } from "@/app/(app)/enrollments/data";
-import { SHIFT_PERIODS, fullAddress, longDate } from "@/lib/enrollment-report";
-import { formatDate, formatMoney, label } from "@/lib/finance";
+import { type Run, SHIFT_PERIODS, fullAddress, longDate } from "@/lib/enrollment-report";
+import { formatDate, formatMoney, label, today } from "@/lib/finance";
 import { formatDocument, formatZipCode } from "@/lib/format";
 import { SEX_CHOICES, formatPhone } from "@/lib/person";
 import type { EnrollmentReport, Person } from "./report";
@@ -79,6 +79,30 @@ const CONTRACT_CSS = `
 .enr .blank { display: inline-block; width: calc(100% - 48px); border-bottom: 1px solid #111827; }
 @media (max-width: 640px) { .enr .contract-signatures, .enr .witnesses { grid-template-columns: 1fr; } .enr .price-table { font-size: 9pt; } }
 `;
+
+const DECLARATION_CSS = `
+.enr.declaration-page { display: flex; flex-direction: column; min-height: 297mm; font-size: 12pt; }
+/* The paper model's letterhead is Consolas (slashed zeros): one centered block per line, wrapping naturally */
+.enr .heading { text-align: center; font-family: Consolas, Menlo, "DejaVu Sans Mono", monospace; font-size: 7pt; line-height: 1.25; }
+.enr .heading img { display: block; margin: 0 auto 24px; }
+.enr .heading p { margin: 0; }
+.enr h1 { margin: 56px 0 64px; font-size: 14pt; }
+.enr .body p { margin: 0; text-align: justify; text-indent: 2.5em; line-height: 2; }
+.enr .date { margin: 56px 0 0; text-align: right; }
+.enr .signature { width: 60%; margin: 88px auto 0; padding-top: 4px; border-top: 1px solid #111827; text-align: center; }
+.enr footer { margin-top: auto; padding-top: 6px; border-top: 2px solid #4b5563; text-align: center; font-size: 9pt; color: #4b5563; }
+.enr footer p { margin: 0; }
+@media print { .enr.declaration-page { min-height: 267mm; } }
+`;
+
+/** The declaração's letterhead and footer, as on the secretaria's paper model (also in the .docx). */
+export const DECLARATION_HEADING = [
+  "SGAS 606 BLOCO F PARTE A, ASA SUL - Brasília DISTRITO FEDERAL - CEP 70200-660",
+  "Mantenedora: Único Educacional JAM e M de Ensino Ltda",
+  "Portaria de Recredenciamento nº 1.202, de 16 de dezembro de 2022 - SEDF, DODF nº 233, de 19 de dezembro de 2022. " +
+    "Fundamentação Legal: Lei nº 9394/96, Resolução nº 01/2020 CEDF. Parecer nº 240/2022-CEDF de 29 de novembro de 2022.",
+];
+export const DECLARATION_FOOTER = ["ASA SUL", "End: SGAS II St. de Grandes Áreas Sul 606"];
 
 const LOGO = "/img/unico_logo_stamp.png";
 const upper = (s: string | null | undefined) => (s ?? "").toUpperCase();
@@ -792,6 +816,34 @@ export function Contract({ r, payer }: { r: EnrollmentReport; payer: Person }) {
           ))}
         </div>
       </section>
+    </main>
+  );
+}
+
+export function Declaracao({ paragraphs }: { paragraphs: Run[][] }) {
+  return (
+    <main className="enr declaration-page">
+      <style>{BASE_CSS + DECLARATION_CSS}</style>
+      <div className="heading">
+        <img className="logo" src={LOGO} alt="Único Educacional" />
+        {DECLARATION_HEADING.map((line) => (
+          <p key={line}>{line}</p>
+        ))}
+      </div>
+      <h1>Declaração de Escolaridade</h1>
+      <div className="body">
+        {paragraphs.map((runs, i) => (
+          <p key={i}>{runs.map((r, j) => (r.bold ? <b key={j}>{r.text}</b> : r.text))}</p>
+        ))}
+      </div>
+      <p className="date">Brasília, {longDate(today())}.</p>
+      <p className="signature">Assinatura da Secretária Escolar</p>
+      <footer>
+        <p>
+          <b>{DECLARATION_FOOTER[0]}</b>
+        </p>
+        <p>{DECLARATION_FOOTER[1]}</p>
+      </footer>
     </main>
   );
 }

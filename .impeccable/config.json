@@ -29,6 +29,12 @@
         "value": "material symbols outlined",
         "createdAt": "2026-11-18T10:41:02.171Z",
         "reason": "Claude: icon font (not typography), already in layout.tsx before this change, same font the Django templates use"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "consolas",
+        "createdAt": "2026-11-25T12:59:44.738Z",
+        "reason": "Claude: print-only letterhead of the declaração de escolaridade; the user's paper-model photo uses Consolas (slashed zeros) and the user asked to match its font; not app UI"
       }
     ]
   }
