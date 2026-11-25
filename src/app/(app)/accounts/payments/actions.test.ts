@@ -110,6 +110,93 @@ describe.skipIf(!local)("savePayment / deletePayment", () => {
     expect(await status()).toBe("A");
   });
 
+  it("asks receivables paid by cheque for its details, keeps old cheque payments editable, skips payables", async () => {
+    // A receivable under the test's category, so afterAll cleans it up
+    const [{ id: receivable }] = await db
+      .insert(account)
+      .values({
+        direction: "R",
+        description: "test cheque",
+        categoryId,
+        issueDate: "2026-01-01",
+        grossValue: "100.00",
+        discountValue: "0.00",
+        notes: "",
+      })
+      .returning({ id: account.id });
+    const [{ id: target }] = await db
+      .insert(installment)
+      .values({ accountId: receivable, number: 1, dueDate: "2026-01-10", amount: "100.00", status: "A" })
+      .returning({ id: installment.id });
+    const f = form("10,00");
+    f.set("installmentId", String(target));
+    f.set("method", "CHQ");
+    const saveR = (id: number | null) => savePayment(id, "R", null, {}, f).catch((e: Error) => e.message);
+    const row = async (id: number) => (await db.select().from(payment).where(eq(payment.id, id)))[0];
+
+    expect(await saveR(null)).toMatchObject({
+      errors: { checkNumber: [expect.any(String)], checkHolderCpf: [expect.any(String)] },
+    });
+    // A CMC-7 line whose check digits don't match
+    f.set("checkNumber", "18776221 6209755155 974742302660");
+    expect(await saveR(null)).toMatchObject({ errors: { checkNumber: [expect.stringContaining("não confere")] } });
+    for (const [k, v] of Object.entries({
+      checkNumber: "000123",
+      checkBank: "001",
+      checkBranch: "1234",
+      checkAccount: "56789-0",
+      checkDate: "2026-02-10",
+      checkHolderName: "Fulano",
+      checkHolderCpf: "123.456.789-00",
+    }))
+      f.set(k, v);
+    expect(await saveR(null)).toMatch(/^REDIRECT/);
+    const [{ id }] = await db.select({ id: payment.id }).from(payment).where(eq(payment.installmentId, target));
+    expect(await row(id)).toMatchObject({
+      checkNumber: "000123",
+      checkBank: "001",
+      checkDate: "2026-02-10",
+      checkHolderCpf: "12345678900",
+    });
+
+    // Once filled, an edit can't blank them
+    for (const k of [
+      "checkNumber",
+      "checkBank",
+      "checkBranch",
+      "checkAccount",
+      "checkDate",
+      "checkHolderName",
+      "checkHolderCpf",
+    ])
+      f.set(k, "");
+    expect(await saveR(id)).toMatchObject({ errors: { checkNumber: [expect.any(String)] } });
+
+    // A cheque payment saved without details (Django, or before this screen) stays editable with them blank
+    await db.update(payment).set({ checkNumber: "", checkHolderCpf: "" }).where(eq(payment.id, id));
+    f.set("notes", "corrigido");
+    expect(await saveR(id)).toMatch(/^REDIRECT/);
+
+    // Switching to PIX drops them
+    await db.update(payment).set({ checkNumber: "000123" }).where(eq(payment.id, id));
+    f.set("method", "PIX");
+    expect(await saveR(id)).toMatch(/^REDIRECT/);
+    expect(await row(id)).toMatchObject({ checkNumber: "", checkDate: null, checkHolderCpf: "" });
+
+    // ...and a PIX payment switched to cheque must bring the details: the exception is only for old cheques
+    f.set("method", "CHQ");
+    expect(await saveR(id)).toMatchObject({ errors: { checkNumber: [expect.any(String)] } });
+    await deletePayment(id).catch(() => {});
+
+    // A payable paid by cheque is the school's own cheque: nothing asked, nothing stored
+    const p = form("10,00");
+    p.set("method", "CHQ");
+    expect(await savePayment(null, "P", null, {}, p).catch((e: Error) => e.message)).toMatch(/^REDIRECT/);
+    const [payable] = await db.select().from(payment).where(eq(payment.installmentId, installmentId));
+    expect(payable).toMatchObject({ method: "CHQ", checkNumber: "" });
+    await deletePayment(payable.id).catch(() => {});
+  });
+
   it("splits a new payment across methods: one row each, charges on the first, all or nothing", async () => {
     const rows = () => db.select().from(payment).where(eq(payment.installmentId, installmentId));
     // Valor pago is the first method's share; the other methods add to it
@@ -243,9 +330,20 @@ describe.skipIf(!local)("saveBatchPayment", () => {
     expect(
       await save({ [`balance_${a}`]: "100.00", [`balance_${b}`]: "200.00", [`discount_${b}`]: "200,00" }),
     ).toMatchObject({ errors: { [`discount_${b}`]: [expect.any(String)] } });
+    // Paid by cheque: its details are asked once for the whole batch
+    expect(await save({ [`balance_${a}`]: "100.00", [`balance_${b}`]: "200.00", method: "CHQ" })).toMatchObject({
+      errors: { checkNumber: [expect.any(String)], checkBank: [expect.any(String)] },
+    });
     expect(await payments()).toHaveLength(0);
 
     const result = await save({
+      method: "CHQ",
+      checkNumber: "000777",
+      checkBank: "237",
+      checkBranch: "0001",
+      checkAccount: "12345",
+      checkHolderName: "Fulano",
+      checkHolderCpf: "12345678900",
       [`balance_${a}`]: "100.00",
       [`balance_${b}`]: "200.00",
       [`penalty_${a}`]: "2,00",
@@ -259,9 +357,11 @@ describe.skipIf(!local)("saveBatchPayment", () => {
       penalty: "2.00",
       interest: "0.50",
       discount: "0.00",
-      method: "PIX",
+      method: "CHQ",
+      checkNumber: "000777",
+      checkBank: "237",
     });
-    expect(saved[b]).toMatchObject({ amount: "190.00", discount: "10.00" });
+    expect(saved[b]).toMatchObject({ amount: "190.00", discount: "10.00", checkNumber: "000777" });
     const statuses = await db.select({ s: installment.status }).from(installment).where(inArray(installment.id, ids));
     expect(statuses.map((r) => r.s)).toEqual(["Q", "Q"]);
 

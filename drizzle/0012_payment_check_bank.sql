@@ -1,0 +1,1 @@
+ALTER TABLE "accounts_payment" ADD COLUMN "check_bank" varchar(3) DEFAULT '' NOT NULL;
