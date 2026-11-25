@@ -5,9 +5,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { enrollmentsCalendarday as calendarDay, enrollmentsSchoolyear as schoolYear } from "@/db/schema/app";
 import { requirePermission } from "@/lib/authorization";
-import { monthDays, yearMonths } from "@/lib/calendar";
-
-const NOTE_MAX = 500;
+import { monthDays, NOTE_MAX, yearMonths } from "@/lib/calendar";
 
 /** Saves every day of the month shown (last write wins); the days come from the year, not from the form. */
 export async function saveCalendarMonth(yearId: number, month: string, formData: FormData) {

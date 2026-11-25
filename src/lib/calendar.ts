@@ -17,6 +17,9 @@ export function monthDays(month: string, begins: string, ends: string): string[]
   return days;
 }
 
+/** Longest note a day keeps (the input stops there, the action cuts there). */
+export const NOTE_MAX = 500;
+
 /** A day nobody has set yet counts as a school day from Monday to Friday. */
 export const defaultSchoolDay = (day: string) => isoWeekday(day) <= 5;
 

@@ -4,7 +4,7 @@ import { Button, Checkbox, Label, TextInput } from "flowbite-react";
 import type { Metadata } from "next";
 import { db } from "@/db";
 import { enrollmentsCalendarday as calendarDay, enrollmentsSchoolyear as schoolYear } from "@/db/schema/app";
-import { defaultSchoolDay, monthDays, monthName, weekdayName, yearMonths } from "@/lib/calendar";
+import { defaultSchoolDay, monthDays, NOTE_MAX, monthName, weekdayName, yearMonths } from "@/lib/calendar";
 import { isoWeekday } from "@/lib/dates";
 import { param } from "@/lib/list";
 import { yearOptions } from "../classes/options";
@@ -69,7 +69,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
                     name={`note_${day}`}
                     sizing="sm"
                     className="min-w-48 flex-1"
-                    maxLength={500}
+                    maxLength={NOTE_MAX}
                     placeholder="Observação (prova, evento, feriado...)"
                     aria-label={`Observação do dia ${day.slice(8)}`}
                     defaultValue={row?.note ?? ""}
