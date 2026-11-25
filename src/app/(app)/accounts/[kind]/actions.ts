@@ -93,7 +93,7 @@ async function counterpartErrors(kind: Kind, data: z.infer<typeof baseSchema>, s
 }
 
 export async function createAccount(kind: Kind, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("finance", "edit");
+  await requirePermission(KINDS[kind].resource, "edit");
   const { data, values, state } = parseForm(createSchema, formData);
   if (!data) return state;
   const discount = money(data.discountValue ?? "0");
@@ -137,7 +137,7 @@ export async function createAccount(kind: Kind, _prev: FormState, formData: Form
 }
 
 export async function updateAccount(kind: Kind, id: number, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("finance", "edit");
+  await requirePermission(KINDS[kind].resource, "edit");
   const [current] = await db
     .select()
     .from(account)
@@ -169,7 +169,7 @@ export async function updateAccount(kind: Kind, id: number, _prev: FormState, fo
 
 /** An account with payments can't be deleted; without them its installments go with it. */
 export async function deleteAccount(kind: Kind, id: number) {
-  await requirePermission("finance", "edit");
+  await requirePermission(KINDS[kind].resource, "edit");
   // Its installments go first, so check the account is of this kind before touching them
   const [acc] = await db
     .select({ id: account.id })

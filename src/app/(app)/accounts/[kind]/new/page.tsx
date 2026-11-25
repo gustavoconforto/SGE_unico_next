@@ -14,8 +14,8 @@ export async function generateMetadata({ params }: PageProps<"/accounts/[kind]/n
 }
 
 export default async function NewAccountPage({ params, searchParams }: PageProps<"/accounts/[kind]/new">) {
-  await requirePermission("finance", "edit");
   const kind = await kindParam(params);
+  await requirePermission(KINDS[kind].resource, "edit");
   const optionsPromise = accountFormOptions(kind); // runs alongside the prefill lookups below
   // "Nova conta a receber" on the enrollment page: ?enrollment=<id> prefills the student and payer
   const enrollmentId = kind === "receivable" ? Number(param(await searchParams, "enrollment")) || null : null;

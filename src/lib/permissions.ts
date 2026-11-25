@@ -14,6 +14,7 @@ export const statement = {
   enrollments: VIEW_EDIT,
   finance: VIEW_EDIT,
   payments: VIEW_EDIT,
+  payables: VIEW_EDIT, // payable accounts and suppliers (receivables are `finance`)
   grades: VIEW_EDIT_MANAGE, // manage: lock bimesters, enter concept / extra / adjustment grades
   lessons: VIEW_EDIT, // timetable, class diary, Q&A sessions
   pathways: VIEW_EDIT,
@@ -45,6 +46,13 @@ export const roles = {
     releases: VIEW_EDIT,
     programs: VIEW_EDIT,
   }),
+  financeiro: ac.newRole({
+    students: VIEW,
+    enrollments: VIEW,
+    finance: VIEW_EDIT,
+    payments: VIEW_EDIT,
+    payables: VIEW_EDIT,
+  }),
   coordenacao: ac.newRole({
     students: VIEW,
     enrollments: VIEW,
@@ -67,6 +75,7 @@ export type RoleName = keyof typeof roles;
 export const ROLE_LABELS = {
   admin: "Administrador",
   secretaria: "Secretaria",
+  financeiro: "Financeiro",
   coordenacao: "Coordenação",
   professor: "Professor",
 } satisfies Partial<Record<RoleName, string>>;

@@ -5,6 +5,7 @@ import { Direction } from "@/lib/finance";
 export const KINDS = {
   receivable: {
     direction: Direction.RECEIVABLE,
+    resource: "finance",
     title: "A receber",
     noun: "duplicata a receber",
     counterpartLabel: "Responsável",
@@ -12,6 +13,7 @@ export const KINDS = {
   },
   payable: {
     direction: Direction.PAYABLE,
+    resource: "payables",
     title: "A pagar",
     noun: "duplicata a pagar",
     counterpartLabel: "Fornecedor",

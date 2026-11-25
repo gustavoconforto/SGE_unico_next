@@ -19,8 +19,8 @@ import { accountFormOptions } from "../../options";
 export const metadata: Metadata = { title: "Editar conta" };
 
 export default async function EditAccountPage({ params }: PageProps<"/accounts/[kind]/[id]/edit">) {
-  await requirePermission("finance", "edit");
   const kind = await kindParam(params);
+  await requirePermission(KINDS[kind].resource, "edit");
   const id = await idParam(params);
   const [row] = await db
     .select()

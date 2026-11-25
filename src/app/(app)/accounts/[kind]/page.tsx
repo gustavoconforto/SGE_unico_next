@@ -34,8 +34,8 @@ const STATUS_CHOICES = [
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export default async function AccountListPage({ params, searchParams }: PageProps<"/accounts/[kind]">) {
-  await requirePermission("finance", "view");
   const kind = await kindParam(params);
+  await requirePermission(KINDS[kind].resource, "view");
   const k = KINDS[kind];
   const sp = await searchParams;
   await connection(); // depends on today's date: never prerender it
