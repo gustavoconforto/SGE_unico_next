@@ -1,7 +1,7 @@
 // saveRollCall against the dev database: saves a day's grid and notes, updates them on a second save, and refuses
-// future days and a grid that no longer matches the day. Puts two timetable slots on the first seeded class with an
-// active enrollment (and a series subject if it has none); afterwards removes what it saved and puts the class's
-// own slots back.
+// future days and a grid that no longer matches the day. Gives the first seeded class with an active enrollment a
+// Monday of only periods 1 and 2 (adding a series subject if it has none); afterwards removes what it saved and
+// puts the class's own Monday slots back.
 import "dotenv/config";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { afterAll, describe, expect, it, vi } from "vitest";
@@ -73,10 +73,10 @@ describe.skipIf(!local)("saveRollCall", async () => {
         .where(and(eq(enrollment.schoolClassId, classId), eq(enrollment.status, "A")))
     : [];
   const ids = students.map((s) => s.id);
-  const mondayFirstTwo = and(eq(slot.schoolClassId, classId), eq(slot.weekday, 1), inArray(slot.period, [1, 2]));
-  const kept = ready ? await db.select().from(slot).where(mondayFirstTwo) : [];
+  const monday = and(eq(slot.schoolClassId, classId), eq(slot.weekday, 1));
+  const kept = ready ? await db.select().from(slot).where(monday) : [];
   if (ready) {
-    await db.delete(slot).where(mondayFirstTwo);
+    await db.delete(slot).where(monday);
     await db.insert(slot).values(
       [1, 2].map((period) => ({
         schoolClassId: classId,
@@ -93,7 +93,7 @@ describe.skipIf(!local)("saveRollCall", async () => {
     await db
       .delete(attendanceNote)
       .where(and(inArray(attendanceNote.enrollmentId, ids), eq(attendanceNote.date, date)));
-    await db.delete(slot).where(mondayFirstTwo);
+    await db.delete(slot).where(monday);
     if (kept.length) await db.insert(slot).values(kept);
     if (created) await db.delete(levelSubject).where(eq(levelSubject.id, created.id));
   });
