@@ -60,7 +60,7 @@ export const NAV: NavGroup[] = [
         href: "/lessons/timetable",
         label: "Grade horária",
         icon: "calendar_view_week",
-        permission: ["lessons", "view"],
+        permission: ["timetable", "view"],
       },
       { href: "/lessons/lectures", label: "Diário de classe", icon: "menu_book", permission: ["lessons", "view"] },
       { href: "/q-and-a", label: "Plantões", icon: "support_agent", permission: ["qAndA", "view"] },

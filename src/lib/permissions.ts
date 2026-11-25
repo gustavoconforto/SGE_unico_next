@@ -16,7 +16,8 @@ export const statement = {
   payments: VIEW_EDIT,
   payables: VIEW_EDIT, // payable accounts and suppliers (receivables are `finance`)
   grades: VIEW_EDIT_MANAGE, // manage: lock bimesters, enter concept / extra / adjustment grades
-  lessons: VIEW_EDIT, // timetable, class diary, Q&A sessions
+  lessons: VIEW_EDIT, // class diary
+  timetable: VIEW_EDIT,
   pathways: VIEW_EDIT,
   incidents: VIEW_EDIT, // incidents, delays, bathroom permissions
   employees: VIEW_EDIT,
@@ -39,6 +40,7 @@ export const roles = {
     payments: VIEW_EDIT,
     grades: VIEW,
     lessons: VIEW,
+    timetable: VIEW_EDIT,
     pathways: VIEW,
     incidents: VIEW_EDIT,
     enrollmentSetup: VIEW_EDIT,
@@ -58,6 +60,7 @@ export const roles = {
     enrollments: VIEW,
     grades: VIEW_EDIT_MANAGE,
     lessons: VIEW_EDIT,
+    timetable: VIEW_EDIT,
     pathways: VIEW_EDIT,
     incidents: VIEW_EDIT,
     academicSetup: VIEW_EDIT,

@@ -8,7 +8,7 @@ import { TimetableForm } from "../../timetable-form";
 export const metadata: Metadata = { title: "Editar grade horária" };
 
 export default async function EditTimetablePage({ params }: PageProps<"/lessons/timetable/[id]/edit">) {
-  await requirePermission("lessons", "edit");
+  await requirePermission("timetable", "edit");
   const c = await seriesClass(await idParam(params));
   if (!c) notFound();
   const [subjects, slots] = await Promise.all([levelSubjects(c.gradeLevel), classSlots(c.id)]);
