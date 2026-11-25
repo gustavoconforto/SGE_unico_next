@@ -872,6 +872,51 @@ export const incidentsStudentdelay = pgTable("incidents_studentdelay", {
 		}),
 ]);
 
+// Not in Django: a student's presence at one lesson (period) of a day (src/app/(app)/lessons/attendance/).
+export const lessonsAttendance = pgTable("lessons_attendance", {
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).notNull().$defaultFn(() => new Date().toISOString()),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).notNull().$defaultFn(() => new Date().toISOString()).$onUpdate(() => new Date().toISOString()),
+	enrollmentId: bigint("enrollment_id", { mode: "number" }).notNull(),
+	date: date().notNull(),
+	period: smallint().notNull(),
+	subjectId: bigint("subject_id", { mode: "number" }).notNull(),
+	status: varchar({ length: 1 }).notNull(),
+}, (table) => [
+	index("lessons_attendance_date").using("btree", table.date.asc().nullsLast()),
+	index("lessons_attendance_subject_id").using("btree", table.subjectId.asc().nullsLast()),
+	foreignKey({
+			columns: [table.enrollmentId],
+			foreignColumns: [enrollmentsEnrollment.id],
+			name: "lessons_attendance_enrollment_id_fk_enrollments_enrollment_id"
+		}),
+	foreignKey({
+			columns: [table.subjectId],
+			foreignColumns: [gradesGradelevelsubject.id],
+			name: "lessons_attendance_subject_id_fk_grades_gradelevelsubject_id"
+		}),
+	unique("unique_attendance").on(table.enrollmentId, table.date, table.period),
+	check("attendance_period_range", sql`(period >= 1) AND (period <= 12)`),
+	check("attendance_status", sql`status IN ('P', 'F', 'J')`),
+]);
+
+// Not in Django: a note on a student's day of lessons (src/app/(app)/lessons/attendance/).
+export const lessonsAttendancenote = pgTable("lessons_attendancenote", {
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).notNull().$defaultFn(() => new Date().toISOString()),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).notNull().$defaultFn(() => new Date().toISOString()).$onUpdate(() => new Date().toISOString()),
+	enrollmentId: bigint("enrollment_id", { mode: "number" }).notNull(),
+	date: date().notNull(),
+	note: text().notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.enrollmentId],
+			foreignColumns: [enrollmentsEnrollment.id],
+			name: "lessons_attendancenote_enrollment_id_fk_enrollments_enrollment_id"
+		}),
+	unique("unique_attendance_note").on(table.enrollmentId, table.date),
+]);
+
 export const lessonsLecture = pgTable("lessons_lecture", {
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),

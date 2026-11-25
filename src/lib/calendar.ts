@@ -23,6 +23,10 @@ export const NOTE_MAX = 500;
 /** A day nobody has set yet counts as a school day from Monday to Friday. */
 export const defaultSchoolDay = (day: string) => isoWeekday(day) <= 5;
 
+/** Whether `day` is a school day: as set on the calendar (its row, if any), else the default. */
+export const isSchoolDay = (row: { isSchoolDay: boolean } | null | undefined, day: string) =>
+  row?.isSchoolDay ?? defaultSchoolDay(day);
+
 export const weekdayName = (day: string) => utc(day).toLocaleDateString("pt-BR", { weekday: "long", timeZone: "UTC" });
 
 export const monthName = (month: string) =>
