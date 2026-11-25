@@ -9,6 +9,8 @@ import {
   enrollmentsEnrollmenttype as enrollmentType,
   enrollmentsNeededdocumenttype as documentType,
   enrollmentsSchoolyear as schoolYear,
+  gradesGradelevelsubject as levelSubject,
+  gradesSubject as subject,
   studentsGuardian as guardian,
   studentsGuardianassociation as guardianLink,
   studentsStudent as student,
@@ -115,3 +117,17 @@ export const studentFacts = (r: EnrollmentReport): StudentFacts => ({
 /** The declaração de escolaridade's text, shared by its print page and its .docx. */
 export const declarationParagraphs = (r: EnrollmentReport) =>
   schoolingDeclaration({ ...studentFacts(r), program: r.program, yearEnds: r.yearEnds });
+
+/** The subjects of the student's series for the prova substitutiva; every subject when the series has none set. */
+export async function examSubjects(r: EnrollmentReport): Promise<string[]> {
+  const series = await db
+    .select({ name: subject.name })
+    .from(levelSubject)
+    .innerJoin(subject, eq(levelSubject.subjectId, subject.id))
+    .where(eq(levelSubject.gradeLevel, Number(r.grade)))
+    .orderBy(asc(subject.name));
+  const rows = series.length
+    ? series
+    : await db.select({ name: subject.name }).from(subject).orderBy(asc(subject.name));
+  return rows.map((s) => s.name);
+}

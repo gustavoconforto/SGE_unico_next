@@ -7,9 +7,10 @@ import { today } from "@/lib/finance";
 import { idParam } from "@/lib/list";
 import { PrintToolbar } from "../../../../print-toolbar";
 import { Paragraphs } from "../paragraphs";
+import { ExamRequestForm, ExamRequestProvider } from "./exam-request-form";
 import { AttendanceBody, AttendanceForm, AttendanceProvider } from "./attendance-form";
-import { Contract, Declaracao, Ficha, Requerimento } from "../documents";
-import { declarationParagraphs, loadEnrollmentReport, studentFacts } from "../report";
+import { Contract, Declaracao, Ficha, ProvaSubstitutiva, Requerimento } from "../documents";
+import { declarationParagraphs, examSubjects, loadEnrollmentReport, studentFacts } from "../report";
 
 // slug in the URL -> title (Django's PRINT_DOCUMENTS)
 const DOCUMENTS: Record<string, string> = {
@@ -18,6 +19,7 @@ const DOCUMENTS: Record<string, string> = {
   ficha: "Ficha de Matrícula",
   declaracao: "Declaração de Escolaridade",
   comparecimento: "Declaração de Comparecimento",
+  substitutiva: "Requerimento de Prova Substitutiva",
 };
 
 export async function generateMetadata({ params }: PageProps<"/enrollments/[id]/print/[doc]">): Promise<Metadata> {
@@ -85,6 +87,19 @@ export default async function EnrollmentPrintPage({ params }: PageProps<"/enroll
           <AttendanceBody />
         </Declaracao>
       </AttendanceProvider>
+    );
+  }
+
+  // The student (or a guardian) signs the request; the secretaria fills in the blanks in the toolbar
+  if (doc === "substitutiva") {
+    if (r.enrollment.status !== "A") notFound();
+    return (
+      <ExamRequestProvider>
+        <PrintToolbar>
+          <ExamRequestForm subjects={await examSubjects(r)} />
+        </PrintToolbar>
+        <ProvaSubstitutiva r={r} />
+      </ExamRequestProvider>
     );
   }
 

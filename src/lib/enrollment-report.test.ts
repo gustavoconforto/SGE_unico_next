@@ -3,6 +3,8 @@ import {
   SHIFT_PERIODS,
   attendanceDeclaration,
   attendanceFields,
+  brlAmount,
+  examRequestText,
   fullAddress,
   hourLabel,
   longDate,
@@ -134,4 +136,32 @@ test("attendanceDeclaration prints blank fields as lines to fill by hand", () =>
     `Declaro ainda, que o(a) aluno(a) esteve presente na ${"_".repeat(24)} no dia ____/____/________ ` +
       `no turno ${"_".repeat(16)}, das ______h às ______h.`,
   );
+});
+
+test("brlAmount reads the fee as typed in Brazil", () => {
+  expect(brlAmount("150")).toBe("R$ 150,00");
+  expect(brlAmount("1.234,5")).toBe("R$ 1.234,50");
+  expect(brlAmount("R$ 80,00")).toBe("R$ 80,00");
+  expect(brlAmount("1234")).toBe("R$ 1.234,00");
+  expect(brlAmount("")).toBe("");
+  expect(brlAmount("12.5")).toBe("");
+  expect(brlAmount("abc")).toBe("");
+});
+
+test("examRequestText prints the blanks, or lines while they're empty", () => {
+  expect(
+    examRequestText({
+      missedOn: "2026-11-10",
+      kind: "PS",
+      subject: "Física",
+      date: "2026-11-30",
+      time: "14:00",
+      value: "50",
+    }),
+  ).toEqual({ missedOn: "10/11/2026", exam: "PS de Física", date: "30/11/2026", time: "14h", value: "R$ 50,00" });
+  const blank = examRequestText({ missedOn: "", kind: "PB", subject: "", date: "", time: "", value: "" });
+  expect(blank.missedOn).toBe("____/____/________");
+  expect(blank.exam).toMatch(/^_+$/);
+  expect(blank.time).toMatch(/^_+$/);
+  expect(blank.value).toMatch(/^_+$/);
 });

@@ -1,6 +1,10 @@
 // Pure pieces of Django's enrollment printouts (enrollments/views.py build_report_context).
-import { formatDate } from "./finance";
+import { formatDate, formatMoney } from "./finance";
 import { formatZipCode } from "./format";
+
+/** The blanks typed in the print toolbars: "2026-11-30" and "14:30". */
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 /** Class shift as written in the requerimento ("no período matutino"). */
 export const SHIFT_PERIODS: Record<string, string> = { M: "matutino", T: "vespertino", N: "noturno", I: "integral" };
@@ -116,10 +120,10 @@ export function attendanceFields(
   };
   return {
     event: value("evento", DEFAULT_ATTENDANCE_EVENT, () => true).slice(0, 200),
-    date: value("data", defaults.date, (v) => /^\d{4}-\d{2}-\d{2}$/.test(v)),
+    date: value("data", defaults.date, (v) => ISO_DATE.test(v)),
     shift: value("turno", defaults.shift ?? "", (v) => v in SHIFT_PERIODS),
-    from: value("das", "", (v) => /^([01]\d|2[0-3]):[0-5]\d$/.test(v)),
-    to: value("as", "", (v) => /^([01]\d|2[0-3]):[0-5]\d$/.test(v)),
+    from: value("das", "", (v) => TIME.test(v)),
+    to: value("as", "", (v) => TIME.test(v)),
   };
 }
 
@@ -161,4 +165,39 @@ export function attendanceDeclaration(d: StudentFacts, a: Attendance): Run[][] {
       },
     ],
   ];
+}
+
+/** The requerimento de prova substitutiva's exam kinds: substitutiva and bimestral. */
+export const EXAM_KINDS = ["PS", "PB"] as const;
+
+/** What the secretaria fills in on the requerimento de prova substitutiva. */
+export type ExamRequest = {
+  missedOn: string;
+  kind: string;
+  subject: string;
+  date: string;
+  time: string;
+  value: string;
+};
+
+/** "150" or "1.234,5" (as typed in Brazil) → "R$ 150,00" / "R$ 1.234,50"; anything else → "". */
+export function brlAmount(typed: string): string {
+  const s = typed.trim().replace(/^R\$\s*/, "");
+  if (!/^\d{1,3}(\.?\d{3})*(,\d{1,2})?$/.test(s)) return "";
+  return `R$ ${formatMoney(s.replaceAll(".", "").replace(",", "."))}`;
+}
+
+/**
+ * The requerimento de prova substitutiva's blanks as printed (not in Django: copied from the secretaria's paper
+ * model). A field left empty prints as a line to fill by hand; the exam reads "PS de Física".
+ */
+export function examRequestText(v: ExamRequest) {
+  const date = (iso: string) => (ISO_DATE.test(iso) ? formatDate(iso) : "____/____/________");
+  return {
+    missedOn: date(v.missedOn),
+    exam: v.kind && v.subject ? `${v.kind} de ${v.subject}` : "_".repeat(40),
+    date: date(v.date),
+    time: TIME.test(v.time) ? hourLabel(v.time) : "__________",
+    value: brlAmount(v.value) || "_".repeat(20),
+  };
 }

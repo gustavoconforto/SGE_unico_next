@@ -4,6 +4,7 @@ import { SHIFT_PERIODS, fullAddress, longDate } from "@/lib/enrollment-report";
 import { formatDate, formatMoney, label, today } from "@/lib/finance";
 import { formatDocument, formatZipCode } from "@/lib/format";
 import { SEX_CHOICES, formatPhone } from "@/lib/person";
+import { ExamBlank } from "./[doc]/exam-request-form";
 import type { EnrollmentReport, Person } from "./report";
 
 // Ported from Django's print_base.html / preview_enrollment.html styles, scoped to .enr
@@ -93,6 +94,23 @@ const DECLARATION_CSS = `
 .enr footer { margin-top: auto; padding-top: 6px; border-top: 2px solid #4b5563; text-align: center; font-size: 9pt; color: #4b5563; }
 .enr footer p { margin: 0; }
 @media print { .enr.declaration-page { min-height: 267mm; } }
+`;
+
+const EXAM_REQUEST_CSS = `
+.enr.exam-request { font-size: 11pt; }
+.enr .logo-row { text-align: center; }
+.enr .logo-row img { display: inline-block; }
+.enr h1 { margin: 16px 0 32px; font-size: 13pt; }
+.enr .exam-request-body { margin: 0; text-align: justify; line-height: 1.8; }
+.enr dl { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; margin: 0; }
+.enr dl div { display: flex; gap: 6px; }
+.enr dl .wide { grid-column: 1 / -1; }
+.enr dt { font-weight: bold; text-transform: uppercase; }
+.enr dd { margin: 0; }
+.enr .exam { margin: 28px 0 0; }
+.enr .date { margin: 28px 0 0; text-align: right; }
+.enr .signature { width: 60%; margin: 64px auto 0; padding-top: 4px; border-top: 1px solid #111827; text-align: center; font-size: 10pt; }
+.enr .cut { margin: 32px 0; border: 0; border-top: 1px dashed #111827; }
 `;
 
 /** The declaração's letterhead and footer, as on the secretaria's paper model (also in the .docx). */
@@ -841,6 +859,78 @@ export function Declaracao({ title, children }: { title: string; children: React
         </p>
         <p>{DECLARATION_FOOTER[1]}</p>
       </footer>
+    </main>
+  );
+}
+
+/**
+ * The requerimento de prova substitutiva (the student's request) and, below the cut line, its protocolo (the
+ * student's copy with the new exam's date, time and fee). The blanks come from the toolbar form (`ExamBlank`).
+ */
+export function ProvaSubstitutiva({ r }: { r: EnrollmentReport }) {
+  const name = upper(r.student.name);
+  const grade = `${r.grade}ª Série`;
+  const klass = upper(r.schoolClass?.name);
+  const date = <p className="date">Brasília, {longDate(today())}.</p>;
+  return (
+    <main className="enr exam-request">
+      <style>{BASE_CSS + EXAM_REQUEST_CSS}</style>
+      <div className="logo-row">
+        <img className="logo" src={LOGO} alt="Único Educacional" />
+      </div>
+      <h1>Requerimento de Prova Substitutiva</h1>
+      <p className="exam-request-body">
+        Eu, {name}, matrícula: {r.student.registration}, Série: {grade}
+        {klass && `, Turma: ${klass}`}, venho solicitar a realização de prova substitutiva, ocorrida no dia{" "}
+        <ExamBlank name="missedOn" />.
+      </p>
+      <p className="exam">
+        Prova: <ExamBlank name="exam" />
+      </p>
+      {date}
+      <p className="signature">Assinatura do(a) responsável e/ou aluno(a)</p>
+      <hr className="cut" />
+      <h1>Protocolo de Prova Substitutiva</h1>
+      <dl>
+        <div className="wide">
+          <dt>Aluno(a):</dt>
+          <dd>{name}</dd>
+        </div>
+        <div>
+          <dt>Série:</dt>
+          <dd>{grade}</dd>
+        </div>
+        <div>
+          <dt>Turma:</dt>
+          <dd>{klass}</dd>
+        </div>
+        <div className="wide">
+          <dt>Prova:</dt>
+          <dd>
+            <ExamBlank name="exam" />
+          </dd>
+        </div>
+        <div>
+          <dt>Data da prova substitutiva:</dt>
+          <dd>
+            <ExamBlank name="date" />
+          </dd>
+        </div>
+        <div>
+          <dt>Horário:</dt>
+          <dd>
+            <ExamBlank name="time" />
+          </dd>
+        </div>
+        <div className="wide">
+          <dt>Valor:</dt>
+          <dd>
+            <ExamBlank name="value" />
+          </dd>
+        </div>
+      </dl>
+      {date}
+      <p className="signature">Assinatura</p>
     </main>
   );
 }
