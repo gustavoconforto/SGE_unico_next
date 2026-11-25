@@ -1,4 +1,8 @@
-// Test data for development (`npm run db:reset`). Deterministic: the same run gives the same rows.
+// Test data for development (`npm run db:reset`). School year 2026 is under way: new students in every series,
+// grades, payments, the last two weeks of lectures and their roll calls (the latest day left to take). 2027 is
+// enrolled in November 2026: the 1st and 2nd series move up a series, the 3rd graduates, a new 1st series arrives.
+// One login per role; Mathematics and Portuguese have two teachers. Deterministic: the same run on the same day
+// gives the same rows.
 // Users go through Better Auth's own API (it hashes the passwords); money goes through the app's rules
 // (createEnrollmentAccount, refreshInstallmentStatus), so balances match what the screens would produce.
 import { eq } from "drizzle-orm";
@@ -18,6 +22,7 @@ import {
   toDb,
 } from "../src/lib/finance";
 import { createEnrollmentAccount, refreshInstallmentStatus, syncDocuments } from "../src/lib/finance-db";
+import { isoWeekday } from "../src/lib/dates";
 import { lessonDays } from "../src/lib/pathways";
 import type { RoleName } from "../src/lib/permissions";
 import { nextRegistration } from "../src/lib/students";
@@ -26,7 +31,37 @@ export const SEED_PASSWORD = process.env.SEED_PASSWORD ?? "senha1234";
 const USERS: { username: string; name: string; role: RoleName[] }[] = [
   { username: "admin", name: "Administrador", role: ["admin"] },
   { username: "secretaria", name: "Secretaria Escolar", role: ["user", "secretaria"] },
+  { username: "financeiro", name: "Financeiro", role: ["user", "financeiro"] },
+  { username: "coordenacao", name: "Coordenação Pedagógica", role: ["user", "coordenacao"] },
+  { username: "professor", name: "Professor", role: ["user", "professor"] },
 ];
+const YEARS = [2026, 2027] as const;
+/** Days off in each school year, with the calendar's note. */
+const HOLIDAYS: Record<(typeof YEARS)[number], [string, string][]> = {
+  2026: [
+    ["2026-02-16", "Carnaval"],
+    ["2026-02-17", "Carnaval"],
+    ["2026-04-03", "Sexta-feira Santa"],
+    ["2026-04-21", "Tiradentes"],
+    ["2026-05-01", "Dia do Trabalho"],
+    ["2026-06-04", "Corpus Christi"],
+    ["2026-09-07", "Independência"],
+    ["2026-10-12", "Nossa Senhora Aparecida"],
+    ["2026-11-02", "Finados"],
+    ["2026-11-20", "Consciência Negra"],
+  ],
+  2027: [
+    ["2027-02-08", "Carnaval"],
+    ["2027-02-09", "Carnaval"],
+    ["2027-03-26", "Sexta-feira Santa"],
+    ["2027-04-21", "Tiradentes"],
+    ["2027-05-27", "Corpus Christi"],
+    ["2027-09-07", "Independência"],
+    ["2027-10-12", "Nossa Senhora Aparecida"],
+    ["2027-11-02", "Finados"],
+    ["2027-11-15", "Proclamação da República"],
+  ],
+};
 
 const FIRST = [
   "Ana",
@@ -132,7 +167,6 @@ function person(name: string, sex: "M" | "F", birthYear: number) {
 
 export async function seed() {
   const on = today();
-  const year = Number(on.slice(0, 4));
 
   for (const u of USERS)
     await auth.api.createUser({
@@ -150,7 +184,7 @@ export async function seed() {
   const years = await db
     .insert(t.enrollmentsSchoolyear)
     .values(
-      [year, year + 1].map((y) => ({
+      YEARS.map((y) => ({
         begins: `${y}-02-02`,
         ends: `${y}-12-11`,
         schoolDays: 200,
@@ -167,6 +201,13 @@ export async function seed() {
     )
     .returning();
   const current = years[0];
+  await db
+    .insert(t.enrollmentsCalendarday)
+    .values(
+      years.flatMap((y, i) =>
+        HOLIDAYS[YEARS[i]].map(([day, note]) => ({ schoolYearId: y.id, day, isSchoolDay: false, note })),
+      ),
+    );
   const types = await db
     .insert(t.enrollmentsEnrollmenttype)
     .values(
@@ -223,21 +264,21 @@ export async function seed() {
       ].map(([type, penalty]) => ({ type, penalty })),
     )
     .returning();
-  const [teacherRole, , secretaryRole] = await db
+  const [teacherRole, coordinationRole, secretaryRole, financeRole] = await db
     .insert(t.employeesEmployeeroletype)
-    .values([{ role: "Professor" }, { role: "Coordenação" }, { role: "Secretaria" }])
+    .values([{ role: "Professor" }, { role: "Coordenação" }, { role: "Secretaria" }, { role: "Financeiro" }])
     .returning();
-  // The secretaria login is a Secretaria employee
-  const [secretary] = await db
-    .insert(t.employeesEmployee)
-    .values({
-      ...person("Secretaria Escolar", "F", 1985),
-      roleId: secretaryRole.id,
-      canAccessSuga: false,
-      passwordSuga: "",
-    })
-    .returning();
-  await db.update(user).set({ employeeId: secretary.id }).where(eq(user.username, "secretaria"));
+  for (const [username, name, sex, roleId] of [
+    ["secretaria", "Secretaria Escolar", "F", secretaryRole.id],
+    ["coordenacao", "Coordenação Pedagógica", "M", coordinationRole.id],
+    ["financeiro", "Setor Financeiro", "F", financeRole.id],
+  ] as const) {
+    const [emp] = await db
+      .insert(t.employeesEmployee)
+      .values({ ...person(name, sex, 1985), roleId, canAccessSuga: false, passwordSuga: "" })
+      .returning();
+    await db.update(user).set({ employeeId: emp.id }).where(eq(user.username, username));
+  }
   await db.insert(t.accountsAccounttype).values([
     { name: "Mensalidade", direction: "R" },
     { name: "Material didático", direction: "R" },
@@ -267,117 +308,148 @@ export async function seed() {
     await db
       .insert(t.gradesGradelevelsubjectTeachers)
       .values(levelSubjects.map((ls) => ({ gradelevelsubjectId: ls.id, employeeId: emp.id })));
-    subjects.push({ id: subject.id, name, teacherId: emp.id, levelSubjectIds: levelSubjects.map((ls) => ls.id) });
-  }
-
-  // --- classes, students, guardians, enrollments (with their contract accounts) -----
-  const enrollments: { id: number; level: number; classId: number }[] = [];
-  let registration: string | undefined;
-  for (const level of [1, 2, 3] as const) {
-    const type = types.find((x) => x.schoolYearId === current.id && x.level === String(level))!;
-    for (const [c, className] of CLASS_NAMES[level].entries()) {
-      const [klass] = await db
-        .insert(t.classesClass)
+    if (i < 2) {
+      const [second] = await db
+        .insert(t.employeesEmployee)
         .values({
-          name: className,
-          gradeLevel: level,
-          shift: c ? "T" : "M",
-          capacity: 40,
-          programId: program.id,
-          yearId: current.id,
+          ...person(`${FIRST[10 + i]} ${LAST[(i + 8) % LAST.length]}`, i ? "F" : "M", 1975 + i),
+          roleId: teacherRole.id,
+          canAccessSuga: false,
+          passwordSuga: "",
         })
         .returning();
-      for (let s = 0; s < STUDENTS_PER_CLASS; s++) {
-        const last = `${pick(LAST)} ${pick(LAST)}`;
-        const sex = rand() < 0.5 ? "F" : "M";
-        registration = nextRegistration(registration, year);
-        const selfFinancial = level === 3 && s === 0; // an adult student who pays for themselves
-        const [student] = await db
-          .insert(t.studentsStudent)
+      await db.insert(t.departmentsDepartmentTeachers).values({ departmentId: dep.id, employeeId: second.id });
+      await db
+        .insert(t.gradesGradelevelsubjectTeachers)
+        .values(levelSubjects.map((ls) => ({ gradelevelsubjectId: ls.id, employeeId: second.id })));
+    }
+    subjects.push({ id: subject.id, name, teacherId: emp.id, levelSubjectIds: levelSubjects.map((ls) => ls.id) });
+  }
+  await db.update(user).set({ employeeId: subjects[0].teacherId }).where(eq(user.username, "professor"));
+
+  // --- classes, students, guardians, enrollments (with their contract accounts) -----
+  type Pupil = { id: number; name: string; selfFinancial: boolean };
+  const enrollments: { id: number; level: number; classId: number; yearId: number }[] = [];
+  const pupils = new Map<string, Pupil[]>();
+  let registration: string | undefined;
+  async function newPupil(level: number, s: number, schoolYear: number): Promise<Pupil> {
+    const last = `${pick(LAST)} ${pick(LAST)}`;
+    const sex = rand() < 0.5 ? "F" : "M";
+    registration = nextRegistration(registration, schoolYear);
+    const selfFinancial = level === 3 && s === 0; // an adult student who pays for themselves
+    const [student] = await db
+      .insert(t.studentsStudent)
+      .values({
+        ...person(`${pick(FIRST)} ${last}`, sex, schoolYear - 15 - level),
+        socialName: "",
+        useSocialName: false,
+        registration,
+        photo: "",
+        isSelfFinancial: selfFinancial,
+        bloodType: pick(["A+", "O+", "B+", "AB+", "O-"]),
+        observations: "",
+        schoolFrom: "CEF 01 de Brasília",
+      })
+      .returning();
+    if (!selfFinancial) {
+      const [g] = await db
+        .insert(t.studentsGuardian)
+        .values({ ...person(`${pick(FIRST)} ${last}`, "F", schoolYear - 42), maritalStatus: "C" })
+        .returning();
+      await db.insert(t.studentsGuardianassociation).values({
+        guardianId: g.id,
+        studentId: student.id,
+        relationship: "MAE",
+        isFinancial: true,
+        isPrimaryContact: true,
+        livingWith: true,
+        pickUp: true,
+      });
+    }
+    return { id: student.id, name: student.name, selfFinancial };
+  }
+  for (const [y, schoolYear] of YEARS.entries()) {
+    const yearRow = years[y];
+    for (const level of [1, 2, 3] as const) {
+      const type = types.find((x) => x.schoolYearId === yearRow.id && x.level === String(level))!;
+      for (const [c, className] of CLASS_NAMES[level].entries()) {
+        const [klass] = await db
+          .insert(t.classesClass)
           .values({
-            ...person(`${pick(FIRST)} ${last}`, sex, year - 15 - level),
-            socialName: "",
-            useSocialName: false,
-            registration,
-            photo: "",
-            isSelfFinancial: selfFinancial,
-            bloodType: pick(["A+", "O+", "B+", "AB+", "O-"]),
-            observations: "",
-            schoolFrom: "CEF 01 de Brasília",
+            name: className,
+            gradeLevel: level,
+            shift: c ? "T" : "M",
+            capacity: 40,
+            programId: program.id,
+            yearId: yearRow.id,
           })
           .returning();
-        if (!selfFinancial) {
-          const [g] = await db
-            .insert(t.studentsGuardian)
-            .values({ ...person(`${pick(FIRST)} ${last}`, "F", year - 42), maritalStatus: "C" })
-            .returning();
-          await db.insert(t.studentsGuardianassociation).values({
-            guardianId: g.id,
-            studentId: student.id,
-            relationship: "MAE",
-            isFinancial: true,
-            isPrimaryContact: true,
-            livingWith: true,
-            pickUp: true,
-          });
-        }
-
-        const firstPercent = s === 1 ? discounts[0].percentage : "0.00";
-        const remainingPercent = s === 1 ? discounts[0].percentage : s === 2 ? discounts[1].percentage : "0.00";
-        const enrolledAt = `${year}-01-${String(10 + s).padStart(2, "0")}`;
-        const id = await db.transaction(async (tx) => {
-          const [e] = await tx
-            .insert(t.enrollmentsEnrollment)
-            .values({
-              studentId: student.id,
-              enrollmentTypeId: type.id,
-              schoolClassId: klass.id,
-              status: "A",
-              dueDay: 10,
-              enrolledAt,
-              grossValue: type.totalPrice,
-              firstDiscountPercent: firstPercent,
-              remainingDiscountPercent: remainingPercent,
-            })
-            .returning();
-          if (s === 1)
-            await tx.insert(t.enrollmentsEnrollmentdiscount).values(
-              ["F", "R"].map((group) => ({
+        const moving = y && level > 1 ? (pupils.get(`${schoolYear - 1}-${level - 1}-${c}`) ?? []) : null;
+        const roster: Pupil[] = [];
+        for (let s = 0; s < (moving?.length ?? STUDENTS_PER_CLASS); s++) {
+          const pupil = moving?.[s] ?? (await newPupil(level, s, schoolYear));
+          roster.push(pupil);
+          const firstPercent = s === 1 ? discounts[0].percentage : "0.00";
+          const remainingPercent = s === 1 ? discounts[0].percentage : s === 2 ? discounts[1].percentage : "0.00";
+          const enrolledAt = y
+            ? `${YEARS[0]}-11-${String(3 + s).padStart(2, "0")}`
+            : `${schoolYear}-01-${String(10 + s).padStart(2, "0")}`;
+          const id = await db.transaction(async (tx) => {
+            const [e] = await tx
+              .insert(t.enrollmentsEnrollment)
+              .values({
+                studentId: pupil.id,
+                enrollmentTypeId: type.id,
+                schoolClassId: klass.id,
+                status: "A",
+                dueDay: 10,
+                enrolledAt,
+                grossValue: type.totalPrice,
+                firstDiscountPercent: firstPercent,
+                remainingDiscountPercent: remainingPercent,
+              })
+              .returning();
+            if (s === 1)
+              await tx.insert(t.enrollmentsEnrollmentdiscount).values(
+                ["F", "R"].map((group) => ({
+                  enrollmentId: e.id,
+                  group,
+                  discountTypeId: discounts[0].id,
+                  percentage: firstPercent,
+                  observation: "",
+                })),
+              );
+            if (s === 2)
+              await tx.insert(t.enrollmentsEnrollmentdiscount).values({
                 enrollmentId: e.id,
-                group,
-                discountTypeId: discounts[0].id,
-                percentage: firstPercent,
+                group: "R",
+                discountTypeId: discounts[1].id,
+                percentage: remainingPercent,
                 observation: "",
-              })),
+              });
+            await createEnrollmentAccount(
+              tx,
+              {
+                id: e.id,
+                studentId: pupil.id,
+                enrolledAt,
+                dueDay: 10,
+                schoolYear,
+                selfFinancial: pupil.selfFinancial,
+                description: `${pupil.name} - Ensino Médio - ${label(LEVELS, String(level))} - ${schoolYear}`,
+              },
+              contractValues(type.totalPrice, firstPercent, remainingPercent),
             );
-          if (s === 2)
-            await tx.insert(t.enrollmentsEnrollmentdiscount).values({
-              enrollmentId: e.id,
-              group: "R",
-              discountTypeId: discounts[1].id,
-              percentage: remainingPercent,
-              observation: "",
-            });
-          await createEnrollmentAccount(
-            tx,
-            {
-              id: e.id,
-              studentId: student.id,
-              enrolledAt,
-              dueDay: 10,
-              schoolYear: year,
-              selfFinancial,
-              description: `${student.name} - Ensino Médio - ${label(LEVELS, String(level))} - ${year}`,
-            },
-            contractValues(type.totalPrice, firstPercent, remainingPercent),
-          );
-          await syncDocuments(tx, e.id);
-          return e.id;
-        });
-        enrollments.push({ id, level, classId: klass.id });
+            await syncDocuments(tx, e.id);
+            return e.id;
+          });
+          enrollments.push({ id, level, classId: klass.id, yearId: yearRow.id });
+        }
+        pupils.set(`${schoolYear}-${level}-${c}`, roster);
       }
     }
   }
+  const underWay = enrollments.filter((e) => e.yearId === current.id);
 
   // --- payments: everything due is paid, except a few debtors (overdue) and one partial payment ---
   const due = await db
@@ -440,10 +512,10 @@ export async function seed() {
       .insert(t.accountsAccount)
       .values({
         direction: "P",
-        description: `${category} ${year}`,
+        description: `${category} ${YEARS[0]}`,
         categoryId: categories[category],
         supplierId: suppliers[s].id,
-        issueDate: `${year}-07-01`,
+        issueDate: `${YEARS[0]}-07-01`,
         grossValue: gross,
         discountValue: "0.00",
         notes: "",
@@ -452,7 +524,7 @@ export async function seed() {
     const rows = await db
       .insert(t.accountsInstallment)
       .values(
-        accountInstallments(money(gross), count, `${year}-08-05`).map((i) => ({
+        accountInstallments(money(gross), count, `${YEARS[0]}-08-05`).map((i) => ({
           accountId: acc.id,
           number: i.number,
           dueDate: i.dueDate,
@@ -480,7 +552,7 @@ export async function seed() {
 
   // --- grades for the finished bimesters; incidents, delays and Q&A in the current one ---
   const bimesters = ([1, 2, 3, 4] as const).filter((b) => current[`bi${b}Ends`]! < on);
-  const grades = enrollments.flatMap((e) =>
+  const grades = underWay.flatMap((e) =>
     bimesters.flatMap((bimester) =>
       subjects.flatMap((s) => [
         { enrollmentId: e.id, subjectId: s.id, examTypeId: exams.PS.id, bimester, score: half(3) },
@@ -493,55 +565,81 @@ export async function seed() {
   await db
     .insert(t.incidentsIncident)
     .values(
-      enrollments
+      underWay
         .filter((_, i) => i % 4 === 0)
         .map((e) => ({ enrollmentId: e.id, incidentTypeId: pick(incidentTypes).id, incidentDate: recent(20) })),
     );
   await db
     .insert(t.incidentsStudentdelay)
     .values(
-      enrollments
+      underWay
         .filter((_, i) => i % 3 === 0)
         .map((e) => ({ enrollmentId: e.id, delayType: pick(["A", "A", "U"]), incidentDate: recent(20) })),
     );
   await db
     .insert(t.incidentsBathroompermission)
     .values(
-      enrollments
+      underWay
         .filter((_, i) => i % 2 === 0)
         .map((e) => ({ enrollmentId: e.id, classPeriod: 1 + Math.floor(rand() * 6), incidentDate: recent(10) })),
     );
   await db
     .insert(t.qAndAQanda)
     .values(
-      enrollments
+      underWay
         .filter((_, i) => i % 5 === 0)
         .map((e) => ({ enrollmentId: e.id, subjectId: pick(subjects).id, qAndADate: recent(15) })),
     );
 
-  // --- timetable (Mon–Fri, periods 1–6) and the last two weeks of lectures ----------------
+  // --- timetable (Mon–Fri, periods 1–6) for both years; the last two weeks of lectures and roll calls ---
   const classes = [...new Set(enrollments.map((e) => e.classId))];
   const slots = classes.flatMap((schoolClassId, c) =>
     [1, 2, 3, 4, 5].flatMap((weekday) =>
       [1, 2, 3, 4, 5, 6].map((period) => {
         const s = subjects[(weekday * 6 + period + c) % subjects.length];
-        return { schoolClassId, weekday, period, subjectId: s.id, teacherId: s.teacherId };
+        const level = enrollments.find((e) => e.classId === schoolClassId)!.level;
+        return { schoolClassId, weekday, period, subjectId: s.levelSubjectIds[level - 1], teacherId: s.teacherId };
       }),
     ),
   );
   await db.insert(t.lessonsTimetableslot).values(slots);
-  const days = lessonDays([1, 2, 3, 4, 5], addDays(on, -14), addDays(on, -1)).filter((d) => d >= current.begins);
+  const daysOff = new Set(HOLIDAYS[YEARS[0]].map(([day]) => day));
+  const days = lessonDays([1, 2, 3, 4, 5], addDays(on, -14), addDays(on, -1)).filter(
+    (d) => d >= current.begins && d <= current.ends && !daysOff.has(d),
+  );
+  const underWayClasses = new Set(underWay.map((e) => e.classId));
   const lectures = days.flatMap((date) =>
     slots
-      .filter((s) => s.weekday === (new Date(`${date}T00:00:00Z`).getUTCDay() || 7))
-      .map((s) => ({
+      .filter((s) => underWayClasses.has(s.schoolClassId) && s.weekday === isoWeekday(date))
+      .map(({ weekday: _, ...s }) => ({
         ...s,
-        weekday: undefined,
         date,
-        topic: `${subjects.find((x) => x.id === s.subjectId)!.name}: revisão`,
+        topic: `${subjects.find((x) => x.levelSubjectIds.includes(s.subjectId))!.name}: revisão`,
       })),
   );
-  if (lectures.length) await db.insert(t.lessonsLecture).values(lectures.map(({ weekday: _, ...l }) => l));
+  if (lectures.length) await db.insert(t.lessonsLecture).values(lectures);
+  const attendance: (typeof t.lessonsAttendance.$inferInsert)[] = [];
+  const notes: (typeof t.lessonsAttendancenote.$inferInsert)[] = [];
+  for (const date of days.slice(0, -1))
+    for (const e of underWay) {
+      const day = rand();
+      const status = day < 0.04 ? "F" : day < 0.07 ? "J" : null;
+      if (day >= 0.04 && day < 0.07) notes.push({ enrollmentId: e.id, date, note: "Atestado médico" });
+      const lessons = lectures.filter((l) => l.date === date && l.schoolClassId === e.classId);
+      const leftAt = !status && rand() < 0.05 ? 4 : null;
+      if (leftAt) notes.push({ enrollmentId: e.id, date, note: "Saiu mais cedo com o responsável" });
+      for (const l of lessons)
+        attendance.push({
+          enrollmentId: e.id,
+          date,
+          period: l.period,
+          subjectId: l.subjectId,
+          status: status ?? (leftAt && l.period >= leftAt ? "F" : rand() < 0.02 ? "F" : "P"),
+        });
+    }
+  for (let i = 0; i < attendance.length; i += 500)
+    await db.insert(t.lessonsAttendance).values(attendance.slice(i, i + 500));
+  if (notes.length) await db.insert(t.lessonsAttendancenote).values(notes);
 
   // --- pathways: two offerings with members, weekly sessions, attendance and bimester grades ---
   const pathways = await db
@@ -582,7 +680,7 @@ export async function seed() {
     const members = await db
       .insert(t.pathwaysPathwayenrollment)
       .values(
-        enrollments
+        underWay
           .filter((_, i) => i % 4 === p)
           .map((e) => ({ enrollmentId: e.id, offeringId: offering.id, joinedAt: current.begins })),
       )
@@ -619,7 +717,7 @@ export async function seed() {
   }
 
   console.log(
-    `Seeded ${enrollments.length} students in ${classes.length} classes, ${subjects.length} subjects, ${grades.length} grades.`,
+    `Seeded ${enrollments.length} enrollments in ${classes.length} classes over ${YEARS.join(" and ")}, ${subjects.length} subjects, ${grades.length} grades, ${attendance.length} roll call marks.`,
   );
   console.log(`Log in as ${USERS.map((u) => u.username).join(" or ")}, password "${SEED_PASSWORD}".`);
 }
