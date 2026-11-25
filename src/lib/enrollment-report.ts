@@ -1,4 +1,5 @@
 // Pure pieces of Django's enrollment printouts (enrollments/views.py build_report_context).
+import { formatDate } from "./finance";
 import { formatZipCode } from "./format";
 
 /** Class shift as written in the requerimento ("no período matutino"). */
@@ -44,11 +45,8 @@ export function fullAddress(p: Address): string {
 /** A stretch of a printout's paragraph; the page and the .docx render the same runs. */
 export type Run = { text: string; bold?: boolean };
 
-/**
- * The declaração de escolaridade's paragraphs (not in Django: copied from the secretaria's paper model).
- * Blank data drops its clause; the conclusion paragraphs only apply to the last series (3ª).
- */
-export function schoolingDeclaration(d: {
+/** The student's data the declarações print. */
+export type StudentFacts = {
   name: string;
   registration: string;
   birthDate: string | null;
@@ -57,12 +55,16 @@ export function schoolingDeclaration(d: {
   address: string;
   shift: string | undefined;
   grade: string;
-  program: string;
-  yearEnds: string;
-}): Run[][] {
+};
+
+/**
+ * The declaração de escolaridade's paragraphs (not in Django: copied from the secretaria's paper model).
+ * Blank data drops its clause; the conclusion paragraphs only apply to the last series (3ª).
+ */
+export function schoolingDeclaration(d: StudentFacts & { program: string; yearEnds: string }): Run[][] {
   const facts = [
     `registrada(o) sob o número de matrícula: ${d.registration}`,
-    d.birthDate && `nascido(a) dia ${d.birthDate.slice(0, 10).split("-").reverse().join("/")}`,
+    d.birthDate && `nascido(a) dia ${formatDate(d.birthDate)}`,
     d.parents.length > 0 && `filho(a) ${d.parents.map((p) => p.toUpperCase()).join(" e ")}`,
     d.placeOfBirth && `natural de ${d.placeOfBirth}`,
     d.address && `residente à ${d.address}`,
@@ -92,4 +94,71 @@ export function schoolingDeclaration(d: {
       ],
     );
   return paragraphs;
+}
+
+/** What the secretaria fills in on the declaração de comparecimento; blank fields print as lines to fill by hand. */
+export type Attendance = { event: string; date: string; shift: string; from: string; to: string };
+
+export const DEFAULT_ATTENDANCE_EVENT = "aplicação da prova";
+
+/**
+ * Reads the declaração de comparecimento's fields from the query string (`get` returns null for a missing key).
+ * Before the form is first submitted the event, date and shift take their defaults; invalid values become blank.
+ */
+export function attendanceFields(
+  get: (key: string) => string | null,
+  defaults: { date: string; shift: string | undefined },
+): Attendance {
+  const value = (key: string, fallback: string, valid: (v: string) => boolean) => {
+    const v = get(key)?.trim();
+    if (v == null) return fallback;
+    return valid(v) ? v : "";
+  };
+  return {
+    event: value("evento", DEFAULT_ATTENDANCE_EVENT, () => true).slice(0, 200),
+    date: value("data", defaults.date, (v) => /^\d{4}-\d{2}-\d{2}$/.test(v)),
+    shift: value("turno", defaults.shift ?? "", (v) => v in SHIFT_PERIODS),
+    from: value("das", "", (v) => /^([01]\d|2[0-3]):[0-5]\d$/.test(v)),
+    to: value("as", "", (v) => /^([01]\d|2[0-3]):[0-5]\d$/.test(v)),
+  };
+}
+
+/** "08:00" → "8h", "14:30" → "14h30". */
+export const hourLabel = (time: string) => {
+  const [h, m] = time.split(":");
+  return `${Number(h)}h${m === "00" ? "" : m}`;
+};
+
+/**
+ * The declaração de comparecimento's paragraphs (not in Django: copied from the secretaria's paper model).
+ * Blank student data drops its clause; blank attendance fields print as lines, as on the paper model.
+ */
+export function attendanceDeclaration(d: StudentFacts, a: Attendance): Run[][] {
+  const facts = [
+    `Matrícula: ${d.registration}`,
+    d.birthDate && `nascido(a) em ${formatDate(d.birthDate)}`,
+    d.parents.length > 0 && `filho(a) de ${d.parents.map((p) => p.toUpperCase()).join(" e ")}`,
+    d.placeOfBirth && `natural de ${d.placeOfBirth}`,
+    d.address && `residente em ${d.address}`,
+  ].filter(Boolean);
+  const blank = (s: string, n: number) => s || "_".repeat(n);
+  return [
+    [
+      { text: "Declaramos para os devidos fins que o(a) aluno(a) " },
+      { text: d.name.toUpperCase(), bold: true },
+      {
+        text: `, ${facts.join(", ")}, está regularmente matriculado(a) nesta Instituição de Ensino na ${d.grade}ª Série${
+          d.shift ? `, no turno ${d.shift.toUpperCase()}` : ""
+        }.`,
+      },
+    ],
+    [
+      {
+        text:
+          `Declaro ainda, que o(a) aluno(a) esteve presente na ${blank(a.event, 24)} no dia ` +
+          `${a.date ? formatDate(a.date) : "____/____/________"} no turno ${blank(SHIFT_PERIODS[a.shift]?.toUpperCase() ?? "", 16)}, ` +
+          `das ${a.from ? hourLabel(a.from) : "______h"} às ${a.to ? hourLabel(a.to) : "______h"}.`,
+      },
+    ],
+  ];
 }

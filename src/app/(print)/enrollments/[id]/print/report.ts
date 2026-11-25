@@ -13,7 +13,13 @@ import {
   studentsGuardianassociation as guardianLink,
   studentsStudent as student,
 } from "@/db/schema/app";
-import { SHIFT_PERIODS, fullAddress, reportGrade, schoolingDeclaration } from "@/lib/enrollment-report";
+import {
+  type StudentFacts,
+  SHIFT_PERIODS,
+  fullAddress,
+  reportGrade,
+  schoolingDeclaration,
+} from "@/lib/enrollment-report";
 import { contractValues } from "@/lib/finance";
 import { financialGuardians } from "@/lib/finance-db";
 
@@ -94,17 +100,18 @@ export async function loadEnrollmentReport(id: number) {
 
 export type EnrollmentReport = NonNullable<Awaited<ReturnType<typeof loadEnrollmentReport>>>;
 
+/** The student's data both declarações print. */
+export const studentFacts = (r: EnrollmentReport): StudentFacts => ({
+  name: r.student.name,
+  registration: r.student.registration,
+  birthDate: r.student.birthDate,
+  parents: [r.father, r.mother].flatMap((p) => (p ? [p.name] : [])),
+  placeOfBirth: r.student.placeOfBirth,
+  address: fullAddress(r.student),
+  shift: r.schoolClass ? SHIFT_PERIODS[r.schoolClass.shift] : undefined,
+  grade: r.grade,
+});
+
 /** The declaração de escolaridade's text, shared by its print page and its .docx. */
 export const declarationParagraphs = (r: EnrollmentReport) =>
-  schoolingDeclaration({
-    name: r.student.name,
-    registration: r.student.registration,
-    birthDate: r.student.birthDate,
-    parents: [r.father, r.mother].flatMap((p) => (p ? [p.name] : [])),
-    placeOfBirth: r.student.placeOfBirth,
-    address: fullAddress(r.student),
-    shift: r.schoolClass ? SHIFT_PERIODS[r.schoolClass.shift] : undefined,
-    grade: r.grade,
-    program: r.program,
-    yearEnds: r.yearEnds,
-  });
+  schoolingDeclaration({ ...studentFacts(r), program: r.program, yearEnds: r.yearEnds });

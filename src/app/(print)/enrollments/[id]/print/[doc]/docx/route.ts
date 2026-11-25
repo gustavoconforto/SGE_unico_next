@@ -3,22 +3,35 @@ import path from "node:path";
 import { AlignmentType, BorderStyle, Document, Footer, ImageRun, Packer, Paragraph, TextRun } from "docx";
 import { notFound } from "next/navigation";
 import { requirePermission } from "@/lib/authorization";
-import { longDate } from "@/lib/enrollment-report";
+import { attendanceDeclaration, attendanceFields, longDate } from "@/lib/enrollment-report";
 import { today } from "@/lib/finance";
 import { idParam } from "@/lib/list";
 import { DECLARATION_FOOTER, DECLARATION_HEADING } from "../../documents";
-import { declarationParagraphs, loadEnrollmentReport } from "../../report";
+import { declarationParagraphs, loadEnrollmentReport, studentFacts } from "../../report";
 
 // next.config.ts traces this file into the route (outputFileTracingIncludes): Vercel serves public/ from its CDN
 const LOGO = path.join(process.cwd(), "public/img/unico_logo_stamp.png");
 const line = (color: string, size: number) => ({ style: BorderStyle.SINGLE, size, color, space: 4 });
 
-/** The declaração de escolaridade as a Word file, for the secretaria to adapt before printing. */
-export async function GET(_request: Request, ctx: RouteContext<"/enrollments/[id]/print/[doc]/docx">) {
+/** The declarações as Word files, for the secretaria to adapt before printing. */
+export async function GET(request: Request, ctx: RouteContext<"/enrollments/[id]/print/[doc]/docx">) {
   await requirePermission("enrollments", "view");
-  if ((await ctx.params).doc !== "declaracao") notFound();
+  const { doc: slug } = await ctx.params;
+  if (slug !== "declaracao" && slug !== "comparecimento") notFound();
   const r = await loadEnrollmentReport(await idParam(ctx.params));
   if (!r || r.enrollment.status !== "A") notFound();
+  const query = new URL(request.url).searchParams;
+  const [title, paragraphs, file] =
+    slug === "declaracao"
+      ? ["DECLARAÇÃO DE ESCOLARIDADE", declarationParagraphs(r), "declaracao-escolaridade"]
+      : [
+          "DECLARAÇÃO DE COMPARECIMENTO",
+          attendanceDeclaration(
+            studentFacts(r),
+            attendanceFields((key) => query.get(key), { date: today(), shift: r.schoolClass?.shift }),
+          ),
+          "declaracao-comparecimento",
+        ];
 
   const doc = new Document({
     styles: { default: { document: { run: { font: "Arial", size: 24 } } } },
@@ -65,9 +78,9 @@ export async function GET(_request: Request, ctx: RouteContext<"/enrollments/[id
           new Paragraph({
             alignment: AlignmentType.CENTER,
             spacing: { before: 1100, after: 1200 },
-            children: [new TextRun({ text: "DECLARAÇÃO DE ESCOLARIDADE", bold: true, size: 28 })],
+            children: [new TextRun({ text: title, bold: true, size: 28 })],
           }),
-          ...declarationParagraphs(r).map(
+          ...paragraphs.map(
             (runs) =>
               new Paragraph({
                 alignment: AlignmentType.JUSTIFIED,
@@ -93,11 +106,11 @@ export async function GET(_request: Request, ctx: RouteContext<"/enrollments/[id
     ],
   });
 
-  const file = `declaracao-escolaridade-${r.student.registration.replace(/[^\w-]/g, "")}.docx`;
+  const filename = `${file}-${r.student.registration.replace(/[^\w-]/g, "")}.docx`;
   return new Response(new Uint8Array(await Packer.toBuffer(doc)), {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "Content-Disposition": `attachment; filename="${file}"`,
+      "Content-Disposition": `attachment; filename="${filename}"`,
       "Cache-Control": "private, no-store",
     },
   });

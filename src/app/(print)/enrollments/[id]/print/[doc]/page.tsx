@@ -2,10 +2,14 @@ import { requirePermission } from "@/lib/authorization";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LinkButton } from "@/components/link-button";
+import { attendanceFields } from "@/lib/enrollment-report";
+import { today } from "@/lib/finance";
 import { idParam } from "@/lib/list";
 import { PrintToolbar } from "../../../../print-toolbar";
+import { Paragraphs } from "../paragraphs";
+import { AttendanceBody, AttendanceForm, AttendanceProvider } from "./attendance-form";
 import { Contract, Declaracao, Ficha, Requerimento } from "../documents";
-import { declarationParagraphs, loadEnrollmentReport } from "../report";
+import { declarationParagraphs, loadEnrollmentReport, studentFacts } from "../report";
 
 // slug in the URL -> title (Django's PRINT_DOCUMENTS)
 const DOCUMENTS: Record<string, string> = {
@@ -13,6 +17,7 @@ const DOCUMENTS: Record<string, string> = {
   requerimento: "Requerimento de Matrícula",
   ficha: "Ficha de Matrícula",
   declaracao: "Declaração de Escolaridade",
+  comparecimento: "Declaração de Comparecimento",
 };
 
 export async function generateMetadata({ params }: PageProps<"/enrollments/[id]/print/[doc]">): Promise<Metadata> {
@@ -60,8 +65,26 @@ export default async function EnrollmentPrintPage({ params }: PageProps<"/enroll
             Baixar Word
           </a>
         </PrintToolbar>
-        <Declaracao paragraphs={declarationParagraphs(r)} />
+        <Declaracao title={DOCUMENTS.declaracao}>
+          <Paragraphs paragraphs={declarationParagraphs(r)} />
+        </Declaracao>
       </>
+    );
+  }
+
+  // The secretaria fills in the event, date, shift and hours in the toolbar; the text follows in the browser
+  if (doc === "comparecimento") {
+    if (r.enrollment.status !== "A") notFound();
+    const initial = attendanceFields(() => null, { date: today(), shift: r.schoolClass?.shift });
+    return (
+      <AttendanceProvider facts={studentFacts(r)} initial={initial}>
+        <PrintToolbar>
+          <AttendanceForm docx={`/enrollments/${id}/print/comparecimento/docx`} />
+        </PrintToolbar>
+        <Declaracao title={DOCUMENTS.comparecimento}>
+          <AttendanceBody />
+        </Declaracao>
+      </AttendanceProvider>
     );
   }
 

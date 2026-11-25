@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element -- print pages */
 import { enrollmentTypeLabel } from "@/app/(app)/enrollments/data";
-import { type Run, SHIFT_PERIODS, fullAddress, longDate } from "@/lib/enrollment-report";
+import { SHIFT_PERIODS, fullAddress, longDate } from "@/lib/enrollment-report";
 import { formatDate, formatMoney, label, today } from "@/lib/finance";
 import { formatDocument, formatZipCode } from "@/lib/format";
 import { SEX_CHOICES, formatPhone } from "@/lib/person";
@@ -820,7 +820,8 @@ export function Contract({ r, payer }: { r: EnrollmentReport; payer: Person }) {
   );
 }
 
-export function Declaracao({ paragraphs }: { paragraphs: Run[][] }) {
+/** A declaração on the letterhead (escolaridade, comparecimento): title, body, date and the secretária's signature. */
+export function Declaracao({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <main className="enr declaration-page">
       <style>{BASE_CSS + DECLARATION_CSS}</style>
@@ -830,12 +831,8 @@ export function Declaracao({ paragraphs }: { paragraphs: Run[][] }) {
           <p key={line}>{line}</p>
         ))}
       </div>
-      <h1>Declaração de Escolaridade</h1>
-      <div className="body">
-        {paragraphs.map((runs, i) => (
-          <p key={i}>{runs.map((r, j) => (r.bold ? <b key={j}>{r.text}</b> : r.text))}</p>
-        ))}
-      </div>
+      <h1>{title}</h1>
+      <div className="body">{children}</div>
       <p className="date">Brasília, {longDate(today())}.</p>
       <p className="signature">Assinatura da Secretária Escolar</p>
       <footer>

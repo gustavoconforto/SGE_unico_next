@@ -7,6 +7,7 @@ const DOCUMENTS = [
   ["requerimento", "Requerimento de matrícula"],
   ["ficha", "Ficha de matrícula"],
   ["declaracao", "Declaração de escolaridade"],
+  ["comparecimento", "Declaração de comparecimento"],
 ] as const;
 
 type Doc = (typeof DOCUMENTS)[number][0];
