@@ -27,7 +27,7 @@ const supplierSchema = z.object({
 });
 
 export async function saveSupplier(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
-  await requirePermission("finance", "edit");
+  await requirePermission("payables", "edit");
   const { data, values, state } = parseForm(supplierSchema, formData);
   if (!data) return state;
   try {
@@ -42,7 +42,7 @@ export async function saveSupplier(id: number | null, _prev: FormState, formData
 }
 
 export async function deleteSupplier(id: number) {
-  await requirePermission("finance", "edit");
+  await requirePermission("payables", "edit");
   await deleteAndRedirect(
     () => db.delete(supplier).where(eq(supplier.id, id)),
     "/accounts/suppliers",

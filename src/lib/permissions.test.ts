@@ -23,8 +23,14 @@ describe("roles", () => {
     expect(roles.secretaria.authorize({ payments: ["edit"] }).success).toBe(true);
   });
 
+  it("keeps payables and suppliers to the financeiro, not the secretaria", () => {
+    expect(roles.financeiro.authorize({ payables: ["view", "edit"], finance: ["edit"] }).success).toBe(true);
+    expect(roles.secretaria.authorize({ finance: ["edit"] }).success).toBe(true);
+    expect(roles.secretaria.authorize({ payables: ["view"] }).success).toBe(false);
+  });
+
   it("never lets a department role manage users or roles", () => {
-    for (const role of [roles.secretaria, roles.coordenacao, roles.professor])
+    for (const role of [roles.secretaria, roles.financeiro, roles.coordenacao, roles.professor])
       expect(role.authorize({ user: ["set-role"] }).success).toBe(false);
   });
 });

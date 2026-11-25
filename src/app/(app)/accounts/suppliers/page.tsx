@@ -12,7 +12,7 @@ import { deleteSupplier } from "./actions";
 export const metadata: Metadata = { title: "Fornecedores" };
 
 export default async function SupplierListPage({ searchParams }: PageProps<"/accounts/suppliers">) {
-  await requirePermission("finance", "view");
+  await requirePermission("payables", "view");
   const sp = await searchParams;
   const where = searchWhere(param(sp, "q"), [
     supplier.name,

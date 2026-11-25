@@ -37,7 +37,7 @@ export const NAV: NavGroup[] = [
     icon: "receipt_long",
     items: [
       { href: "/accounts/receivable", label: "A receber", icon: "attach_money", permission: ["finance", "view"] },
-      { href: "/accounts/payable", label: "A pagar", icon: "money_off", permission: ["finance", "view"] },
+      { href: "/accounts/payable", label: "A pagar", icon: "money_off", permission: ["payables", "view"] },
       { href: "/accounts/payments", label: "Baixas", icon: "price_check", permission: ["payments", "view"] },
       { href: "/accounts/installments", label: "Parcelas", icon: "balance", permission: ["finance", "view"] },
       {
@@ -46,7 +46,7 @@ export const NAV: NavGroup[] = [
         icon: "category",
         permission: ["finance", "view"],
       },
-      { href: "/accounts/suppliers", label: "Fornecedores", icon: "storefront", permission: ["finance", "view"] },
+      { href: "/accounts/suppliers", label: "Fornecedores", icon: "storefront", permission: ["payables", "view"] },
     ],
   },
   {
