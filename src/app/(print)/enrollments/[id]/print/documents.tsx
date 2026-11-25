@@ -41,6 +41,11 @@ const REQUERIMENTO_CSS = `
 .enr .date { text-align: right; }
 .enr .salutation { margin: 56px 0 32px; }
 .enr .body p { text-align: justify; line-height: 2; margin-bottom: 1em; }
+/* One-page document: fill the A4 sheet and push the signatures to its foot */
+.enr { display: flex; flex-direction: column; min-height: 297mm; }
+.enr .signatures { margin-top: auto; padding-top: 64px; }
+/* 297mm - 2 x 14mm @page margin, minus 2mm so rounding never spills a blank second page */
+@media print { .enr { min-height: 267mm; } }
 `;
 
 const CONTRACT_CSS = `
