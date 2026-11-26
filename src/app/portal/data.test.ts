@@ -17,7 +17,7 @@ import { applyLoginPlan, ownerLogin } from "@/lib/login";
 vi.mock("server-only", () => ({}));
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 
-const { guardianAlerts, guardianStudents } = await import("./data");
+const { guardianAlerts, guardianStudents, isGuardianEnrollment } = await import("./data");
 const { alertSubscriptions } = await import("@/lib/push");
 
 // Writes rows: never against anything but a local database
@@ -28,16 +28,18 @@ describe.skipIf(!local)("guardian portal", () => {
   const alertIds: number[] = [];
   let studentId: number;
   let classId: number;
+  let enrollmentId: number;
   const cpf = String(Date.now()).slice(-11).padStart(11, "9");
 
   beforeAll(async () => {
     const [placed] = await db
-      .select({ studentId: enrollment.studentId, classId: enrollment.schoolClassId })
+      .select({ id: enrollment.id, studentId: enrollment.studentId, classId: enrollment.schoolClassId })
       .from(enrollment)
       .where(and(eq(enrollment.status, "A"), isNotNull(enrollment.schoolClassId)))
       .limit(1);
     studentId = placed.studentId;
     classId = placed.classId!;
+    enrollmentId = placed.id;
     const blank = {
       sex: "F",
       issuingAuthority: "",
@@ -82,6 +84,11 @@ describe.skipIf(!local)("guardian portal", () => {
   it("lists only the guardian's own students", async () => {
     expect((await guardianStudents(ids[0])).map((s) => s.id)).toEqual([studentId]);
     expect(await guardianStudents(ids[1])).toEqual([]);
+  });
+
+  it("opens grades only for an enrollment of the guardian's own student", async () => {
+    expect(await isGuardianEnrollment(ids[0], enrollmentId)).toBe(true);
+    expect(await isGuardianEnrollment(ids[1], enrollmentId)).toBe(false);
   });
 
   it("creates a portal login named by the CPF, with no staff role, that must change its password", async () => {

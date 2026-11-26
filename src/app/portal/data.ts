@@ -35,6 +35,7 @@ export async function guardianStudents(guardianId: number) {
       className: klass.name,
       gradeLevel: klass.gradeLevel,
       yearId: klass.yearId,
+      enrollmentId: enrollment.id,
     })
     .from(link)
     .innerJoin(student, eq(link.studentId, student.id))
@@ -42,7 +43,7 @@ export async function guardianStudents(guardianId: number) {
     .leftJoin(klass, eq(enrollment.schoolClassId, klass.id))
     .where(eq(link.guardianId, guardianId))
     .orderBy(asc(student.name), asc(klass.id));
-  type Class = { id: number; yearId: number; label: string };
+  type Class = { id: number; yearId: number; enrollmentId: number; label: string };
   const students = new Map<number, { id: number; name: string; classes: Class[] }>();
   for (const r of rows) {
     const s = students.get(r.id) ?? { id: r.id, name: displayName(r), classes: [] };
@@ -50,6 +51,7 @@ export async function guardianStudents(guardianId: number) {
       s.classes.push({
         id: r.classId,
         yearId: r.yearId!,
+        enrollmentId: r.enrollmentId!,
         label: `${r.gradeLevel ? `${r.gradeLevel}º ` : ""}${r.className}`,
       });
     students.set(r.id, s);
@@ -66,4 +68,15 @@ export async function guardianAlerts(classIds: number[], limit = 20) {
     .where(or(isNull(alert.schoolClassId), forClass))
     .orderBy(desc(alert.createdAt), desc(alert.id))
     .limit(limit);
+}
+
+/** Whether the enrollment is of one of the guardian's students: the check before showing its grades. */
+export async function isGuardianEnrollment(guardianId: number, enrollmentId: number) {
+  const [row] = await db
+    .select({ id: enrollment.id })
+    .from(enrollment)
+    .innerJoin(link, eq(link.studentId, enrollment.studentId))
+    .where(and(eq(enrollment.id, enrollmentId), eq(link.guardianId, guardianId)))
+    .limit(1);
+  return row !== undefined;
 }

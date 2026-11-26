@@ -196,7 +196,9 @@ Guardians sign in at `/portal/login` with their CPF. Staff create the login on t
 The portal lives in `src/app/portal/`, outside `(app)`, with its own layout, its own manifest
 (`/portal/manifest.webmanifest`, scope `/portal`) and service worker (`public/portal/sw.js`). Its pages call
 `requireGuardian()` (`src/app/portal/data.ts`), never `requirePermission()`, and read only the signed-in guardian's
-students through `students_guardianassociation`.
+students through `students_guardianassociation`. The home shows each student's current-school-year turma and timetable;
+"Ver notas" opens `/portal/notas/[enrollment]` (`loadReportCard`), which counts only locked subject × bimester grades
+(`/grades/locks`), so guardians never see a bimester still being typed.
 
 | Table                     | Key fields and rules                                                                     |
 | ------------------------- | ---------------------------------------------------------------------------------------- |

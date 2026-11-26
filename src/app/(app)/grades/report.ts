@@ -15,7 +15,8 @@ import {
 } from "@/db/schema/app";
 import { BIMESTERS, ExamKind, FINAL_RECOVERY, type Score, reportRow } from "@/lib/grades";
 
-export async function loadReportCard(enrollmentId: number) {
+/** `shown(subjectId, period)`: counts only those grades (the guardian portal shows locked bimesters only). */
+export async function loadReportCard(enrollmentId: number, shown?: (subjectId: number, period: number) => boolean) {
   const [e] = await db
     .select({
       id: enrollment.id,
@@ -35,7 +36,7 @@ export async function loadReportCard(enrollmentId: number) {
     .leftJoin(klass, eq(enrollment.schoolClassId, klass.id))
     .where(eq(enrollment.id, enrollmentId));
   if (!e) return null;
-  const [subjects, grades, examTypes, recoveryTypes] = await Promise.all([
+  const [subjects, entered, examTypes, recoveryTypes] = await Promise.all([
     // A class without a series has no subjects
     e.gradeLevel
       ? db
@@ -68,6 +69,7 @@ export async function loadReportCard(enrollmentId: number) {
       .where(eq(examType.kind, ExamKind.RECOVERY))
       .orderBy(asc(examType.order), asc(examType.name)),
   ]);
+  const grades = shown ? entered.filter((g) => shown(g.subjectId, g.bimester)) : entered;
   const rows = subjects.map((s) => {
     const mine = grades.filter((g) => g.subjectId === s.id);
     const byPeriod = new Map<number, Score[]>();

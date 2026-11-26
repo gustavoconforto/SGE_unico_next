@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LinkButton } from "@/components/link-button";
 import { Panel } from "@/components/panel";
 import { currentSchoolYear } from "@/lib/concept-db";
 import { formatDate, today } from "@/lib/finance";
@@ -80,9 +81,14 @@ export default async function PortalHomePage({ searchParams }: PageProps<"/porta
                     .sort((a, b) => a.period - b.period);
                   return (
                     <div key={c.id} className="flex flex-col gap-2">
-                      <p className="text-gray-600">
-                        Turma <span className="font-semibold text-gray-900">{c.label}</span>
-                      </p>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-gray-600">
+                          Turma <span className="font-semibold text-gray-900">{c.label}</span>
+                        </p>
+                        <LinkButton href={`${PORTAL_HOME}/notas/${c.enrollmentId}`} color="alternative" size="sm">
+                          Ver notas
+                        </LinkButton>
+                      </div>
                       <h3 className="text-sm font-semibold text-gray-900">
                         Aulas de {WEEKDAYS.find(([d]) => d === weekday)![1].toLowerCase()}
                         {weekday === todayWeekday && " (hoje)"}
