@@ -14,16 +14,25 @@ export const classCell = (c: { className: string | null; gradeLevel: number | nu
 
 export const INVALID_ENROLLMENT = { enrollmentId: [INVALID_CHOICE] };
 
-/** Why a batch form's checked enrollments can't be saved: none checked, or one no longer active; null when they can. */
-export async function batchEnrollmentError(ids: number[]): Promise<string | null> {
+/**
+ * Why a batch form's checked enrollments can't be saved: none checked, or one no longer active (in `schoolClassId`,
+ * when given); null when they can.
+ */
+export async function batchEnrollmentError(ids: number[], schoolClassId?: number): Promise<string | null> {
   if (!ids.length) return "Selecione ao menos um aluno.";
   const active = await db
     .select({ id: enrollment.id })
     .from(enrollment)
-    .where(and(inArray(enrollment.id, ids), eq(enrollment.status, "A")));
+    .where(
+      and(
+        inArray(enrollment.id, ids),
+        eq(enrollment.status, "A"),
+        schoolClassId === undefined ? undefined : eq(enrollment.schoolClassId, schoolClassId),
+      ),
+    );
   return active.length === ids.length
     ? null
-    : "Algum aluno selecionado não tem mais matrícula ativa. Recarregue a página.";
+    : `Algum aluno selecionado não tem mais matrícula ativa${schoolClassId === undefined ? "" : " nesta turma"}. Recarregue a página.`;
 }
 
 /** Active enrollments A→Z by the name shown (social name when used), which activeEnrollmentOptions doesn't sort by. */
