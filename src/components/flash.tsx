@@ -37,6 +37,7 @@ const MESSAGES = {
   releases_created: { text: "Liberações registradas com sucesso", ok: true },
   delays_created: { text: "Atrasos registrados com sucesso", ok: true },
   incidents_created: { text: "Ocorrências registradas com sucesso", ok: true },
+  bathroom_created: { text: "Saídas para banheiro registradas com sucesso", ok: true },
 } as const;
 
 export type FlashKey = keyof typeof MESSAGES;
