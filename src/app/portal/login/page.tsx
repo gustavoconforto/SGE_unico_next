@@ -6,9 +6,9 @@ import { LoginForm } from "../../login/login-form";
 
 export const metadata: Metadata = { title: "Entrar" };
 
+// Same shell as the staff login: top-aligned so the phone keyboard doesn't cover the button
 export default function PortalLoginPage() {
   return (
-    // Same shell as the staff login: top-aligned so the phone keyboard doesn't cover the button
     <main className="flex min-h-screen items-start justify-center bg-gray-50 px-4 pt-12 pb-4 sm:pt-[18vh]">
       <div className="flex w-full max-w-sm flex-col gap-4 rounded-lg bg-white p-6 drop-shadow-md">
         <div className="flex flex-col items-center gap-2 text-center">

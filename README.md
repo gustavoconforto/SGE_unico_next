@@ -103,12 +103,14 @@ commands below reach Neon while `.env` keeps pointing at the local database.
    DATABASE_URL="<neon direct url>" npm run create-admin -- <username> "<Full name>" [email]
    ```
 3. **Set the Vercel environment variables** (Production):
-   | Variable             | Value                                                                                  |
-   | -------------------- | -------------------------------------------------------------------------------------- |
-   | `DATABASE_URL`       | Neon **pooled** URL                                                                    |
-   | `BETTER_AUTH_SECRET` | a new secret, `openssl rand -base64 32` (never the dev one)                            |
-   | `BETTER_AUTH_URL`    | the production address, e.g. `https://gestao.example.com` (login cookies depend on it) |
-   | `MEDIA_ROOT`         | `/tmp/media`: the only writable folder on Vercel (see the photo warning below)         |
+   | Variable                                            | Value                                                                                         |
+   | --------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+   | `DATABASE_URL`                                      | Neon **pooled** URL                                                                           |
+   | `BETTER_AUTH_SECRET`                                | a new secret, `openssl rand -base64 32` (never the dev one)                                   |
+   | `BETTER_AUTH_URL`                                   | the production address, e.g. `https://gestao.example.com` (login cookies depend on it)        |
+   | `MEDIA_ROOT`                                        | `/tmp/media`: the only writable folder on Vercel (see the photo warning below)                |
+   | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | from `npx web-push generate-vapid-keys`, once (new keys orphan every guardian's subscription) |
+   | `VAPID_SUBJECT`                                     | `mailto:` the school's address: push services contact it about abuse                          |
 4. **Deploy**, then sign in with the administrator and open a few screens.
 
 ### Training data (beta only)

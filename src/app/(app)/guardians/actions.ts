@@ -22,11 +22,12 @@ const loginSchema = z.object({ access: checkbox, password: z.string().default(""
 
 // Django has no guardian delete screen; guardians are PROTECT-linked to students.
 // The portal login is the guardian's CPF; whoever edits guardians gives it a password (it grants no staff access).
+// Better Auth can't join the insert's transaction, so a failed login undoes a new guardian. Passwords are never echoed back.
 export async function saveGuardian(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
   await requirePermission("students", "edit");
   const { data, values, state } = parseForm(guardianSchema, formData);
   const login = { ...loginSchema.parse(values), username: data?.cpf ?? "" };
-  delete values.password; // never echo a typed password back to the browser
+  delete values.password;
 
   const current = id !== null ? await ownerLogin({ guardianId: id }) : undefined;
   const { plan, errors: loginErrors = {} } = data ? loginPlan(login, !!current) : { plan: "none" as const };
@@ -52,7 +53,6 @@ export async function saveGuardian(id: number | null, _prev: FormState, formData
     try {
       await applyLoginPlan(plan, { guardianId: guardianId! }, data.name, login, current);
     } catch (error) {
-      // Better Auth can't join the insert's transaction: undo a new guardian so a failed save leaves nothing
       if (id === null) await db.delete(studentsGuardian).where(eq(studentsGuardian.id, guardianId!));
       throw error;
     }

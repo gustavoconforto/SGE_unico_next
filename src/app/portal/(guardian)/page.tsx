@@ -5,8 +5,10 @@ import { formatDate, today } from "@/lib/finance";
 import { lessonWeekday, WEEKDAYS } from "@/lib/lessons";
 import { param } from "@/lib/list";
 import { PORTAL_HOME } from "@/lib/portal-paths";
+import { pushEnabled } from "@/lib/push";
 import { timetableSlots } from "../../(app)/lessons/data";
 import { guardianAlerts, guardianStudents, requireGuardian } from "../data";
+import { PushPrompt } from "./push-prompt";
 
 export const metadata: Metadata = { title: "Início" };
 
@@ -16,7 +18,6 @@ export default async function PortalHomePage({ searchParams }: PageProps<"/porta
   const todayWeekday = lessonWeekday(today());
   const asked = Number(param(sp, "dia"));
   const weekday = WEEKDAYS.some(([d]) => d === asked) ? asked : todayWeekday;
-  // Class ids come only from the guardian's own students, never from the URL
   const classIds = [...new Set(students.flatMap((s) => s.classes.map((c) => c.id)))];
   const [slotsByClass, alerts] = await Promise.all([
     Promise.all(classIds.map(async (id) => [id, await timetableSlots(id)] as const)).then((e) => new Map(e)),
@@ -26,6 +27,11 @@ export default async function PortalHomePage({ searchParams }: PageProps<"/porta
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">Olá, {session.user.name.split(" ")[0]}</h1>
+      {pushEnabled && (
+        <Panel title="Notificações">
+          <PushPrompt publicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!} />
+        </Panel>
+      )}
       {alerts.length > 0 && (
         <Panel title="Avisos da escola">
           <ul className="divide-y divide-gray-100">

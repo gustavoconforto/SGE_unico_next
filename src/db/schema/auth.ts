@@ -51,6 +51,24 @@ export const session = pgTable(
   (table) => [index("session_userId_idx").on(table.userId)],
 );
 
+// Not Better Auth's: a browser's Web Push subscription for a portal login (src/lib/push.ts); one row per device
+export const portalPushsubscription = pgTable(
+  "portal_pushsubscription",
+  {
+    id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .$defaultFn(() => new Date().toISOString()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+  },
+  (table) => [index("portal_pushsubscription_user_id").on(table.userId)],
+);
+
 export const account = pgTable(
   "account",
   {

@@ -1,23 +1,24 @@
 // Guardian portal logins and data scoping against the dev database (gestao-pg): a guardian sees only the
 // students linked to them, and their login is a portal-only role tied to the guardian.
 import "dotenv/config";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, ne } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { db } from "@/db";
 import {
   classesClass as klass,
+  enrollmentsEnrollment as enrollment,
   portalAlert as alert,
   studentsGuardian as guardian,
   studentsGuardianassociation as link,
-  studentsStudent as student,
 } from "@/db/schema/app";
-import { user } from "@/db/schema/auth";
+import { portalPushsubscription as pushSubscription, user } from "@/db/schema/auth";
 import { applyLoginPlan, ownerLogin } from "@/lib/login";
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 
 const { guardianAlerts, guardianStudents } = await import("./data");
+const { alertSubscriptions } = await import("@/lib/push");
 
 // Writes rows: never against anything but a local database
 const local = /@(localhost|127\.0\.0\.1)[:/]/.test(process.env.DATABASE_URL ?? "");
@@ -26,10 +27,17 @@ describe.skipIf(!local)("guardian portal", () => {
   const ids: number[] = [];
   const alertIds: number[] = [];
   let studentId: number;
+  let classId: number;
   const cpf = String(Date.now()).slice(-11).padStart(11, "9");
 
   beforeAll(async () => {
-    [{ id: studentId }] = await db.select({ id: student.id }).from(student).limit(1);
+    const [placed] = await db
+      .select({ studentId: enrollment.studentId, classId: enrollment.schoolClassId })
+      .from(enrollment)
+      .where(and(eq(enrollment.status, "A"), isNotNull(enrollment.schoolClassId)))
+      .limit(1);
+    studentId = placed.studentId;
+    classId = placed.classId!;
     const blank = {
       sex: "F",
       issuingAuthority: "",
@@ -103,5 +111,17 @@ describe.skipIf(!local)("guardian portal", () => {
     expect(seen.sort()).toEqual([alertIds[0], alertIds[1]].sort());
     const none = (await guardianAlerts([], 1000)).map((a) => a.id).filter((id) => alertIds.includes(id));
     expect(none).toEqual([alertIds[0]]);
+  });
+
+  it("pushes to the guardian's devices for school-wide notices and their student's class only", async () => {
+    const login = (await ownerLogin({ guardianId: ids[0] }))!;
+    const endpoint = `https://fcm.googleapis.com/fcm/send/test-${cpf}`;
+    await db.insert(pushSubscription).values({ userId: login.id, endpoint, p256dh: "k", auth: "a" });
+    const [other] = await db.select({ id: klass.id }).from(klass).where(ne(klass.id, classId)).limit(1);
+    const reaches = async (schoolClassId: number | null) =>
+      (await alertSubscriptions(schoolClassId)).some((s) => s.endpoint === endpoint);
+    expect(await reaches(null)).toBe(true);
+    expect(await reaches(classId)).toBe(true);
+    expect(await reaches(other.id)).toBe(false);
   });
 });

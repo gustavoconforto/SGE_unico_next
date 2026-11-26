@@ -2,12 +2,14 @@
 
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { portalAlert } from "@/db/schema/app";
 import { requirePermission } from "@/lib/authorization";
 import { deleteAndRedirect } from "@/lib/crud";
 import { type FormState, optionalForeignKey, parseForm, requiredText } from "@/lib/form";
+import { pushAlert } from "@/lib/push";
 
 const alertSchema = z.object({
   title: requiredText(120),
@@ -21,6 +23,7 @@ export async function createAlert(_prev: FormState, formData: FormData): Promise
   const { data, state } = parseForm(alertSchema, formData);
   if (!data) return state;
   await db.insert(portalAlert).values(data);
+  after(() => pushAlert(data));
   redirect("/alerts?msg=created");
 }
 
