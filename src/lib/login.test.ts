@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("@/db", () => ({ db: {} }));
 vi.mock("./auth", () => ({ auth: {} }));
 
-const { loginPlan } = await import("./employee-login");
+const { loginPlan } = await import("./login");
 
 const input = (over: Partial<{ access: boolean; username: string; password: string }> = {}) => ({
   access: true,

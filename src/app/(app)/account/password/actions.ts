@@ -8,8 +8,9 @@ import { z } from "zod";
 import { db } from "@/db";
 import { user } from "@/db/schema/auth";
 import { auth } from "@/lib/auth";
-import { MIN_PASSWORD } from "@/lib/employee-login";
+import { MIN_PASSWORD } from "@/lib/login";
 import { type FormState, parseForm, REQUIRED } from "@/lib/form";
+import { PORTAL_HOME } from "@/lib/portal-paths";
 import { requireSession } from "@/lib/session";
 
 const schema = z
@@ -40,5 +41,5 @@ export async function changePassword(_prev: FormState, formData: FormData): Prom
     throw error;
   }
   await db.update(user).set({ mustChangePassword: false }).where(eq(user.id, session.user.id));
-  redirect("/?msg=password_changed");
+  redirect(`${session.user.guardianId != null ? PORTAL_HOME : "/"}?msg=password_changed`);
 }

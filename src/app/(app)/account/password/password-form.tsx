@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { FormButtons, FormFields, TextField } from "@/components/form-fields";
 import { changePassword } from "./actions";
 
-export function PasswordForm({ forced }: { forced: boolean }) {
+export function PasswordForm({ forced, home = "/" }: { forced: boolean; home?: string }) {
   const [state, action, pending] = useActionState(changePassword, {});
   return (
     <form action={action} className="flex max-w-md flex-col gap-4">
@@ -24,7 +24,7 @@ export function PasswordForm({ forced }: { forced: boolean }) {
         />
         <TextField name="confirmPassword" label="Repita a nova senha" type="password" autoComplete="new-password" />
       </FormFields>
-      <FormButtons pending={pending} cancelHref="/" label="Alterar senha" />
+      <FormButtons pending={pending} cancelHref={home} label="Alterar senha" />
     </form>
   );
 }

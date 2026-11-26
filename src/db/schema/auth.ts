@@ -1,6 +1,6 @@
 import { relations } from "drizzle-orm";
 import { pgTable, text, timestamp, boolean, index, integer, bigint } from "drizzle-orm/pg-core";
-import { employeesEmployee } from "./app";
+import { employeesEmployee, studentsGuardian } from "./app";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -23,6 +23,10 @@ export const user = pgTable("user", {
   employeeId: bigint("employee_id", { mode: "number" })
     .unique()
     .references(() => employeesEmployee.id, { onDelete: "cascade" }),
+  // The guardian this portal login belongs to (src/app/(portal)); deleting the guardian deletes it
+  guardianId: bigint("guardian_id", { mode: "number" })
+    .unique()
+    .references(() => studentsGuardian.id, { onDelete: "cascade" }),
   // Set when an admin picks the password; the proxy holds the user on /account/password until they change it
   mustChangePassword: boolean("must_change_password").default(false).notNull(),
 });
@@ -45,6 +49,24 @@ export const session = pgTable(
     impersonatedBy: text("impersonated_by"),
   },
   (table) => [index("session_userId_idx").on(table.userId)],
+);
+
+// Not Better Auth's: a browser's Web Push subscription for a portal login (src/lib/push.ts); one row per device
+export const portalPushsubscription = pgTable(
+  "portal_pushsubscription",
+  {
+    id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .$defaultFn(() => new Date().toISOString()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+  },
+  (table) => [index("portal_pushsubscription_user_id").on(table.userId)],
 );
 
 export const account = pgTable(

@@ -1209,3 +1209,19 @@ export const releasesEarlyexit = pgTable("releases_earlyexit", {
 	// Also serves lookups by enrollment (leading column)
 	unique("releases_earlyexit_enrollment_date_reason_key").on(table.enrollmentId, table.exitDate, table.reasonId),
 ]);
+
+// Not in Django: a notice staff send to guardians (src/app/(app)/alerts), listed on the portal home; no class = every guardian.
+export const portalAlert = pgTable("portal_alert", {
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).notNull().$defaultFn(() => new Date().toISOString()),
+	title: varchar({ length: 120 }).notNull(),
+	body: text().notNull(),
+	schoolClassId: bigint("school_class_id", { mode: "number" }),
+}, (table) => [
+	index("portal_alert_school_class_id").using("btree", table.schoolClassId.asc().nullsLast().op("int8_ops")),
+	foreignKey({
+			columns: [table.schoolClassId],
+			foreignColumns: [classesClass.id],
+			name: "portal_alert_school_class_id_fk_classes_class_id"
+		}).onDelete("cascade"),
+]);

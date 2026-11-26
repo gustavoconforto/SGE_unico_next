@@ -64,7 +64,7 @@ describe("concept grade (incidents/services.py)", () => {
 });
 
 import { isoWeekday } from "./dates";
-import { lectureDateError, periodError, weekdayPeriods } from "./lessons";
+import { lectureDateError, lessonWeekday, periodError, weekdayPeriods } from "./lessons";
 
 describe("lessons (lessons/models.py)", () => {
   it("Saturday has 7 periods, other days 12", () => {
@@ -72,6 +72,11 @@ describe("lessons (lessons/models.py)", () => {
     expect(weekdayPeriods(1)).toHaveLength(12);
     expect(periodError(6, 8)).toBe("O sábado tem só 7 aulas.");
     expect(periodError(5, 12)).toBeNull();
+  });
+  it("a day's lesson weekday: Sunday shows the coming Monday", () => {
+    expect(lessonWeekday("2026-11-23")).toBe(1); // Monday
+    expect(lessonWeekday("2026-11-28")).toBe(6); // Saturday
+    expect(lessonWeekday("2026-11-29")).toBe(1); // Sunday
   });
   it("lectures are Monday to Saturday, inside the school year", () => {
     expect(isoWeekday("2026-11-16")).toBe(1);

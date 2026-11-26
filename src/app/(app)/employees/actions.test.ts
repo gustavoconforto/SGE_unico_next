@@ -7,7 +7,7 @@ import { db } from "@/db";
 import { employeesEmployee as employee, employeesEmployeeroletype as role } from "@/db/schema/app";
 import { session as sessionTable, user } from "@/db/schema/auth";
 import { auth } from "@/lib/auth";
-import { applyLoginPlan, employeeLogin } from "@/lib/employee-login";
+import { applyLoginPlan, ownerLogin } from "@/lib/login";
 import { deleteEmployee, setUserRoles } from "./actions";
 
 const caller = vi.hoisted(() => ({ user: { id: "", role: "admin" } }));
@@ -64,8 +64,8 @@ describe.skipIf(!local)("employee logins", () => {
     (await db.select({ f: user.mustChangePassword }).from(user).where(eq(user.id, id)))[0].f;
 
   it("creates a login that must change its password, and a reset signs it out", async () => {
-    await applyLoginPlan("create", { id: employeeId, name: "Test Login" }, input, undefined);
-    const login = (await employeeLogin(employeeId))!;
+    await applyLoginPlan("create", { employeeId }, "Test Login", input, undefined);
+    const login = (await ownerLogin({ employeeId }))!;
     expect(login).toMatchObject({ username, role: "user" });
     expect(await flag(login.id)).toBe(true);
 
@@ -78,28 +78,23 @@ describe.skipIf(!local)("employee logins", () => {
       expiresAt: new Date(Date.now() + 3600_000),
       updatedAt: new Date(),
     });
-    await applyLoginPlan(
-      "update",
-      { id: employeeId, name: "Test Login" },
-      { ...input, password: "senha-nova-123" },
-      login,
-    );
+    await applyLoginPlan("update", { employeeId }, "Test Login", { ...input, password: "senha-nova-123" }, login);
     expect(await flag(login.id)).toBe(true);
     expect(await db.select().from(sessionTable).where(eq(sessionTable.userId, login.id))).toEqual([]);
-    expect((await employeeLogin(employeeId))!.role).toBe("admin,secretaria");
+    expect((await ownerLogin({ employeeId }))!.role).toBe("admin,secretaria");
   });
 
   it("lets only another admin delete an employee who has a login", async () => {
-    const login = (await employeeLogin(employeeId))!;
+    const login = (await ownerLogin({ employeeId }))!;
 
     // An admin can't delete their own record
     caller.user = { id: login.id, role: "admin" };
     expect(await del()).toBe("REDIRECT /employees?msg=employee_has_login");
-    expect(await employeeLogin(employeeId)).toBeDefined();
+    expect(await ownerLogin({ employeeId })).toBeDefined();
 
     caller.user = { id: "another-admin", role: "admin" };
     expect(await del()).toBe("REDIRECT /employees?msg=deleted");
-    expect(await employeeLogin(employeeId)).toBeUndefined();
+    expect(await ownerLogin({ employeeId })).toBeUndefined();
   });
 });
 

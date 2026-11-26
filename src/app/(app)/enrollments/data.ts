@@ -25,9 +25,13 @@ export const studentName = sql<string>`case when ${student.useSocialName} and ${
 export const enrollmentTypeLabel = (programName: string, level: string, schoolYear: number) =>
   `${programName} - ${label(LEVELS, level)} - ${schoolYear}`;
 
+/** A class without its year: "2º Inspiração". */
+export const classShortLabel = (c: { gradeLevel: number | null; name: string }) =>
+  `${c.gradeLevel ? `${c.gradeLevel}º ` : ""}${c.name}`;
+
 /** Class.__str__: "2º Inspiração - 2027". */
 export const classLabel = (c: { gradeLevel: number | null; name: string; year: number }) =>
-  `${c.gradeLevel ? `${c.gradeLevel}º ` : ""}${c.name} - ${c.year}`;
+  `${classShortLabel(c)} - ${c.year}`;
 
 export async function enrollmentTypeOptions(): Promise<EnrollmentTypeOption[]> {
   const rows = await db

@@ -11,7 +11,7 @@ import {
 import { currentSchoolYear } from "@/lib/concept-db";
 import { PAGE_SIZE, pageParam, param, searchWhere } from "@/lib/list";
 import { yearOptions } from "../options";
-import { studentName } from "../../enrollments/data";
+import { classShortLabel, studentName } from "../../enrollments/data";
 import { ClassPicker } from "./class-picker";
 
 export const metadata: Metadata = { title: "Alunos da turma" };
@@ -19,8 +19,6 @@ export const metadata: Metadata = { title: "Alunos da turma" };
 const ACTIVE = "A"; // EnrollmentStatus.ACTIVE
 
 const intParam = (v: string) => (/^\d+$/.test(v) ? Number(v) : null);
-const classLabel = (c: { gradeLevel: number | null; name: string }) =>
-  `${c.gradeLevel ? `${c.gradeLevel}º ` : ""}${c.name}`;
 
 export default async function ClassDetailPage({ searchParams }: PageProps<"/classes/detail">) {
   await requirePermission("academicSetup", "view");
@@ -83,7 +81,7 @@ export default async function ClassDetailPage({ searchParams }: PageProps<"/clas
       filters={
         <ClassPicker
           years={years}
-          classes={classes.map((c) => [c.id, classLabel(c)])}
+          classes={classes.map((c) => [c.id, classShortLabel(c)])}
           yearId={yearId}
           classId={selected?.id ?? null}
         />
