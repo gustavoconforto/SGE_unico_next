@@ -189,6 +189,23 @@ it points at an **enrollment**, and its forms list only active enrollments.
 (name filter, check several) and saves one exit each; one already recorded is skipped (`onConflictDoNothing`).
 Permission area `releases`.
 
+### Guardian portal (`/portal`, `portal_*`, not in Django)
+
+Guardians sign in at `/portal/login` with their CPF. Staff create the login on the guardian form
+(`user.guardian_id`, role `responsavel`, which holds no staff resource; `applyLoginPlan`, `src/lib/login.ts`).
+The portal lives in `src/app/portal/`, outside `(app)`, with its own layout, its own manifest
+(`/portal/manifest.webmanifest`, scope `/portal`) and service worker (`public/portal/sw.js`). Its pages call
+`requireGuardian()` (`src/app/portal/data.ts`), never `requirePermission()`, and read only the signed-in guardian's
+students through `students_guardianassociation`.
+
+| Table                     | Key fields and rules                                                                     |
+| ------------------------- | ---------------------------------------------------------------------------------------- |
+| `portal_alert`            | `title`, `body`, `school_class_id` (null = every guardian), sent on `/alerts`; no edit   |
+| `portal_pushsubscription` | one per device: login, `endpoint` (unique, browser push services only), `p256dh`, `auth` |
+
+Sending a notice pushes it after the response (`pushAlert`, `src/lib/push.ts`) to every guardian login, or to those
+with a student active in the class. Push is off until the VAPID env vars are set. Permission area `alerts`.
+
 ### School calendar (`enrollments_calendarday`, not in Django)
 
 `/calendar` picks a school year, then a month inside its `begins`–`ends`, and lists the month's days in the year
@@ -510,7 +527,8 @@ users are created with `auth.api.createUser` (the seed does this).
 
 `src/proxy.ts` asks Better Auth to validate the session on every request
 (`auth.api.getSession`: signature, expiry, revocation, banned user) and
-redirects to `/login?next=…` otherwise. That check has to live there, not only
+redirects to `/login?next=…` otherwise (`/portal/login` for portal paths). It also keeps guardian logins
+(`user.guardian_id`) inside `/portal` and staff out of it. That check has to live there, not only
 in a layout: a layout doesn't stop its page from rendering into the response.
 Server Actions also call `requirePermission()`, since they are POST endpoints.
 
@@ -524,7 +542,7 @@ Not in Django (its groups held users and were never checked). Roles live in code
   Admins assign them on `/employees` (`setUserRoles()`, `auth.api.setRole`).
 - `src/lib/authorization.ts`: `hasPermission(resource, action)`, `requirePermission(resource, action)` (first line
   of every page and Server Action) and `requireAdmin()` (employees, logins, roles).
-- The proxy checks only the session. The sidebar hides `NAV` items whose `[resource, action]` the user lacks.
+- The proxy checks the session and the login type (guardian or staff), not permissions. The sidebar hides `NAV` items whose `[resource, action]` the user lacks.
 
 Every function and the order they run in for one request: [docs/permissions.md](docs/permissions.md).
 
