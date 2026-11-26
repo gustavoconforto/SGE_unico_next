@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
     instantInsights: { validationLevel: "manual-warning" },
   },
   partialPrefetching: true,
+  // The portal's worker lives in /portal/ but must also control /portal itself (a scope is a plain prefix)
+  async headers() {
+    return [{ source: "/portal/sw.js", headers: [{ key: "Service-Worker-Allowed", value: "/portal" }] }];
+  },
   // The declaração's .docx route reads the logo from disk; Vercel would otherwise serve it only from its CDN
   outputFileTracingIncludes: { "/enrollments/*/print/*/docx": ["./public/img/unico_logo_stamp.png"] },
   turbopack: {

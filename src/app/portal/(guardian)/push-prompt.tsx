@@ -9,8 +9,9 @@ export const PORTAL_SW = "/portal/sw.js";
 
 type State = "loading" | "unsupported" | "install-ios" | "off" | "on" | "denied";
 
-// iOS offers push only to a web app added to the Home Screen
-const isIos = () => /iPad|iPhone|iPod/.test(navigator.userAgent);
+// iOS offers push only to a web app added to the Home Screen; iPadOS reports itself as a Mac with touch
+const isIos = () =>
+  /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const isInstalled = () =>
   matchMedia("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
 
@@ -25,7 +26,7 @@ async function currentState(): Promise<State> {
     return isIos() && !isInstalled() ? "install-ios" : "unsupported";
   try {
     const registration = await navigator.serviceWorker.register(PORTAL_SW, {
-      scope: "/portal/",
+      scope: "/portal",
       updateViaCache: "none",
     });
     if (await registration.pushManager.getSubscription()) return "on";
