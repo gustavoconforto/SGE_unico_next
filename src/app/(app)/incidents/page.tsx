@@ -1,6 +1,7 @@
 import { requirePermission } from "@/lib/authorization";
 import { and, count, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
+import { LinkButton } from "@/components/link-button";
 import { ListPage, ListRow } from "@/components/list-page";
 import { db } from "@/db";
 import {
@@ -56,6 +57,11 @@ export default async function RecordListPage({ searchParams }: PageProps<"/incid
       title="Ocorrências"
       newHref="/incidents/new"
       newLabel="Nova ocorrência"
+      actions={
+        <LinkButton href="/incidents/batch" color="alternative">
+          Lançar em lote
+        </LinkButton>
+      }
       searchPlaceholder="Pesquisar por aluno..."
       headers={["Data", "Aluno", "Turma", "Tipo", "Penalidade"]}
       page={page}

@@ -23,6 +23,8 @@ export function ListPage(props: {
   title: string;
   newHref?: string;
   newLabel?: string;
+  /** Extra header buttons, shown before the "new" one. */
+  actions?: React.ReactNode;
   searchPlaceholder: string;
   /** FilterSelect / FilterDate controls shown beside the search. */
   filters?: React.ReactNode;
@@ -46,7 +48,10 @@ export function ListPage(props: {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold">{props.title}</h1>
-        {props.newHref && <LinkButton href={props.newHref}>{props.newLabel}</LinkButton>}
+        <div className="flex flex-wrap gap-2">
+          {props.actions}
+          {props.newHref && <LinkButton href={props.newHref}>{props.newLabel}</LinkButton>}
+        </div>
       </div>
       <div className="flex flex-wrap items-end gap-3">
         <SearchBox placeholder={props.searchPlaceholder} />
