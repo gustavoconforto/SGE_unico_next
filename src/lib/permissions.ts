@@ -35,8 +35,9 @@ export const ac = createAccessControl(statement);
 export const roles = {
   admin: ac.newRole(statement),
   user: ac.newRole({}),
-  // Guardian portal logins (src/app/(portal)): no staff resource; portal pages scope data by user.guardianId
+  // Portal logins (src/app/portal): no staff resource; portal pages scope data by user.guardianId / user.studentId
   responsavel: ac.newRole({}),
+  aluno: ac.newRole({}),
   secretaria: ac.newRole({
     students: VIEW_EDIT,
     enrollments: VIEW_EDIT,

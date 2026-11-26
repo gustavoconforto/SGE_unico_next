@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Flash } from "@/components/flash";
 import { PORTAL_HOME } from "@/lib/portal-paths";
-import { requireGuardian } from "../data";
+import { requirePortalUser } from "../data";
 import { SignOutButton } from "./sign-out-button";
 
 /** The signed-in portal: a phone-first column with the school's bar on top; no staff sidebar. */
@@ -33,6 +33,6 @@ export default function GuardianLayout({ children }: LayoutProps<"/portal">) {
 }
 
 async function Guarded({ children }: { children: React.ReactNode }) {
-  await requireGuardian();
+  await requirePortalUser();
   return children;
 }

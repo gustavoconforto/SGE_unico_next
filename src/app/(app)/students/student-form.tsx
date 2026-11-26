@@ -15,6 +15,7 @@ import {
 } from "@/components/form-fields";
 import { CopyAddressButtons } from "@/components/copy-address";
 import { PersonFields } from "@/components/person-fields";
+import { PortalAccessFields } from "@/components/portal-access-fields";
 import { WhatsAppLink } from "@/components/whatsapp-link";
 import { formatPhone } from "@/lib/person";
 import { BLOOD_TYPES, type GuardianRow, STUDENT_PLACEHOLDER as PLACEHOLDER } from "@/lib/students";
@@ -107,6 +108,9 @@ export function StudentForm({ id = null, defaults, photoUrl, guardianRows = [], 
           <TextField name="schoolFrom" label="Escola de origem" maxLength={200} optional className="sm:col-span-2" />
           <TextareaField name="observations" label="Observações pedagógicas" optional className="sm:col-span-2" />
         </Fieldset>
+        {id !== null && (
+          <PortalAccessFields hasLogin={defaults?.access === true} username="a matrícula" who="do aluno" />
+        )}
       </FormFields>
       <FormButtons
         pending={pending}

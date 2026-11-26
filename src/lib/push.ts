@@ -1,7 +1,7 @@
 // Web Push to guardians' devices (portal_pushsubscription). Off until the three VAPID env vars are set.
 import "server-only";
 
-import { and, eq, exists, inArray, isNotNull, sql } from "drizzle-orm";
+import { and, eq, exists, inArray, isNotNull, or, sql } from "drizzle-orm";
 import { sendNotification, setVapidDetails, WebPushError } from "web-push";
 import { db } from "@/db";
 import { enrollmentsEnrollment as enrollment, studentsGuardianassociation as link } from "@/db/schema/app";
@@ -35,23 +35,29 @@ export function isPushEndpoint(endpoint: string) {
   }
 }
 
-/** The devices an alert reaches: every guardian login, or those with a student active in `schoolClassId`. */
+/**
+ * The devices an alert reaches: every portal login (guardians and students), or for `schoolClassId` the guardians of
+ * its active students and those students themselves.
+ */
 export async function alertSubscriptions(schoolClassId: number | null) {
+  const activeIn = (classId: number) => and(eq(enrollment.status, "A"), eq(enrollment.schoolClassId, classId));
   const inClass =
     schoolClassId === null
       ? undefined
-      : exists(
-          db
-            .select({ one: sql`1` })
-            .from(link)
-            .innerJoin(enrollment, eq(enrollment.studentId, link.studentId))
-            .where(
-              and(
-                sql`${link.guardianId} = ${ref(user.guardianId)}`,
-                eq(enrollment.status, "A"),
-                eq(enrollment.schoolClassId, schoolClassId),
-              ),
-            ),
+      : or(
+          exists(
+            db
+              .select({ one: sql`1` })
+              .from(link)
+              .innerJoin(enrollment, eq(enrollment.studentId, link.studentId))
+              .where(and(sql`${link.guardianId} = ${ref(user.guardianId)}`, activeIn(schoolClassId))),
+          ),
+          exists(
+            db
+              .select({ one: sql`1` })
+              .from(enrollment)
+              .where(and(sql`${enrollment.studentId} = ${ref(user.studentId)}`, activeIn(schoolClassId))),
+          ),
         );
   return db
     .select({
@@ -62,7 +68,7 @@ export async function alertSubscriptions(schoolClassId: number | null) {
     })
     .from(subscription)
     .innerJoin(user, eq(subscription.userId, user.id))
-    .where(and(isNotNull(user.guardianId), inClass));
+    .where(and(or(isNotNull(user.guardianId), isNotNull(user.studentId)), inClass));
 }
 
 // shortcut: pushAlert sends inline in one after() call; move to a queue if subscriptions grow past a few thousand

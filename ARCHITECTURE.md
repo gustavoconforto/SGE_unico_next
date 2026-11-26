@@ -189,24 +189,26 @@ it points at an **enrollment**, and its forms list only active enrollments.
 (name filter, check several) and saves one exit each; one already recorded is skipped (`onConflictDoNothing`).
 Permission area `releases`.
 
-### Guardian portal (`/portal`, `portal_*`, not in Django)
+### Portal for guardians and students (`/portal`, `portal_*`, not in Django)
 
-Guardians sign in at `/portal/login` with their CPF. Staff create the login on the guardian form
-(`user.guardian_id`, role `responsavel`, which holds no staff resource; `applyLoginPlan`, `src/lib/login.ts`).
+Guardians sign in at `/portal/login` with their CPF, students with their matrícula. Staff create the login on the
+guardian form (`user.guardian_id`, role `responsavel`) or on a saved student's form (`user.student_id`, role `aluno`);
+neither role holds a staff resource (`applyLoginPlan`, `src/lib/login.ts`).
 The portal lives in `src/app/portal/`, outside `(app)`, with its own layout, its own manifest
 (`/portal/manifest.webmanifest`, scope `/portal`) and service worker (`public/portal/sw.js`). Its pages call
-`requireGuardian()` (`src/app/portal/data.ts`), never `requirePermission()`, and read only the signed-in guardian's
-students through `students_guardianassociation`. The home shows each student's current-school-year turma and timetable;
+`requirePortalUser()` (`src/app/portal/data.ts`), never `requirePermission()`; it returns the viewer (guardian or
+student), and every query reads only the viewer's students: a guardian's through `students_guardianassociation`, a
+student only themself. Both see the same pages today; guardian-only features check `viewer.kind`. The home shows each student's current-school-year turma and timetable;
 "Ver notas" opens `/portal/notas/[enrollment]` (`loadReportCard`), which counts only locked subject × bimester grades
-(`/grades/locks`), so guardians never see a bimester still being typed.
+(`/grades/locks`, made since the enrollment's school year began), so nobody sees a bimester still being typed.
 
 | Table                     | Key fields and rules                                                                     |
 | ------------------------- | ---------------------------------------------------------------------------------------- |
-| `portal_alert`            | `title`, `body`, `school_class_id` (null = every guardian), sent on `/alerts`; no edit   |
+| `portal_alert`            | `title`, `body`, `school_class_id` (null = everyone), sent on `/alerts`; no edit         |
 | `portal_pushsubscription` | one per device: login, `endpoint` (unique, browser push services only), `p256dh`, `auth` |
 
-Sending a notice pushes it after the response (`pushAlert`, `src/lib/push.ts`) to every guardian login, or to those
-with a student active in the class. Push is off until the VAPID env vars are set. Permission area `alerts`.
+Sending a notice pushes it after the response (`pushAlert`, `src/lib/push.ts`) to every portal login, or for a class
+to the guardians of its active students and those students themselves. Push is off until the VAPID env vars are set. Permission area `alerts`.
 
 ### School calendar (`enrollments_calendarday`, not in Django)
 
@@ -529,8 +531,8 @@ users are created with `auth.api.createUser` (the seed does this).
 
 `src/proxy.ts` asks Better Auth to validate the session on every request
 (`auth.api.getSession`: signature, expiry, revocation, banned user) and
-redirects to `/login?next=…` otherwise (`/portal/login` for portal paths). It also keeps guardian logins
-(`user.guardian_id`) inside `/portal` and staff out of it. That check has to live there, not only
+redirects to `/login?next=…` otherwise (`/portal/login` for portal paths). It also keeps portal logins
+(`user.guardian_id` or `user.student_id`) inside `/portal` and staff out of it. That check has to live there, not only
 in a layout: a layout doesn't stop its page from rendering into the response.
 Server Actions also call `requirePermission()`, since they are POST endpoints.
 

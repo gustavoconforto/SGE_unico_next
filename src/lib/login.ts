@@ -35,12 +35,25 @@ export function loginPlan(
   return Object.keys(errors).length ? { plan: "none", errors } : { plan: hasLogin ? "update" : "create" };
 }
 
-/** Whose login it is: an employee (roles picked on /employees) or a guardian (the portal's `responsavel` role). */
-export type LoginOwner = { employeeId: number } | { guardianId: number };
+/** Whose login it is: an employee (roles picked on /employees), or a guardian or student (portal roles). */
+export type LoginOwner = { employeeId: number } | { guardianId: number } | { studentId: number };
+
+const ownerWhere = (owner: LoginOwner) =>
+  "employeeId" in owner
+    ? eq(user.employeeId, owner.employeeId)
+    : "guardianId" in owner
+      ? eq(user.guardianId, owner.guardianId)
+      : eq(user.studentId, owner.studentId);
+
+/** The role a new login starts with: employees get theirs on /employees; portal logins hold no staff resource. */
+const ownerRole = (owner: LoginOwner) =>
+  "employeeId" in owner ? "user" : "guardianId" in owner ? "responsavel" : "aluno";
 
 export async function ownerLogin(owner: LoginOwner) {
-  const where = "employeeId" in owner ? eq(user.employeeId, owner.employeeId) : eq(user.guardianId, owner.guardianId);
-  const [login] = await db.select({ id: user.id, username: user.username, role: user.role }).from(user).where(where);
+  const [login] = await db
+    .select({ id: user.id, username: user.username, role: user.role })
+    .from(user)
+    .where(ownerWhere(owner));
   return login;
 }
 
@@ -72,8 +85,7 @@ export async function applyLoginPlan(
         email,
         password: input.password,
         name,
-        // Employees' roles are picked on the /employees list (setUserRoles)
-        role: "employeeId" in owner ? "user" : "responsavel",
+        role: ownerRole(owner),
         // Staff picked this password: its owner replaces it at first sign-in
         data: {
           username: input.username,

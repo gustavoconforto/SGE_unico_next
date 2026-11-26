@@ -9,14 +9,17 @@ import { authClient } from "@/lib/auth-client";
 const inputTheme = { field: { input: { sizes: { md: "p-2.5 text-base sm:text-sm" } } } };
 
 // Only a 401 is the user's fault; a rate limit or an outage must not read as a wrong password
-function errorMessage(status: number | undefined, cpf: boolean) {
-  if (status === 401) return `${cpf ? "CPF" : "Usuário"} ou senha incorretos.`;
+function errorMessage(status: number | undefined, portal: boolean) {
+  if (status === 401) return `${portal ? "CPF/matrícula" : "Usuário"} ou senha incorretos.`;
   if (status === 429) return "Muitas tentativas. Aguarde um minuto e tente de novo.";
   return "Não foi possível entrar agora. Tente novamente em instantes.";
 }
 
-/** `home`: where a sign-in without `?next=` lands. `cpf`: the username is a CPF (guardian portal), typed with or without dots. */
-export function LoginForm({ home = "/", cpf = false }: { home?: string; cpf?: boolean }) {
+/**
+ * `home`: where a sign-in without `?next=` lands. `portal`: the username is a guardian's CPF (typed with or without
+ * dots) or a student's matrícula, both digits only.
+ */
+export function LoginForm({ home = "/", portal = false }: { home?: string; portal?: boolean }) {
   const router = useRouter();
   const next = useSearchParams().get("next") ?? home;
   const [error, setError] = useState<{ status?: number } | null>(null);
@@ -30,7 +33,7 @@ export function LoginForm({ home = "/", cpf = false }: { home?: string; cpf?: bo
     try {
       const typed = String(form.get("username")).trim().toLowerCase();
       const { error } = await authClient.signIn.username({
-        username: cpf ? typed.replace(/\D/g, "") : typed,
+        username: portal ? typed.replace(/\D/g, "") : typed,
         password: String(form.get("password")),
       });
       if (error) return setError({ status: error.status });
@@ -49,12 +52,12 @@ export function LoginForm({ home = "/", cpf = false }: { home?: string; cpf?: bo
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       <div>
-        <Label htmlFor="username">{cpf ? "CPF" : "Usuário"}</Label>
+        <Label htmlFor="username">{portal ? "CPF ou matrícula" : "Usuário"}</Label>
         <TextInput
           id="username"
           name="username"
-          placeholder={cpf ? "000.000.000-00" : "seu.usuario"}
-          inputMode={cpf ? "numeric" : undefined}
+          placeholder={portal ? "Somente números" : "seu.usuario"}
+          inputMode={portal ? "numeric" : undefined}
           autoComplete="username"
           autoCapitalize="none"
           autoCorrect="off"
@@ -83,7 +86,7 @@ export function LoginForm({ home = "/", cpf = false }: { home?: string; cpf?: bo
         {pending ? "Entrando…" : "Entrar"}
       </Button>
       {/* Below the button so it doesn't push the fields; cleared on submit so a repeated failure is announced again */}
-      {error && <Alert color="failure">{errorMessage(error.status, cpf)}</Alert>}
+      {error && <Alert color="failure">{errorMessage(error.status, portal)}</Alert>}
     </form>
   );
 }

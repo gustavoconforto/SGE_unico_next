@@ -1,7 +1,7 @@
-// What a signed-in guardian may see: only their own students, found through students_guardianassociation.
+// What a portal user may see: a guardian their linked students (students_guardianassociation), a student themself.
 import "server-only";
 
-import { and, asc, desc, eq, inArray, isNull, or } from "drizzle-orm";
+import { type AnyColumn, and, asc, desc, eq, inArray, isNull, or } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import {
@@ -18,16 +18,30 @@ import { getCurrentSession } from "@/lib/session";
 import { displayName } from "@/lib/students";
 import { classShortLabel } from "../(app)/enrollments/data";
 
-/** Every portal page and action calls this first: the signed-in guardian's id, or → the portal login. */
-export async function requireGuardian() {
+/** Who is signed in to the portal; guardian-only features check `kind`. */
+export type PortalViewer = { kind: "guardian"; guardianId: number } | { kind: "student"; studentId: number };
+
+/** Every portal page and action calls this first: the signed-in guardian or student, or → the portal login. */
+export async function requirePortalUser(): Promise<{
+  session: NonNullable<Awaited<ReturnType<typeof getCurrentSession>>>;
+  viewer: PortalViewer;
+}> {
   const session = await getCurrentSession();
-  const guardianId = session?.user.guardianId;
-  if (guardianId == null) redirect(PORTAL_LOGIN);
-  return { session: session!, guardianId };
+  if (session?.user.guardianId != null)
+    return { session, viewer: { kind: "guardian", guardianId: session.user.guardianId } };
+  if (session?.user.studentId != null)
+    return { session, viewer: { kind: "student", studentId: session.user.studentId } };
+  redirect(PORTAL_LOGIN);
 }
 
-/** The guardian's students with their active enrollments' classes and their school years (none when not placed yet). */
-export async function guardianStudents(guardianId: number) {
+/** `column` (a student id) is one the viewer may see. */
+const visible = (column: AnyColumn, viewer: PortalViewer) =>
+  viewer.kind === "student"
+    ? eq(column, viewer.studentId)
+    : inArray(column, db.select({ id: link.studentId }).from(link).where(eq(link.guardianId, viewer.guardianId)));
+
+/** The viewer's students with their active enrollments' classes and their school years (none when not placed yet). */
+export async function portalStudents(viewer: PortalViewer) {
   const rows = await db
     .select({
       id: student.id,
@@ -40,11 +54,10 @@ export async function guardianStudents(guardianId: number) {
       yearId: klass.yearId,
       enrollmentId: enrollment.id,
     })
-    .from(link)
-    .innerJoin(student, eq(link.studentId, student.id))
+    .from(student)
     .leftJoin(enrollment, and(eq(enrollment.studentId, student.id), eq(enrollment.status, "A")))
     .leftJoin(klass, eq(enrollment.schoolClassId, klass.id))
-    .where(eq(link.guardianId, guardianId))
+    .where(visible(student.id, viewer))
     .orderBy(asc(student.name), asc(klass.id));
   type Class = { id: number; yearId: number; enrollmentId: number; label: string };
   const students = new Map<number, { id: number; name: string; classes: Class[] }>();
@@ -62,8 +75,8 @@ export async function guardianStudents(guardianId: number) {
   return [...students.values()];
 }
 
-/** The latest notices for every guardian or for one of `classIds` (the guardian's students' classes). */
-export async function guardianAlerts(classIds: number[], limit = 20) {
+/** The latest notices for everyone or for one of `classIds` (the viewer's students' classes). */
+export async function portalAlerts(classIds: number[], limit = 20) {
   const forClass = classIds.length ? inArray(alert.schoolClassId, classIds) : undefined;
   return db
     .select({ id: alert.id, title: alert.title, body: alert.body, createdAt: alert.createdAt })
@@ -74,17 +87,16 @@ export async function guardianAlerts(classIds: number[], limit = 20) {
 }
 
 /**
- * The start (YYYY-MM-DD) of the enrollment's school year, or null when the enrollment isn't of one of the guardian's
- * students: the check before showing its grades.
+ * The start (YYYY-MM-DD) of the enrollment's school year, or null when the viewer may not see the enrollment:
+ * the check before showing its grades.
  */
-export async function guardianEnrollmentYearStart(guardianId: number, enrollmentId: number) {
+export async function viewerEnrollmentYearStart(viewer: PortalViewer, enrollmentId: number) {
   const [row] = await db
     .select({ begins: year.begins })
     .from(enrollment)
-    .innerJoin(link, eq(link.studentId, enrollment.studentId))
     .innerJoin(enrollmentType, eq(enrollment.enrollmentTypeId, enrollmentType.id))
     .innerJoin(year, eq(enrollmentType.schoolYearId, year.id))
-    .where(and(eq(enrollment.id, enrollmentId), eq(link.guardianId, guardianId)))
+    .where(and(eq(enrollment.id, enrollmentId), visible(enrollment.studentId, viewer)))
     .limit(1);
   return row?.begins ?? null;
 }

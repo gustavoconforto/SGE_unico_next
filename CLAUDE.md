@@ -73,9 +73,10 @@ never the reset, and the seed only via `db:wipe -- --seed` while in beta; the mi
 - Better Auth Admin plugin roles (`statement` / `roles` in `src/lib/permissions.ts`); `user.role` holds one or more,
   assigned by admins on `/employees`. `admin` holds all; plain `user` holds none. The proxy checks only the session;
   every page and action calls `requirePermission()` (`src/lib/authorization.ts`). See docs/permissions.md.
-- Guardian portal (`src/app/portal/`, ARCHITECTURE.md "Guardian portal"): guardian logins (`user.guardianId`, role
-  `responsavel`) hold no permission. Portal pages and actions call `requireGuardian()` instead of `requirePermission()`
-  and scope every query to the guardian's own students. The proxy keeps guardians in `/portal` and staff out of it.
+- Portal for guardians and students (`src/app/portal/`, ARCHITECTURE.md "Portal for guardians and students"): portal
+  logins (`user.guardianId`, role `responsavel`; `user.studentId`, role `aluno`) hold no permission. Portal pages and
+  actions call `requirePortalUser()` instead of `requirePermission()` and scope every query to the viewer's students
+  (`PortalViewer`). The proxy keeps portal logins in `/portal` and staff out of it.
 
 ## Business rules (from Django — don't break)
 
