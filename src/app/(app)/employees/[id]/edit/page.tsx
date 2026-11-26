@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
 import { employeesEmployee } from "@/db/schema/app";
-import { employeeLogin } from "@/lib/employee-login";
+import { ownerLogin } from "@/lib/login";
 import { idParam } from "@/lib/list";
 import { requireAdmin } from "@/lib/authorization";
 import { EmployeeForm } from "../../employee-form";
@@ -17,7 +17,7 @@ export default async function EditEmployeePage({ params }: PageProps<"/employees
     db.select().from(employeesEmployee).where(eq(employeesEmployee.id, id)),
     roleOptions(),
     requireAdmin(),
-    employeeLogin(id),
+    ownerLogin({ employeeId: id }),
   ]);
   if (!employee) notFound();
   // Never send the SUGA password hash to the browser

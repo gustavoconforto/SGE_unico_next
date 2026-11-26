@@ -127,6 +127,23 @@ export async function dayLessons(classId: number, date: string) {
   }));
 }
 
+/** A class's timetable: each slot with its subject's and teacher's names. */
+export async function timetableSlots(classId: number) {
+  return db
+    .select({
+      weekday: slot.weekday,
+      period: slot.period,
+      subjectId: slot.subjectId,
+      subject: subject.name,
+      teacher: employee.name,
+    })
+    .from(slot)
+    .innerJoin(employee, eq(slot.teacherId, employee.id))
+    .innerJoin(levelSubject, eq(slot.subjectId, levelSubject.id))
+    .innerJoin(subject, eq(levelSubject.subjectId, subject.id))
+    .where(eq(slot.schoolClassId, classId));
+}
+
 export async function classSlots(classId: number) {
   return db.select().from(slot).where(eq(slot.schoolClassId, classId));
 }

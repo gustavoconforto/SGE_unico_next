@@ -1,4 +1,5 @@
-// An employee's login to this app (a Better Auth user linked by user.employee_id). Not SUGA: that's can_access_suga.
+// A person's login to this app: a Better Auth user linked by user.employee_id (staff) or user.guardian_id (portal).
+// Not SUGA: that's can_access_suga.
 import { and, eq, ne } from "drizzle-orm";
 import { db } from "@/db";
 import { user } from "@/db/schema/auth";
@@ -34,11 +35,12 @@ export function loginPlan(
   return Object.keys(errors).length ? { plan: "none", errors } : { plan: hasLogin ? "update" : "create" };
 }
 
-export async function employeeLogin(employeeId: number) {
-  const [login] = await db
-    .select({ id: user.id, username: user.username, role: user.role })
-    .from(user)
-    .where(eq(user.employeeId, employeeId));
+/** Whose login it is: an employee (roles picked on /employees) or a guardian (the portal's `responsavel` role). */
+export type LoginOwner = { employeeId: number } | { guardianId: number };
+
+export async function ownerLogin(owner: LoginOwner) {
+  const where = "employeeId" in owner ? eq(user.employeeId, owner.employeeId) : eq(user.guardianId, owner.guardianId);
+  const [login] = await db.select({ id: user.id, username: user.username, role: user.role }).from(user).where(where);
   return login;
 }
 
@@ -50,12 +52,13 @@ export async function usernameTaken(username: string, exceptUserId?: string) {
 }
 
 /**
- * Applies `plan` through Better Auth (it owns users and password hashing). Runs outside the employee's
+ * Applies `plan` through Better Auth (it owns users and password hashing). Runs outside the owner's
  * transaction: Better Auth writes on its own connection.
  */
 export async function applyLoginPlan(
   plan: LoginPlan,
-  employee: { id: number; name: string },
+  owner: LoginOwner,
+  name: string,
   input: LoginInput,
   login: { id: string; username: string | null } | undefined,
 ) {
@@ -68,13 +71,14 @@ export async function applyLoginPlan(
       body: {
         email,
         password: input.password,
-        name: employee.name,
-        role: "user", // roles are picked on the /employees list (setUserRoles)
-        // The admin picked this password: the employee replaces it at first sign-in
+        name,
+        // Employees' roles are picked on the /employees list (setUserRoles)
+        role: "employeeId" in owner ? "user" : "responsavel",
+        // Staff picked this password: its owner replaces it at first sign-in
         data: {
           username: input.username,
           displayUsername: input.username,
-          employeeId: employee.id,
+          ...owner,
           mustChangePassword: true,
         },
       },
@@ -83,7 +87,7 @@ export async function applyLoginPlan(
     // Better Auth's username hook rejects a user's own unchanged username as "taken": send it only when it changes
     const renamed =
       input.username !== login!.username ? { email, username: input.username, displayUsername: input.username } : {};
-    await ctx.internalAdapter.updateUser(loginId, { name: employee.name, ...renamed });
+    await ctx.internalAdapter.updateUser(loginId, { name, ...renamed });
     if (input.password) {
       // A reset works like a first access: whoever held the old password is signed out, and the new one must be replaced
       await ctx.internalAdapter.updatePassword(loginId, await ctx.password.hash(input.password));

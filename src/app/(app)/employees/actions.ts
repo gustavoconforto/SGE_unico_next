@@ -12,7 +12,7 @@ import {
   pathwaysPathwayofferingTeachers,
 } from "@/db/schema/app";
 import { deleteAndRedirect } from "@/lib/crud";
-import { applyLoginPlan, employeeLogin, loginPlan, usernameTaken } from "@/lib/employee-login";
+import { applyLoginPlan, loginPlan, ownerLogin, usernameTaken } from "@/lib/login";
 import { checkbox, type FormState, foreignKey, parseForm } from "@/lib/form";
 import { personFields, personUniqueError } from "@/lib/person";
 import { auth } from "@/lib/auth";
@@ -34,7 +34,7 @@ export async function saveEmployee(id: number | null, _prev: FormState, formData
   const login = loginSchema.parse(values);
   delete values.password; // never echo a typed password back to the browser
 
-  const current = id !== null ? await employeeLogin(id) : undefined;
+  const current = id !== null ? await ownerLogin({ employeeId: id }) : undefined;
   const { plan, errors: loginErrors = {} } = loginPlan(login, !!current, current?.id === session.user.id);
   if ((plan === "create" || plan === "update") && (await usernameTaken(login.username, current?.id)))
     loginErrors.username = ["Este usuário já está em uso."];
@@ -59,7 +59,7 @@ export async function saveEmployee(id: number | null, _prev: FormState, formData
 
   if (plan !== "none") {
     try {
-      await applyLoginPlan(plan, { id: employeeId!, name: data.name }, login, current);
+      await applyLoginPlan(plan, { employeeId: employeeId! }, data.name, login, current);
     } catch (error) {
       // Better Auth can't join the insert's transaction: undo a new employee so a failed save leaves nothing
       if (id === null) await db.delete(employeesEmployee).where(eq(employeesEmployee.id, employeeId!));
@@ -72,7 +72,7 @@ export async function saveEmployee(id: number | null, _prev: FormState, formData
 export async function deleteEmployee(id: number) {
   const session = await requireAdmin();
   // Deleting the employee deletes their login (FK cascade): an admin can't delete their own
-  if ((await employeeLogin(id))?.id === session.user.id) redirect("/employees?msg=employee_has_login");
+  if ((await ownerLogin({ employeeId: id }))?.id === session.user.id) redirect("/employees?msg=employee_has_login");
   // Django drops the employee's M2M teacher links with it; any other reference (PROTECT) still blocks the delete
   await deleteAndRedirect(
     () =>

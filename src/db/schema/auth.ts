@@ -1,6 +1,6 @@
 import { relations } from "drizzle-orm";
 import { pgTable, text, timestamp, boolean, index, integer, bigint } from "drizzle-orm/pg-core";
-import { employeesEmployee } from "./app";
+import { employeesEmployee, studentsGuardian } from "./app";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -23,6 +23,10 @@ export const user = pgTable("user", {
   employeeId: bigint("employee_id", { mode: "number" })
     .unique()
     .references(() => employeesEmployee.id, { onDelete: "cascade" }),
+  // The guardian this portal login belongs to (src/app/(portal)); deleting the guardian deletes it
+  guardianId: bigint("guardian_id", { mode: "number" })
+    .unique()
+    .references(() => studentsGuardian.id, { onDelete: "cascade" }),
   // Set when an admin picks the password; the proxy holds the user on /account/password until they change it
   mustChangePassword: boolean("must_change_password").default(false).notNull(),
 });

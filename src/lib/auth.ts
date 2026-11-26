@@ -13,10 +13,11 @@ export const auth = betterAuth({
     disableSignUp: true, // staff accounts are created by an admin (auth.api.createUser)
   },
   // Login attempt counts in Postgres: in memory each Vercel instance would count its own
-  // Set by the employee form (src/lib/employee-login.ts), never by the client
+  // Set by the employee and guardian forms (src/lib/login.ts), never by the client
   user: {
     additionalFields: {
       employeeId: { type: "number", required: false, input: false },
+      guardianId: { type: "number", required: false, input: false },
       mustChangePassword: {
         type: "boolean",
         required: false,

@@ -14,6 +14,9 @@ export const WEEKDAYS = [
   [6, "Sábado"],
 ] as const;
 
+/** The lesson weekday (1-6) to show for a YYYY-MM-DD day: Sunday shows the coming Monday. */
+export const lessonWeekday = (day: string) => isoWeekday(day) % 7 || 1;
+
 /** The weekday's periods: Saturday has fewer. */
 export const weekdayPeriods = (weekday: number) =>
   weekday === SATURDAY ? PERIODS.slice(0, SATURDAY_LECTURES) : PERIODS;

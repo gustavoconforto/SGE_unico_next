@@ -23,6 +23,7 @@ import { studentPhotoUrl } from "@/lib/media";
 import { formatPhone } from "@/lib/person";
 import { BLOOD_TYPES, RELATIONSHIPS, STUDENT_PLACEHOLDER, ageOn, displayName } from "@/lib/students";
 import { enrollmentTypeLabel, yearOf } from "../../enrollments/data";
+import { Panel } from "@/components/panel";
 
 export const metadata: Metadata = { title: "Aluno" };
 
@@ -128,7 +129,7 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
 
       {/* Side by side on wide screens: who to call next to who the student is */}
       <div className="grid items-start gap-4 xl:grid-cols-2">
-        <Section title="Responsáveis">
+        <Panel title="Responsáveis">
           {row.isSelfFinancial && <p className="text-gray-700">O próprio aluno é o responsável financeiro.</p>}
           {guardians.length ? (
             <ul className="flex flex-col divide-y divide-gray-200">
@@ -161,9 +162,9 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
           ) : (
             <p className="text-gray-600">Nenhum responsável cadastrado.</p>
           )}
-        </Section>
+        </Panel>
 
-        <Section title="Dados do aluno">
+        <Panel title="Dados do aluno">
           <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
             <Item term="Data de nascimento">
               {row.birthDate && `${formatDate(row.birthDate)} (${ageOn(row.birthDate, today())} anos)`}
@@ -187,9 +188,9 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
               </div>
             )}
           </dl>
-        </Section>
+        </Panel>
 
-        <Section title="Matrículas" className="xl:col-span-2">
+        <Panel title="Matrículas" className="xl:col-span-2">
           {enrollments.length ? (
             <ul className="flex flex-col gap-3">
               {enrollments.map((e) => {
@@ -215,27 +216,9 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
           ) : (
             <p className="text-gray-600">Nenhuma matrícula ainda.</p>
           )}
-        </Section>
+        </Panel>
       </div>
     </div>
-  );
-}
-
-/** A data panel (white, panel-lift shadow) holding one part of the record. */
-function Section({
-  title,
-  className = "",
-  children,
-}: {
-  title: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className={`flex flex-col gap-4 rounded-lg bg-white p-5 drop-shadow-md sm:p-6 ${className}`}>
-      <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-      {children}
-    </section>
   );
 }
 
