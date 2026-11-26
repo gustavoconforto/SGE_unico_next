@@ -622,13 +622,14 @@ Shared CSS is in `src/app/globals.css`.
 ## Configuration
 
 - `.env` (see `.env.example`): `DATABASE_URL`, `BETTER_AUTH_SECRET`,
-  `BETTER_AUTH_URL`, `MEDIA_ROOT`, and `SEED_PASSWORD` (dev only).
+  `BETTER_AUTH_URL`, `MEDIA_ROOT`, and `SEED_PASSWORD` (dev, or `db:wipe -- --seed`).
 - Dev database: the Docker container `gestao-pg`, started by `npm run dev`, `db:reset` and
   `db:migrate` when `DATABASE_URL` is local (`scripts/start-db.mts`; Postgres on `localhost:5433`,
   user / password / db `gestao`), then `npm run db:reset`.
 - Production (Vercel + Neon): see README, "Deploy". In short: an empty
   `public` schema, `npm run db:migrate` and `npm run create-admin` with the
-  direct Neon URL, the pooled URL in Vercel. Never `db:reset` or the seed there.
+  direct Neon URL, the pooled URL in Vercel. Never `db:reset` there; the seed only via
+  `db:wipe -- --seed` while in beta (staff training).
 - Schema changes: edit `src/db/schema/app.ts`, run
   `npm run db:generate`, review the SQL in `drizzle/`, then `npm run db:migrate`.
   The app tables have no DB defaults for `created_at` / `updated_at`: the

@@ -1,10 +1,11 @@
-// Empties a remote database (Neon, while in beta): drops every schema, recreates public, re-runs the migrations.
-// No seed. Asks you to type the host first, since every row (users included) is lost.
+// Empties a remote database (Neon, while in beta): drops every schema, re-runs the migrations, and with `--seed`
+// loads the test seed (staff training). Asks you to type the host first, since every row (users included) is lost.
 import "dotenv/config";
 import { createInterface } from "node:readline/promises";
 import { sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 
+const withSeed = process.argv.includes("--seed");
 const host = new URL(process.env.DATABASE_URL ?? "").hostname;
 if (host.includes("-pooler")) {
   console.error(`${host} is Neon's pooled URL: run db:wipe with the direct one.`);
@@ -12,7 +13,9 @@ if (host.includes("-pooler")) {
 }
 
 const rl = createInterface({ input: process.stdin, output: process.stdout });
-const answer = await rl.question(`This deletes ALL data on ${host}. Type the host to confirm: `);
+const answer = await rl.question(
+  `This deletes ALL data on ${host}${withSeed ? " and loads the test seed" : ""}. Type the host to confirm: `,
+);
 rl.close();
 if (answer.trim() !== host) {
   console.error("Host didn't match: nothing was changed.");
@@ -24,5 +27,12 @@ await db.execute(sql`drop schema if exists public cascade`);
 await db.execute(sql`drop schema if exists drizzle cascade`);
 await db.execute(sql`create schema public`);
 await migrate(db, { migrationsFolder: "drizzle" });
-console.log("Schema recreated from drizzle/. No users exist now: run `npm run create-admin` next.");
+console.log("Schema recreated from drizzle/.");
+
+if (withSeed) {
+  const { seed } = await import("./seed.mjs");
+  await seed();
+} else {
+  console.log("No users exist now: run `npm run create-admin` next.");
+}
 process.exit(0);

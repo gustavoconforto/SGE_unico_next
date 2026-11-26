@@ -18,13 +18,13 @@ npm run typecheck && npm run lint && npm run build
 npm run db:generate      # migration in drizzle/ after a schema change
 npm run db:migrate       # apply pending migrations
 npm run db:reset         # local only: drop everything, migrate, seed (scripts/seed.mts)
-npm run db:wipe          # any DB (Neon direct URL): drop everything, migrate, no seed; asks to type the host
+npm run db:wipe          # any DB (Neon direct URL): drop everything, migrate, `--seed` loads the seed (beta staff training); asks to type the host
 ```
 
 Dev DB: Docker container `gestao-pg` (`npm run dev`, `db:reset` and `db:migrate` start it when `DATABASE_URL` is local; Postgres on localhost:5433, user/pass/db `gestao`), built by `npm run db:reset`.
 Login `admin` or `secretaria`, password `senha1234` (`SEED_PASSWORD`). `db:reset` **wipes the database**: ask
 before running it. Production is Vercel + Neon (README, "Deploy"): only `db:migrate`, `create-admin` and (beta only) `db:wipe` run there,
-never the reset or the seed; the migration goes in before the code that needs it.
+never the reset, and the seed only via `db:wipe -- --seed` while in beta; the migration goes in before the code that needs it.
 
 ## Database and auth
 

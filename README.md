@@ -75,8 +75,9 @@ npm run create-admin -- <username> "<Full name>"   # administrator (any database
 ## Deploy (Vercel + Neon)
 
 Production runs on Vercel with a Neon Postgres database. The schema comes only
-from the migrations in `drizzle/`; the test seed and `db:reset` never run there
-(`db:reset` refuses any database that isn't on your machine).
+from the migrations in `drizzle/`; `db:reset` never runs there (it refuses any
+database that isn't on your machine), and the test seed only while in beta, for
+staff training (see "Training data").
 
 Neon gives two connection strings: the **pooled** one (host ends in
 `-pooler`), for the app on Vercel, and the **direct** one, for migrations and
@@ -109,6 +110,19 @@ commands below reach Neon while `.env` keeps pointing at the local database.
    | `BETTER_AUTH_URL`    | the production address, e.g. `https://gestao.example.com` (login cookies depend on it) |
    | `MEDIA_ROOT`         | `/tmp/media`: the only writable folder on Vercel (see the photo warning below)         |
 4. **Deploy**, then sign in with the administrator and open a few screens.
+
+### Training data (beta only)
+
+To give the staff a seeded database to practice on, wipe it with `--seed`: it
+loads the same test data as `db:reset`. Set a strong `SEED_PASSWORD`, since the
+seeded logins (`admin`, `secretaria`, ...) are reachable on the public URL.
+
+```bash
+SEED_PASSWORD="<strong password>" DATABASE_URL="<neon direct url>" npm run db:wipe -- --seed
+```
+
+After the training, start over with First deploy steps 1 and 2 (`db:wipe`
+without `--seed`, then `create-admin`).
 
 ### Later deploys
 
