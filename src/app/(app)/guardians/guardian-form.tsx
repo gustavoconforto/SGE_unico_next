@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { CheckboxField, Fieldset, FormButtons, FormFields, SelectField, TextField } from "@/components/form-fields";
+import { useActionState } from "react";
+import { FormButtons, FormFields, SelectField } from "@/components/form-fields";
 import { type AddressSource, CopyAddressSearch } from "@/components/copy-address";
 import { PersonFields } from "@/components/person-fields";
+import { PortalAccessFields } from "@/components/portal-access-fields";
 import { WhatsAppLink } from "@/components/whatsapp-link";
 import { formatPhone } from "@/lib/person";
 import { MARITAL_STATUS } from "@/lib/students";
@@ -20,8 +21,6 @@ export function GuardianForm({
   others: AddressSource[];
 }) {
   const [state, action, pending] = useActionState(saveGuardian.bind(null, id), {});
-  const hasLogin = defaults?.access === true;
-  const [access, setAccess] = useState(hasLogin);
   const shown = defaults && {
     ...defaults,
     phone: formatPhone(defaults.phone as string),
@@ -37,29 +36,7 @@ export function GuardianForm({
           // Saved guardians only, like the student form; it follows the number as it is edited
           mobileAction={id ? <WhatsAppLink field="mobile" phone={defaults?.mobile as string} /> : undefined}
         />
-        <Fieldset legend="Acesso ao portal dos responsáveis">
-          <div className="sm:col-span-2" onChange={(e) => setAccess((e.target as HTMLInputElement).checked)}>
-            <CheckboxField
-              name="access"
-              label="Pode acessar o portal"
-              help="O usuário é o CPF. Desmarcar apaga o acesso do responsável."
-            />
-          </div>
-          {access && (
-            <TextField
-              name="password"
-              label="Senha"
-              type="password"
-              autoComplete="new-password"
-              optional={hasLogin}
-              help={
-                hasLogin
-                  ? "Deixe em branco para manter a senha atual. Uma nova senha encerra as sessões do responsável."
-                  : "Senha provisória, com pelo menos 8 caracteres: o responsável a troca no primeiro acesso."
-              }
-            />
-          )}
-        </Fieldset>
+        <PortalAccessFields hasLogin={defaults?.access === true} username="o CPF" who="do responsável" />
       </FormFields>
       <FormButtons pending={pending} cancelHref="/guardians" />
     </form>

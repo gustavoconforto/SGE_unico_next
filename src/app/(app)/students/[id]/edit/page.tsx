@@ -15,6 +15,7 @@ import {
 } from "@/db/schema/app";
 import { EnrollmentStatusBadge } from "@/components/enrollment-status-badge";
 import { idParam } from "@/lib/list";
+import { ownerLogin } from "@/lib/login";
 import { studentPhotoUrl } from "@/lib/media";
 import { enrollmentTypeLabel, yearOf } from "../../../enrollments/data";
 import { displayName } from "@/lib/students";
@@ -26,7 +27,7 @@ export const metadata: Metadata = { title: "Editar aluno" };
 export default async function EditStudentPage({ params }: PageProps<"/students/[id]/edit">) {
   await requirePermission("students", "edit");
   const id = await idParam(params);
-  const [[row], links, options, enrollments] = await Promise.all([
+  const [[row], links, options, enrollments, login] = await Promise.all([
     db.select().from(student).where(eq(student.id, id)),
     db.select().from(link).where(eq(link.studentId, id)).orderBy(asc(link.id)),
     guardianOptions(),
@@ -44,6 +45,7 @@ export default async function EditStudentPage({ params }: PageProps<"/students/[
       .innerJoin(year, eq(enrollmentType.schoolYearId, year.id))
       .where(eq(enrollment.studentId, id))
       .orderBy(desc(enrollment.enrolledAt)),
+    ownerLogin({ studentId: id }),
   ]);
   if (!row) notFound();
   return (
@@ -85,7 +87,7 @@ export default async function EditStudentPage({ params }: PageProps<"/students/[
       </dl>
       <StudentForm
         id={id}
-        defaults={row}
+        defaults={login ? { ...row, access: true } : row}
         photoUrl={await studentPhotoUrl(row.photo, row.registration)}
         guardianRows={links.map(({ studentId: _s, ...l }) => ({ ...l, delete: false }))}
         guardianOptions={options}

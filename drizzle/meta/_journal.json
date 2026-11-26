@@ -120,6 +120,13 @@
       "when": 1795697053725,
       "tag": "0016_portal_push",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1795705358083,
+      "tag": "0017_student_login",
+      "breakpoints": true
     }
   ]
 }

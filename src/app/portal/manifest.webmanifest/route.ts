@@ -5,7 +5,7 @@ import { PORTAL_HOME } from "@/lib/portal-paths";
 export function GET() {
   const manifest: MetadataRoute.Manifest = {
     id: PORTAL_HOME,
-    name: "Único Educacional — Responsáveis",
+    name: "Único Educacional — Portal do Aluno e do Responsável",
     short_name: "Único",
     description: "Turmas, horários e avisos da escola",
     start_url: PORTAL_HOME,

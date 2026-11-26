@@ -8,6 +8,7 @@ import { studentsGuardianassociation as link, studentsStudent as student } from 
 import { UNIQUE_VIOLATION, pgConstraint, pgErrorCode } from "@/lib/db-error";
 import { today } from "@/lib/finance";
 import { type FormState, REQUIRED, anotherUrl, checkbox, optionalText, parseForm } from "@/lib/form";
+import { applyLoginPlan, loginPlan, ownerLogin, usernameTaken } from "@/lib/login";
 import { readPhoto, saveStudentPhoto } from "@/lib/media";
 import { personFields, personUniqueError, phoneDigits } from "@/lib/person";
 import { requirePermission } from "@/lib/authorization";
@@ -72,6 +73,20 @@ async function saveGuardianLinks(
   }
 }
 
+const portalSchema = z.object({ access: checkbox, password: z.string().default("") });
+
+// The portal login's username is the matrícula, so only a saved student (one that has it) gets a login;
+// any error here stops the save like a field error does
+async function portalLogin(id: number, values: Record<string, string>) {
+  const [row] = await db.select({ registration: student.registration }).from(student).where(eq(student.id, id));
+  const input = { ...portalSchema.parse(values), username: row?.registration ?? "" };
+  const current = await ownerLogin({ studentId: id });
+  const { plan, errors = {} } = loginPlan(input, !!current);
+  if ((plan === "create" || plan === "update") && (await usernameTaken(input.username, current?.id)))
+    errors.access = ["Esta matrícula já é usuário de outro acesso."];
+  return { plan, input, current, errors };
+}
+
 export async function saveStudent(id: number | null, _prev: FormState, formData: FormData): Promise<FormState> {
   await requirePermission("students", "edit");
   const { data, values, state } = parseForm(studentSchema, formData);
@@ -82,6 +97,9 @@ export async function saveStudent(id: number | null, _prev: FormState, formData:
   const file = formData.get("photo");
   const photo = file instanceof File && file.size > 0 ? await readPhoto(file) : null;
   const errors = { ...state?.errors, ...(photo && "error" in photo && { photo: [photo.error] }) };
+  const portal = id === null ? null : await portalLogin(id, values);
+  Object.assign(errors, portal?.errors);
+  delete values.password;
   // The guardian error shows inside Responsáveis (GuardianRows reads errors.guardians)
   if (!data || guardianError || Object.keys(errors).length)
     return { errors: { ...errors, ...(guardianError && { guardians: [guardianError] }) }, values };
@@ -138,6 +156,8 @@ export async function saveStudent(id: number | null, _prev: FormState, formData:
     throw error;
   }
 
+  if (portal && portal.plan !== "none")
+    await applyLoginPlan(portal.plan, { studentId: id! }, data.name, portal.input, portal.current);
   if (photo && !("error" in photo)) {
     const name = await saveStudentPhoto(photo, registration, oldPhoto);
     await db.update(student).set({ photo: name }).where(eq(student.id, studentId!));

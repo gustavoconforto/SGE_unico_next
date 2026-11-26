@@ -9,14 +9,14 @@ import { param } from "@/lib/list";
 import { PORTAL_HOME } from "@/lib/portal-paths";
 import { pushEnabled } from "@/lib/push";
 import { timetableSlots } from "../../(app)/lessons/data";
-import { guardianAlerts, guardianStudents, requireGuardian } from "../data";
+import { portalAlerts, portalStudents, requirePortalUser } from "../data";
 import { PushPrompt } from "./push-prompt";
 
 export const metadata: Metadata = { title: "Início" };
 
 export default async function PortalHomePage({ searchParams }: PageProps<"/portal">) {
-  const { session, guardianId } = await requireGuardian();
-  const [linked, sp, year] = await Promise.all([guardianStudents(guardianId), searchParams, currentSchoolYear()]);
+  const { session, viewer } = await requirePortalUser();
+  const [linked, sp, year] = await Promise.all([portalStudents(viewer), searchParams, currentSchoolYear()]);
   const students = linked.map((s) => ({ ...s, classes: s.classes.filter((c) => c.yearId === year?.id) }));
   const todayWeekday = lessonWeekday(today());
   const asked = Number(param(sp, "dia"));
@@ -24,7 +24,7 @@ export default async function PortalHomePage({ searchParams }: PageProps<"/porta
   const classIds = (list: typeof linked) => [...new Set(list.flatMap((s) => s.classes.map((c) => c.id)))];
   const [slotsByClass, alerts] = await Promise.all([
     Promise.all(classIds(students).map(async (id) => [id, await timetableSlots(id)] as const)).then((e) => new Map(e)),
-    guardianAlerts(classIds(linked)),
+    portalAlerts(classIds(linked)),
   ]);
 
   return (

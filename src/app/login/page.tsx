@@ -23,9 +23,9 @@ export default function LoginPage() {
         </Suspense>
         <p className="text-center text-xs text-gray-600">Sistema restrito aos servidores do colégio</p>
         <p className="border-t border-gray-200 pt-4 text-center text-sm text-gray-600">
-          Pai, mãe ou responsável?{" "}
+          Aluno ou responsável?{" "}
           <Link href={PORTAL_LOGIN} className="font-medium text-primary-700 underline-offset-2 hover:underline">
-            Acesse o portal dos responsáveis
+            Acesse o portal do aluno e do responsável
           </Link>
         </p>
       </div>

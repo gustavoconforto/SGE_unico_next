@@ -15,11 +15,11 @@ export default function PortalLoginPage() {
         <div className="flex flex-col items-center gap-2 text-center">
           <Image src="/img/unico_logo_pequeno.png" alt="" width={56} height={56} className="rounded-lg" />
           <p className="text-sm text-gray-600">Único Educacional</p>
-          <h1 className="text-xl font-semibold text-gray-900">Portal dos Responsáveis</h1>
-          <p className="text-sm text-gray-600">Acesso de pais e responsáveis: entre com o seu CPF.</p>
+          <h1 className="text-xl font-semibold text-gray-900">Portal do Aluno e do Responsável</h1>
+          <p className="text-sm text-gray-600">Responsáveis entram com o CPF; alunos, com a matrícula.</p>
         </div>
         <Suspense>
-          <LoginForm home={PORTAL_HOME} cpf />
+          <LoginForm home={PORTAL_HOME} portal />
         </Suspense>
         <p className="text-center text-xs text-gray-600">Sem acesso ou esqueceu a senha? Fale com a secretaria.</p>
         <p className="border-t border-gray-200 pt-4 text-center text-sm text-gray-600">

@@ -9,15 +9,15 @@ import { idParam } from "@/lib/list";
 import { PORTAL_HOME } from "@/lib/portal-paths";
 import { loadReportCard, situation } from "../../../../(app)/grades/report";
 import { classShortLabel } from "../../../../(app)/enrollments/data";
-import { guardianEnrollmentYearStart, requireGuardian } from "../../../data";
+import { viewerEnrollmentYearStart, requirePortalUser } from "../../../data";
 
 export const metadata: Metadata = { title: "Notas" };
 
 // Guardians see a bimester (or the final recovery) only once staff lock it on /grades/locks, in the enrollment's year
 export default async function PortalGradesPage({ params }: PageProps<"/portal/notas/[id]">) {
-  const { guardianId } = await requireGuardian();
+  const { viewer } = await requirePortalUser();
   const id = await idParam(params);
-  const yearStart = await guardianEnrollmentYearStart(guardianId, id);
+  const yearStart = await viewerEnrollmentYearStart(viewer, id);
   if (!yearStart) notFound();
   const locks = await allLocks(yearStart);
   const card = await loadReportCard(id, (subjectId, period) => locks.has(`${subjectId}:${period}`));

@@ -11,6 +11,7 @@ import {
   portalAlert as alert,
   studentsGuardian as guardian,
   studentsGuardianassociation as link,
+  studentsStudent as student,
 } from "@/db/schema/app";
 import { portalPushsubscription as pushSubscription, user } from "@/db/schema/auth";
 import { applyLoginPlan, ownerLogin } from "@/lib/login";
@@ -18,7 +19,7 @@ import { applyLoginPlan, ownerLogin } from "@/lib/login";
 vi.mock("server-only", () => ({}));
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 
-const { guardianAlerts, guardianEnrollmentYearStart, guardianStudents } = await import("./data");
+const { portalAlerts, viewerEnrollmentYearStart, portalStudents } = await import("./data");
 const { loadReportCard } = await import("../(app)/grades/report");
 const { allLocks } = await import("@/lib/grade-lock");
 const { alertSubscriptions } = await import("@/lib/push");
@@ -26,8 +27,9 @@ const { alertSubscriptions } = await import("@/lib/push");
 // Writes rows: never against anything but a local database
 const local = /@(localhost|127\.0\.0\.1)[:/]/.test(process.env.DATABASE_URL ?? "");
 
-describe.skipIf(!local)("guardian portal", () => {
+describe.skipIf(!local)("portal (guardians and students)", () => {
   const ids: number[] = [];
+  const guardian0 = () => ({ kind: "guardian" as const, guardianId: ids[0] });
   const alertIds: number[] = [];
   let studentId: number;
   let classId: number;
@@ -78,6 +80,7 @@ describe.skipIf(!local)("guardian portal", () => {
   });
 
   afterAll(async () => {
+    await db.delete(user).where(eq(user.studentId, studentId)); // the student's test login (the student stays)
     if (alertIds.length) await db.delete(alert).where(inArray(alert.id, alertIds));
     if (!ids.length) return;
     await db.delete(link).where(inArray(link.guardianId, ids));
@@ -85,13 +88,13 @@ describe.skipIf(!local)("guardian portal", () => {
   });
 
   it("lists only the guardian's own students", async () => {
-    expect((await guardianStudents(ids[0])).map((s) => s.id)).toEqual([studentId]);
-    expect(await guardianStudents(ids[1])).toEqual([]);
+    expect((await portalStudents(guardian0())).map((s) => s.id)).toEqual([studentId]);
+    expect(await portalStudents({ kind: "guardian", guardianId: ids[1] })).toEqual([]);
   });
 
   it("opens grades only for an enrollment of the guardian's own student", async () => {
-    expect(await guardianEnrollmentYearStart(ids[0], enrollmentId)).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(await guardianEnrollmentYearStart(ids[1], enrollmentId)).toBeNull();
+    expect(await viewerEnrollmentYearStart(guardian0(), enrollmentId)).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(await viewerEnrollmentYearStart({ kind: "guardian", guardianId: ids[1] }, enrollmentId)).toBeNull();
   });
 
   it("hides every grade the filter doesn't show (guardians: unlocked bimesters)", async () => {
@@ -129,15 +132,46 @@ describe.skipIf(!local)("guardian portal", () => {
       ])
       .returning({ id: alert.id });
     alertIds.push(...rows.map((r) => r.id));
-    const seen = (await guardianAlerts([mine.id], 1000)).map((a) => a.id).filter((id) => alertIds.includes(id));
+    const seen = (await portalAlerts([mine.id], 1000)).map((a) => a.id).filter((id) => alertIds.includes(id));
     expect(seen.sort()).toEqual([alertIds[0], alertIds[1]].sort());
-    const none = (await guardianAlerts([], 1000)).map((a) => a.id).filter((id) => alertIds.includes(id));
+    const none = (await portalAlerts([], 1000)).map((a) => a.id).filter((id) => alertIds.includes(id));
     expect(none).toEqual([alertIds[0]]);
   });
 
   it("pushes to the guardian's devices for school-wide notices and their student's class only", async () => {
     const login = (await ownerLogin({ guardianId: ids[0] }))!;
     const endpoint = `https://fcm.googleapis.com/fcm/send/test-${cpf}`;
+    await db.insert(pushSubscription).values({ userId: login.id, endpoint, p256dh: "k", auth: "a" });
+    const [other] = await db.select({ id: klass.id }).from(klass).where(ne(klass.id, classId)).limit(1);
+    const reaches = async (schoolClassId: number | null) =>
+      (await alertSubscriptions(schoolClassId)).some((s) => s.endpoint === endpoint);
+    expect(await reaches(null)).toBe(true);
+    expect(await reaches(classId)).toBe(true);
+    expect(await reaches(other.id)).toBe(false);
+  });
+
+  it("shows a student only themself, and only their own enrollments' grades", async () => {
+    const me = { kind: "student" as const, studentId };
+    expect((await portalStudents(me)).map((s) => s.id)).toEqual([studentId]);
+    expect(await viewerEnrollmentYearStart(me, enrollmentId)).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    const [other] = await db
+      .select({ id: enrollment.id })
+      .from(enrollment)
+      .where(ne(enrollment.studentId, studentId))
+      .limit(1);
+    expect(await viewerEnrollmentYearStart(me, other.id)).toBeNull();
+  });
+
+  it("creates a student's portal login named by the matrícula, pushed to for their own class only", async () => {
+    const [{ registration }] = await db
+      .select({ registration: student.registration })
+      .from(student)
+      .where(eq(student.id, studentId));
+    const input = { access: true, username: registration, password: "senha-inicial" };
+    await applyLoginPlan("create", { studentId }, "Test Student", input, undefined);
+    const login = (await ownerLogin({ studentId }))!;
+    expect(login).toMatchObject({ username: registration, role: "aluno" });
+    const endpoint = `https://fcm.googleapis.com/fcm/send/test-student-${cpf}`;
     await db.insert(pushSubscription).values({ userId: login.id, endpoint, p256dh: "k", auth: "a" });
     const [other] = await db.select({ id: klass.id }).from(klass).where(ne(klass.id, classId)).limit(1);
     const reaches = async (schoolClassId: number | null) =>

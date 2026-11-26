@@ -2,12 +2,12 @@ import { Alert } from "flowbite-react";
 import type { Metadata } from "next";
 import { PORTAL_HOME } from "@/lib/portal-paths";
 import { PasswordForm } from "../../../(app)/account/password/password-form";
-import { requireGuardian } from "../../data";
+import { requirePortalUser } from "../../data";
 
 export const metadata: Metadata = { title: "Alterar senha" };
 
 export default async function PortalPasswordPage() {
-  const { session } = await requireGuardian();
+  const { session } = await requirePortalUser();
   const forced = session.user.mustChangePassword === true;
   return (
     <div className="flex flex-col gap-4">
