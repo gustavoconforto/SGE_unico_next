@@ -23,7 +23,7 @@ export async function requireGuardian() {
   return { session: session!, guardianId };
 }
 
-/** The guardian's students with their active enrollments' classes (none when not enrolled or not placed yet). */
+/** The guardian's students with their active enrollments' classes and their school years (none when not placed yet). */
 export async function guardianStudents(guardianId: number) {
   const rows = await db
     .select({
@@ -34,6 +34,7 @@ export async function guardianStudents(guardianId: number) {
       classId: klass.id,
       className: klass.name,
       gradeLevel: klass.gradeLevel,
+      yearId: klass.yearId,
     })
     .from(link)
     .innerJoin(student, eq(link.studentId, student.id))
@@ -41,11 +42,16 @@ export async function guardianStudents(guardianId: number) {
     .leftJoin(klass, eq(enrollment.schoolClassId, klass.id))
     .where(eq(link.guardianId, guardianId))
     .orderBy(asc(student.name), asc(klass.id));
-  const students = new Map<number, { id: number; name: string; classes: { id: number; label: string }[] }>();
+  type Class = { id: number; yearId: number; label: string };
+  const students = new Map<number, { id: number; name: string; classes: Class[] }>();
   for (const r of rows) {
     const s = students.get(r.id) ?? { id: r.id, name: displayName(r), classes: [] };
     if (r.classId !== null)
-      s.classes.push({ id: r.classId, label: `${r.gradeLevel ? `${r.gradeLevel}º ` : ""}${r.className}` });
+      s.classes.push({
+        id: r.classId,
+        yearId: r.yearId!,
+        label: `${r.gradeLevel ? `${r.gradeLevel}º ` : ""}${r.className}`,
+      });
     students.set(r.id, s);
   }
   return [...students.values()];

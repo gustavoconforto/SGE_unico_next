@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Panel } from "@/components/panel";
+import { currentSchoolYear } from "@/lib/concept-db";
 import { formatDate, today } from "@/lib/finance";
 import { lessonWeekday, WEEKDAYS } from "@/lib/lessons";
 import { param } from "@/lib/list";
@@ -14,14 +15,15 @@ export const metadata: Metadata = { title: "Início" };
 
 export default async function PortalHomePage({ searchParams }: PageProps<"/portal">) {
   const { session, guardianId } = await requireGuardian();
-  const [students, sp] = await Promise.all([guardianStudents(guardianId), searchParams]);
+  const [linked, sp, year] = await Promise.all([guardianStudents(guardianId), searchParams, currentSchoolYear()]);
+  const students = linked.map((s) => ({ ...s, classes: s.classes.filter((c) => c.yearId === year?.id) }));
   const todayWeekday = lessonWeekday(today());
   const asked = Number(param(sp, "dia"));
   const weekday = WEEKDAYS.some(([d]) => d === asked) ? asked : todayWeekday;
-  const classIds = [...new Set(students.flatMap((s) => s.classes.map((c) => c.id)))];
+  const classIds = (list: typeof linked) => [...new Set(list.flatMap((s) => s.classes.map((c) => c.id)))];
   const [slotsByClass, alerts] = await Promise.all([
-    Promise.all(classIds.map(async (id) => [id, await timetableSlots(id)] as const)).then((e) => new Map(e)),
-    guardianAlerts(classIds),
+    Promise.all(classIds(students).map(async (id) => [id, await timetableSlots(id)] as const)).then((e) => new Map(e)),
+    guardianAlerts(classIds(linked)),
   ]);
 
   return (
