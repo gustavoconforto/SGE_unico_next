@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Panel } from "@/components/panel";
-import { today } from "@/lib/finance";
+import { formatDate, today } from "@/lib/finance";
 import { lessonWeekday, WEEKDAYS } from "@/lib/lessons";
 import { param } from "@/lib/list";
 import { PORTAL_HOME } from "@/lib/portal-paths";
 import { timetableSlots } from "../../(app)/lessons/data";
-import { guardianStudents, requireGuardian } from "../data";
+import { guardianAlerts, guardianStudents, requireGuardian } from "../data";
 
 export const metadata: Metadata = { title: "Início" };
 
@@ -18,11 +18,27 @@ export default async function PortalHomePage({ searchParams }: PageProps<"/porta
   const weekday = WEEKDAYS.some(([d]) => d === asked) ? asked : todayWeekday;
   // Class ids come only from the guardian's own students, never from the URL
   const classIds = [...new Set(students.flatMap((s) => s.classes.map((c) => c.id)))];
-  const slotsByClass = new Map(await Promise.all(classIds.map(async (id) => [id, await timetableSlots(id)] as const)));
+  const [slotsByClass, alerts] = await Promise.all([
+    Promise.all(classIds.map(async (id) => [id, await timetableSlots(id)] as const)).then((e) => new Map(e)),
+    guardianAlerts(classIds),
+  ]);
 
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">Olá, {session.user.name.split(" ")[0]}</h1>
+      {alerts.length > 0 && (
+        <Panel title="Avisos da escola">
+          <ul className="divide-y divide-gray-100">
+            {alerts.map((a) => (
+              <li key={a.id} className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0">
+                <span className="text-sm text-gray-500">{formatDate(today(new Date(a.createdAt)))}</span>
+                <span className="font-semibold text-gray-900">{a.title}</span>
+                <p className="max-w-prose whitespace-pre-line text-gray-700">{a.body}</p>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      )}
       {students.length === 0 ? (
         <p className="text-gray-600">Nenhum aluno vinculado ao seu cadastro. Fale com a secretaria.</p>
       ) : (

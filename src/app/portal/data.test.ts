@@ -5,6 +5,8 @@ import { eq, inArray } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { db } from "@/db";
 import {
+  classesClass as klass,
+  portalAlert as alert,
   studentsGuardian as guardian,
   studentsGuardianassociation as link,
   studentsStudent as student,
@@ -15,13 +17,14 @@ import { applyLoginPlan, ownerLogin } from "@/lib/login";
 vi.mock("server-only", () => ({}));
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 
-const { guardianStudents } = await import("./data");
+const { guardianAlerts, guardianStudents } = await import("./data");
 
 // Writes rows: never against anything but a local database
 const local = /@(localhost|127\.0\.0\.1)[:/]/.test(process.env.DATABASE_URL ?? "");
 
 describe.skipIf(!local)("guardian portal", () => {
   const ids: number[] = [];
+  const alertIds: number[] = [];
   let studentId: number;
   const cpf = String(Date.now()).slice(-11).padStart(11, "9");
 
@@ -62,6 +65,7 @@ describe.skipIf(!local)("guardian portal", () => {
   });
 
   afterAll(async () => {
+    if (alertIds.length) await db.delete(alert).where(inArray(alert.id, alertIds));
     if (!ids.length) return;
     await db.delete(link).where(inArray(link.guardianId, ids));
     await db.delete(guardian).where(inArray(guardian.id, ids)); // their logins go with them
@@ -82,5 +86,22 @@ describe.skipIf(!local)("guardian portal", () => {
       .from(user)
       .where(eq(user.id, login.id));
     expect(row).toEqual({ employeeId: null, mustChange: true });
+  });
+
+  it("shows notices for every guardian or for the guardian's classes, never another class's", async () => {
+    const [mine, other] = await db.select({ id: klass.id }).from(klass).limit(2);
+    const rows = await db
+      .insert(alert)
+      .values([
+        { title: "Test todos", body: "x", schoolClassId: null },
+        { title: "Test minha turma", body: "x", schoolClassId: mine.id },
+        { title: "Test outra turma", body: "x", schoolClassId: other.id },
+      ])
+      .returning({ id: alert.id });
+    alertIds.push(...rows.map((r) => r.id));
+    const seen = (await guardianAlerts([mine.id], 1000)).map((a) => a.id).filter((id) => alertIds.includes(id));
+    expect(seen.sort()).toEqual([alertIds[0], alertIds[1]].sort());
+    const none = (await guardianAlerts([], 1000)).map((a) => a.id).filter((id) => alertIds.includes(id));
+    expect(none).toEqual([alertIds[0]]);
   });
 });

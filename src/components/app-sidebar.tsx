@@ -30,6 +30,7 @@ export const NAV: NavGroup[] = [
       { href: "/enrollments", label: "Matrículas", icon: "how_to_reg", permission: ["enrollments", "view"] },
       { href: "/classes/detail", label: "Alunos da turma", icon: "groups", permission: ["academicSetup", "view"] },
       { href: "/calendar", label: "Calendário", icon: "calendar_month", permission: ["academicSetup", "view"] },
+      { href: "/alerts", label: "Avisos aos responsáveis", icon: "campaign", permission: ["alerts", "view"] },
     ],
   },
   {

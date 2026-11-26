@@ -1,12 +1,13 @@
 // What a signed-in guardian may see: only their own students, found through students_guardianassociation.
 import "server-only";
 
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, or } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import {
   classesClass as klass,
   enrollmentsEnrollment as enrollment,
+  portalAlert as alert,
   studentsGuardianassociation as link,
   studentsStudent as student,
 } from "@/db/schema/app";
@@ -48,4 +49,15 @@ export async function guardianStudents(guardianId: number) {
     students.set(r.id, s);
   }
   return [...students.values()];
+}
+
+/** The latest notices for every guardian or for one of `classIds` (the guardian's students' classes). */
+export async function guardianAlerts(classIds: number[], limit = 20) {
+  const forClass = classIds.length ? inArray(alert.schoolClassId, classIds) : undefined;
+  return db
+    .select({ id: alert.id, title: alert.title, body: alert.body, createdAt: alert.createdAt })
+    .from(alert)
+    .where(or(isNull(alert.schoolClassId), forClass))
+    .orderBy(desc(alert.createdAt), desc(alert.id))
+    .limit(limit);
 }
