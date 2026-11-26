@@ -2,6 +2,7 @@ import { requirePermission } from "@/lib/authorization";
 import { and, count, desc, eq, gte, lte } from "drizzle-orm";
 import type { Metadata } from "next";
 import { FilterDate } from "@/components/list-controls";
+import { LinkButton } from "@/components/link-button";
 import { ListPage, ListRow } from "@/components/list-page";
 import { db } from "@/db";
 import {
@@ -55,6 +56,11 @@ export default async function RecordListPage({ searchParams }: PageProps<"/incid
       title="Atrasos"
       newHref="/incidents/delays/new"
       newLabel="Novo atraso"
+      actions={
+        <LinkButton href="/incidents/delays/batch" color="alternative">
+          Lançar em lote
+        </LinkButton>
+      }
       searchPlaceholder="Pesquisar por aluno..."
       filters={
         <>
