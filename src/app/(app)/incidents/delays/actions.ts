@@ -1,15 +1,15 @@
 "use server";
 
-import { and, eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
-import { enrollmentsEnrollment as enrollment, incidentsStudentdelay as t } from "@/db/schema/app";
+import { incidentsStudentdelay as t } from "@/db/schema/app";
 import { deleteAndRedirect } from "@/lib/crud";
 import { REQUIRED, type FormState, parseForm, anotherUrl, formIds, formValues } from "@/lib/form";
 import { requirePermission } from "@/lib/authorization";
 import { enrollmentAllowed } from "@/app/(app)/enrollments/data";
-import { INVALID_ENROLLMENT, recordFields } from "@/app/(app)/incidents/records";
+import { INVALID_ENROLLMENT, batchEnrollmentError, recordFields } from "@/app/(app)/incidents/records";
 
 const schema = z.object({ ...recordFields, delayType: z.enum(["A", "U"], { error: REQUIRED }) });
 
@@ -37,14 +37,8 @@ export async function saveBatchRecords(_prev: FormState, formData: FormData): Pr
   const { data, state } = parseForm(batchSchema, formData);
   if (!data) return state;
   const ids = formIds(formData, "enrollmentId");
-  const values = formValues(formData);
-  if (!ids.length) return { formError: "Selecione ao menos um aluno.", values };
-  const active = await db
-    .select({ id: enrollment.id })
-    .from(enrollment)
-    .where(and(inArray(enrollment.id, ids), eq(enrollment.status, "A")));
-  if (active.length !== ids.length)
-    return { formError: "Algum aluno selecionado não tem mais matrícula ativa. Recarregue a página.", values };
+  const formError = await batchEnrollmentError(ids);
+  if (formError) return { formError, values: formValues(formData) };
   await db.insert(t).values(ids.map((enrollmentId) => ({ enrollmentId, ...data })));
   redirect(`/incidents/delays?date_from=${data.incidentDate}&date_to=${data.incidentDate}&msg=delays_created`);
 }
