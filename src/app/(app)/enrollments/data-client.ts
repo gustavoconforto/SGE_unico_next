@@ -14,6 +14,8 @@ export type ClassOption = {
   schoolYearId: number;
   programId: number;
   gradeLevel: number | null;
+  name: string;
+  year: number;
 };
 
 /** The classes a contract allows (EnrollmentForm.school_classes_for): same year, program and, if set, grade. */

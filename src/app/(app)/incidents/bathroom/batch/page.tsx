@@ -6,7 +6,7 @@ import { Suspense } from "react";
 import { FilterDate, FilterSelect } from "@/components/list-controls";
 import { db } from "@/db";
 import { enrollmentsEnrollment as enrollment, studentsStudent as student } from "@/db/schema/app";
-import { classOptions, studentName } from "@/app/(app)/enrollments/data";
+import { classLabel, classOptions, studentName } from "@/app/(app)/enrollments/data";
 import { today } from "@/lib/finance";
 import { param } from "@/lib/list";
 import { BatchBathroomForm } from "./batch-form";
@@ -22,15 +22,15 @@ export default async function BatchBathroomPage({ searchParams }: PageProps<"/in
   if (!Object.keys(sp).length) redirect(`/incidents/bathroom/batch?date=${today()}`);
   const classes = await classOptions();
   const date = DATE_RE.test(param(sp, "date")) ? param(sp, "date") : null;
-  const classId = classes.find((c) => String(c.id) === param(sp, "school_class"))?.id ?? null;
+  const selected = classes.find((c) => String(c.id) === param(sp, "school_class"));
   const students =
-    date && classId
+    date && selected
       ? (
           await db
             .select({ id: enrollment.id, name: studentName })
             .from(enrollment)
             .innerJoin(student, eq(enrollment.studentId, student.id))
-            .where(and(eq(enrollment.schoolClassId, classId), eq(enrollment.status, "A")))
+            .where(and(eq(enrollment.schoolClassId, selected.id), eq(enrollment.status, "A")))
             .orderBy(asc(studentName))
         ).map((s): [number, string] => [s.id, s.name])
       : null;
@@ -48,13 +48,16 @@ export default async function BatchBathroomPage({ searchParams }: PageProps<"/in
           />
         </Suspense>
       </div>
-      {students ? (
-        <BatchBathroomForm
-          key={`${date}:${classId}`}
-          incidentDate={date!}
-          schoolClassId={classId!}
-          students={students}
-        />
+      {students && selected ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-semibold text-gray-900">Turma {classLabel(selected)}</h2>
+          <BatchBathroomForm
+            key={`${date}:${selected.id}`}
+            incidentDate={date!}
+            schoolClassId={selected.id}
+            students={students}
+          />
+        </section>
       ) : (
         <p className="text-sm text-gray-700">Escolha a data e a turma para ver os alunos.</p>
       )}
