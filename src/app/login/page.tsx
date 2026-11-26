@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { Suspense } from "react";
+import { PORTAL_LOGIN } from "@/lib/portal-paths";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Entrar" };
@@ -20,6 +22,12 @@ export default function LoginPage() {
           <LoginForm />
         </Suspense>
         <p className="text-center text-xs text-gray-600">Sistema restrito aos servidores do colégio</p>
+        <p className="border-t border-gray-200 pt-4 text-center text-sm text-gray-600">
+          Pai, mãe ou responsável?{" "}
+          <Link href={PORTAL_LOGIN} className="font-medium text-primary-700 underline-offset-2 hover:underline">
+            Acesse o portal dos responsáveis
+          </Link>
+        </p>
       </div>
     </main>
   );
