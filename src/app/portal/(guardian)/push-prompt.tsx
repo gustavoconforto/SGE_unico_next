@@ -7,7 +7,7 @@ import { deletePushSubscription, savePushSubscription } from "../actions";
 /** Where the portal's service worker lives; its scope is the portal only, never the staff system. */
 export const PORTAL_SW = "/portal/sw.js";
 
-type State = "loading" | "unsupported" | "install-ios" | "off" | "on" | "denied";
+type State = "loading" | "unsupported" | "install-ios" | "off" | "on" | "denied" | "failed";
 
 // iOS offers push only to a web app added to the Home Screen; iPadOS reports itself as a Mac with touch
 const isIos = () =>
@@ -21,6 +21,7 @@ function keyBytes(base64: string) {
   return Uint8Array.from(raw, (c) => c.charCodeAt(0));
 }
 
+/** This phone's state; an existing subscription is saved again (best effort) so it belongs to whoever is signed in. */
 async function currentState(): Promise<State> {
   if (!("serviceWorker" in navigator && "PushManager" in window))
     return isIos() && !isInstalled() ? "install-ios" : "unsupported";
@@ -29,7 +30,11 @@ async function currentState(): Promise<State> {
       scope: "/portal",
       updateViaCache: "none",
     });
-    if (await registration.pushManager.getSubscription()) return "on";
+    const sub = await registration.pushManager.getSubscription();
+    if (sub) {
+      await savePushSubscription(sub.toJSON()).catch(() => undefined);
+      return "on";
+    }
     return Notification.permission === "denied" ? "denied" : "off";
   } catch {
     return "unsupported";
@@ -59,6 +64,8 @@ export function PushPrompt({ publicKey }: { publicKey: string }) {
       });
       await savePushSubscription(sub.toJSON());
       setState("on");
+    } catch {
+      setState("failed");
     } finally {
       setBusy(false);
     }
@@ -108,7 +115,11 @@ export function PushPrompt({ publicKey }: { publicKey: string }) {
     );
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-gray-700">Receba os avisos da escola como notificação neste aparelho.</p>
+      <p className="text-gray-700">
+        {state === "failed"
+          ? "Não foi possível ativar as notificações. Tente novamente."
+          : "Receba os avisos da escola como notificação neste aparelho."}
+      </p>
       <Button onClick={turnOn} disabled={busy} className="w-full sm:w-fit">
         {busy ? "Ativando…" : "Ativar notificações"}
       </Button>

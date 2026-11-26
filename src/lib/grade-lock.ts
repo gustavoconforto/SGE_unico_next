@@ -1,5 +1,6 @@
 // Who may edit which grades: teachers lose a subject's bimester once staff lock it, and never edit the
 // computed or secretary-only exam types. Not in Django.
+import { gte } from "drizzle-orm";
 import { db } from "@/db";
 import { gradesGradelock as lock } from "@/db/schema/app";
 import { ExamKind } from "./grades";
@@ -23,11 +24,14 @@ export function gradeEditError(staff: boolean, locked: boolean, exam: { code: st
   return locked ? LOCKED : null;
 }
 
-/** Every lock, as "subjectId:bimester" keys. */
-export async function allLocks() {
-  return new Set(
-    (await db.select({ subjectId: lock.subjectId, bimester: lock.bimester }).from(lock)).map(
-      (r) => `${r.subjectId}:${r.bimester}`,
-    ),
-  );
+/**
+ * Every lock, as "subjectId:bimester" keys. `since` (YYYY-MM-DD): only locks made from that day on, since a lock has
+ * no school year and last year's would otherwise cover this year's bimesters.
+ */
+export async function allLocks(since?: string) {
+  const rows = await db
+    .select({ subjectId: lock.subjectId, bimester: lock.bimester })
+    .from(lock)
+    .where(since ? gte(lock.createdAt, since) : undefined);
+  return new Set(rows.map((r) => `${r.subjectId}:${r.bimester}`));
 }

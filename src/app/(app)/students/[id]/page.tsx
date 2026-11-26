@@ -22,7 +22,7 @@ import { idParam } from "@/lib/list";
 import { studentPhotoUrl } from "@/lib/media";
 import { formatPhone } from "@/lib/person";
 import { BLOOD_TYPES, RELATIONSHIPS, STUDENT_PLACEHOLDER, ageOn, displayName } from "@/lib/students";
-import { enrollmentTypeLabel, yearOf } from "../../enrollments/data";
+import { classShortLabel, enrollmentTypeLabel, yearOf } from "../../enrollments/data";
 import { Panel } from "@/components/panel";
 
 export const metadata: Metadata = { title: "Aluno" };
@@ -86,7 +86,7 @@ export default async function StudentPage({ params }: PageProps<"/students/[id]"
   const photo = await studentPhotoUrl(row.photo, row.registration);
   const current = enrollments[0];
   const className = (e: (typeof enrollments)[number]) =>
-    e.className ? `${e.gradeLevel ? `${e.gradeLevel}º ` : ""}${e.className}` : null;
+    e.className ? classShortLabel({ gradeLevel: e.gradeLevel, name: e.className }) : null;
 
   return (
     <div className="flex flex-col gap-4">

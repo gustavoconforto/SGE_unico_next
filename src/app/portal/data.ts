@@ -7,6 +7,8 @@ import { db } from "@/db";
 import {
   classesClass as klass,
   enrollmentsEnrollment as enrollment,
+  enrollmentsEnrollmenttype as enrollmentType,
+  enrollmentsSchoolyear as year,
   portalAlert as alert,
   studentsGuardianassociation as link,
   studentsStudent as student,
@@ -14,6 +16,7 @@ import {
 import { PORTAL_LOGIN } from "@/lib/portal-paths";
 import { getCurrentSession } from "@/lib/session";
 import { displayName } from "@/lib/students";
+import { classShortLabel } from "../(app)/enrollments/data";
 
 /** Every portal page and action calls this first: the signed-in guardian's id, or → the portal login. */
 export async function requireGuardian() {
@@ -52,7 +55,7 @@ export async function guardianStudents(guardianId: number) {
         id: r.classId,
         yearId: r.yearId!,
         enrollmentId: r.enrollmentId!,
-        label: `${r.gradeLevel ? `${r.gradeLevel}º ` : ""}${r.className}`,
+        label: classShortLabel({ gradeLevel: r.gradeLevel, name: r.className! }),
       });
     students.set(r.id, s);
   }
@@ -70,13 +73,18 @@ export async function guardianAlerts(classIds: number[], limit = 20) {
     .limit(limit);
 }
 
-/** Whether the enrollment is of one of the guardian's students: the check before showing its grades. */
-export async function isGuardianEnrollment(guardianId: number, enrollmentId: number) {
+/**
+ * The start (YYYY-MM-DD) of the enrollment's school year, or null when the enrollment isn't of one of the guardian's
+ * students: the check before showing its grades.
+ */
+export async function guardianEnrollmentYearStart(guardianId: number, enrollmentId: number) {
   const [row] = await db
-    .select({ id: enrollment.id })
+    .select({ begins: year.begins })
     .from(enrollment)
     .innerJoin(link, eq(link.studentId, enrollment.studentId))
+    .innerJoin(enrollmentType, eq(enrollment.enrollmentTypeId, enrollmentType.id))
+    .innerJoin(year, eq(enrollmentType.schoolYearId, year.id))
     .where(and(eq(enrollment.id, enrollmentId), eq(link.guardianId, guardianId)))
     .limit(1);
-  return row !== undefined;
+  return row?.begins ?? null;
 }

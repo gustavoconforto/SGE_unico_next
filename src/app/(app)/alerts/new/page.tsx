@@ -5,6 +5,9 @@ import { AlertForm } from "../alert-form";
 
 export const metadata: Metadata = { title: "Novo aviso" };
 
+// createAlert pushes to every guardian's phone in after(), which runs within this page's time limit
+export const maxDuration = 60;
+
 export default async function NewAlertPage() {
   await requirePermission("alerts", "edit");
   const classes = await classOptions();

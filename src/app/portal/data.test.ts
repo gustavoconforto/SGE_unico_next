@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { db } from "@/db";
 import {
   classesClass as klass,
+  gradesGrade as grade,
   enrollmentsEnrollment as enrollment,
   portalAlert as alert,
   studentsGuardian as guardian,
@@ -17,7 +18,9 @@ import { applyLoginPlan, ownerLogin } from "@/lib/login";
 vi.mock("server-only", () => ({}));
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 
-const { guardianAlerts, guardianStudents, isGuardianEnrollment } = await import("./data");
+const { guardianAlerts, guardianEnrollmentYearStart, guardianStudents } = await import("./data");
+const { loadReportCard } = await import("../(app)/grades/report");
+const { allLocks } = await import("@/lib/grade-lock");
 const { alertSubscriptions } = await import("@/lib/push");
 
 // Writes rows: never against anything but a local database
@@ -87,8 +90,20 @@ describe.skipIf(!local)("guardian portal", () => {
   });
 
   it("opens grades only for an enrollment of the guardian's own student", async () => {
-    expect(await isGuardianEnrollment(ids[0], enrollmentId)).toBe(true);
-    expect(await isGuardianEnrollment(ids[1], enrollmentId)).toBe(false);
+    expect(await guardianEnrollmentYearStart(ids[0], enrollmentId)).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(await guardianEnrollmentYearStart(ids[1], enrollmentId)).toBeNull();
+  });
+
+  it("hides every grade the filter doesn't show (guardians: unlocked bimesters)", async () => {
+    const [graded] = await db.select({ id: grade.enrollmentId }).from(grade).limit(1);
+    const all = (await loadReportCard(graded.id))!;
+    expect(all.rows.some((r) => r.bimesters.some((b) => b !== null))).toBe(true);
+    const hidden = (await loadReportCard(graded.id, () => false))!;
+    expect(hidden.rows.every((r) => r.bimesters.every((b) => b === null) && r.recovery === null)).toBe(true);
+  });
+
+  it("counts only locks made since the school year began", async () => {
+    expect((await allLocks("2999-01-01")).size).toBe(0);
   });
 
   it("creates a portal login named by the CPF, with no staff role, that must change its password", async () => {

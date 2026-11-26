@@ -8,16 +8,18 @@ import { BIMESTERS, formatGrade } from "@/lib/grades";
 import { idParam } from "@/lib/list";
 import { PORTAL_HOME } from "@/lib/portal-paths";
 import { loadReportCard, situation } from "../../../../(app)/grades/report";
-import { isGuardianEnrollment, requireGuardian } from "../../../data";
+import { classShortLabel } from "../../../../(app)/enrollments/data";
+import { guardianEnrollmentYearStart, requireGuardian } from "../../../data";
 
 export const metadata: Metadata = { title: "Notas" };
 
-// Guardians see a bimester (or the final recovery) only once staff lock it on /grades/locks
+// Guardians see a bimester (or the final recovery) only once staff lock it on /grades/locks, in the enrollment's year
 export default async function PortalGradesPage({ params }: PageProps<"/portal/notas/[id]">) {
   const { guardianId } = await requireGuardian();
   const id = await idParam(params);
-  const [mine, locks] = await Promise.all([isGuardianEnrollment(guardianId, id), allLocks()]);
-  if (!mine) notFound();
+  const yearStart = await guardianEnrollmentYearStart(guardianId, id);
+  if (!yearStart) notFound();
+  const locks = await allLocks(yearStart);
   const card = await loadReportCard(id, (subjectId, period) => locks.has(`${subjectId}:${period}`));
   if (!card) notFound();
   const { enrollment: e, rows } = card;
@@ -36,7 +38,7 @@ export default async function PortalGradesPage({ params }: PageProps<"/portal/no
       <div>
         <h1 className="text-2xl font-semibold">Notas de {e.studentName}</h1>
         <p className="text-gray-600">
-          {e.className ? `${e.gradeLevel ? `${e.gradeLevel}º ` : ""}${e.className} · ` : ""}
+          {e.className ? `${classShortLabel({ gradeLevel: e.gradeLevel, name: e.className })} · ` : ""}
           {e.schoolYear}
         </p>
       </div>
