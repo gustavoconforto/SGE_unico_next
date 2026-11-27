@@ -197,6 +197,77 @@ describe.skipIf(!local)("savePayment / deletePayment", () => {
     await deletePayment(payable.id).catch(() => {});
   });
 
+  it("asks receivables paid by card for brand, receipt and (credit only) installments, skips payables", async () => {
+    const [{ id: receivable }] = await db
+      .insert(account)
+      .values({
+        direction: "R",
+        description: "test card",
+        categoryId,
+        issueDate: "2026-01-01",
+        grossValue: "100.00",
+        discountValue: "0.00",
+        notes: "",
+      })
+      .returning({ id: account.id });
+    const [{ id: target }] = await db
+      .insert(installment)
+      .values({ accountId: receivable, number: 1, dueDate: "2026-01-10", amount: "100.00", status: "A" })
+      .returning({ id: installment.id });
+    const f = form("10,00");
+    f.set("installmentId", String(target));
+    f.set("method", "CRE");
+    const saveR = (id: number | null) => savePayment(id, "R", null, {}, f).catch((e: Error) => e.message);
+    const row = async (id: number) => (await db.select().from(payment).where(eq(payment.id, id)))[0];
+
+    expect(await saveR(null)).toMatchObject({
+      errors: {
+        cardBrand: [expect.any(String)],
+        cardReceipt: [expect.any(String)],
+        cardInstallments: [expect.any(String)],
+      },
+    });
+    f.set("cardBrand", "XYZ");
+    f.set("cardReceipt", "123456");
+    f.set("cardInstallments", "13");
+    expect(await saveR(null)).toMatchObject({
+      errors: { cardBrand: [expect.any(String)], cardInstallments: [expect.any(String)] },
+    });
+    f.set("cardBrand", "ELO");
+    f.set("cardInstallments", "3");
+    expect(await saveR(null)).toMatch(/^REDIRECT/);
+    const [{ id }] = await db.select({ id: payment.id }).from(payment).where(eq(payment.installmentId, target));
+    expect(await row(id)).toMatchObject({ cardBrand: "ELO", cardReceipt: "123456", cardInstallments: 3 });
+
+    // Debit is charged at once: whatever was sent, it is 1x
+    f.set("method", "DEB");
+    expect(await saveR(id)).toMatch(/^REDIRECT/);
+    expect(await row(id)).toMatchObject({ method: "DEB", cardInstallments: 1 });
+
+    // A card payment saved without details (Django, or before this screen) stays editable with them blank
+    await db.update(payment).set({ cardBrand: "", cardReceipt: "", cardInstallments: null }).where(eq(payment.id, id));
+    for (const k of ["cardBrand", "cardReceipt", "cardInstallments"]) f.delete(k);
+    expect(await saveR(id)).toMatch(/^REDIRECT/);
+    // ...but switching to credit asks for them
+    f.set("method", "CRE");
+    expect(await saveR(id)).toMatchObject({ errors: { cardBrand: [expect.any(String)] } });
+
+    // Switching to PIX drops them
+    await db.update(payment).set({ cardBrand: "VIS", cardReceipt: "9", cardInstallments: 2 }).where(eq(payment.id, id));
+    f.set("method", "PIX");
+    expect(await saveR(id)).toMatch(/^REDIRECT/);
+    expect(await row(id)).toMatchObject({ cardBrand: "", cardReceipt: "", cardInstallments: null });
+    await deletePayment(id).catch(() => {});
+
+    // A payable paid by card is the school's own card: nothing asked, nothing stored
+    const p = form("10,00");
+    p.set("method", "CRE");
+    expect(await savePayment(null, "P", null, {}, p).catch((e: Error) => e.message)).toMatch(/^REDIRECT/);
+    const [payable] = await db.select().from(payment).where(eq(payment.installmentId, installmentId));
+    expect(payable).toMatchObject({ method: "CRE", cardBrand: "", cardInstallments: null });
+    await deletePayment(payable.id).catch(() => {});
+  });
+
   it("splits a new payment across methods: one row each, charges on the first, all or nothing", async () => {
     const rows = () => db.select().from(payment).where(eq(payment.installmentId, installmentId));
     // Valor pago is the first method's share; the other methods add to it
@@ -333,6 +404,10 @@ describe.skipIf(!local)("saveBatchPayment", () => {
     // Paid by cheque: its details are asked once for the whole batch
     expect(await save({ [`balance_${a}`]: "100.00", [`balance_${b}`]: "200.00", method: "CHQ" })).toMatchObject({
       errors: { checkNumber: [expect.any(String)], checkBank: [expect.any(String)] },
+    });
+    // ...and so is a card's
+    expect(await save({ [`balance_${a}`]: "100.00", [`balance_${b}`]: "200.00", method: "CRE" })).toMatchObject({
+      errors: { cardBrand: [expect.any(String)], cardInstallments: [expect.any(String)] },
     });
     expect(await payments()).toHaveLength(0);
 

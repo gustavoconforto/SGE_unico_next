@@ -51,6 +51,24 @@ export const PAYMENT_METHODS = [
   ["CHQ", "Cheque"],
 ] as const;
 
+export const CARD_METHODS = ["CRE", "DEB"];
+export const CARD_BRANDS = [
+  ["VIS", "Visa"],
+  ["MAS", "Mastercard"],
+  ["ELO", "Elo"],
+  ["AMX", "American Express"],
+  ["HIP", "Hipercard"],
+  ["DIN", "Diners Club"],
+  ["CAB", "Cabal"],
+  ["BAN", "Banescard"],
+  ["SOR", "Sorocred"],
+  ["JCB", "JCB"],
+  ["DIS", "Discover"],
+  ["OUT", "Outra"],
+] as const;
+/** Credit card installments a payment may be split into ("parcelado no cartão"). */
+export const MAX_CARD_INSTALLMENTS = 12;
+
 export const ENROLLMENT_STATUSES = [
   ["A", "Ativa"],
   ["T", "Transferida"],
@@ -69,6 +87,23 @@ export const LEVELS = [
 
 export const label = (choices: readonly (readonly [string, string])[], code: string | null | undefined) =>
   choices.find(([c]) => c === code)?.[1] ?? code ?? "";
+
+/** "Visa · 3x · comprovante 123456"; "" when the payment has no card details. */
+export const cardSummary = (p: {
+  method: string;
+  cardBrand: string;
+  cardReceipt: string;
+  cardInstallments: number | null;
+}) =>
+  p.cardBrand
+    ? [
+        label(CARD_BRANDS, p.cardBrand),
+        p.method === "CRE" && p.cardInstallments && (p.cardInstallments === 1 ? "à vista" : `${p.cardInstallments}x`),
+        `comprovante ${p.cardReceipt}`,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : "";
 
 // --- dates ---------------------------------------------------------------------
 

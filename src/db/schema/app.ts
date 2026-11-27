@@ -384,6 +384,10 @@ export const accountsPayment = pgTable("accounts_payment", {
 	checkDate: date("check_date"),
 	checkHolderName: varchar("check_holder_name", { length: 200 }).notNull().default(""),
 	checkHolderCpf: varchar("check_holder_cpf", { length: 11 }).notNull().default(""),
+	// Card details (not in Django): filled only when method is CRE or DEB, blank otherwise; debit is always 1x
+	cardBrand: varchar("card_brand", { length: 3 }).notNull().default(""),
+	cardReceipt: varchar("card_receipt", { length: 20 }).notNull().default(""),
+	cardInstallments: smallint("card_installments"),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	installmentId: bigint("installment_id", { mode: "number" }).notNull(),
 }, (table) => [

@@ -16,6 +16,7 @@ import {
 } from "@/lib/finance";
 import { parseMoney as parse } from "@/lib/form";
 import { savePayment, searchInstallments } from "./actions";
+import { CardFields } from "./card-fields";
 import { CheckFields } from "./check-fields";
 import type { InstallmentChoice } from "./data";
 
@@ -116,7 +117,7 @@ export function PaymentForm({ id, direction, returnTo, defaults = {}, selected, 
   const showAdjustments =
     !!late || !!state.errors?.amount || ADJUSTMENTS.some(([name]) => state.errors?.[name] || values[name]);
 
-  // The cheque details show only for CHQ on receivables
+  // The cheque or card details show only for CHQ, CRE or DEB on receivables
   const [method, setMethod] = useState(String(defaults.method ?? ""));
   useLastMethod(!id, setMethod);
 
@@ -353,6 +354,7 @@ export function PaymentForm({ id, direction, returnTo, defaults = {}, selected, 
           <TextField name="notes" label="Observações" maxLength={200} optional className="sm:col-span-2" />
         </Fieldset>
         {method === "CHQ" && direction === "R" && <CheckFields defaults={defaults} />}
+        {(method === "CRE" || method === "DEB") && direction === "R" && <CardFields method={method} />}
       </FormFields>
       <FormButtons
         pending={pending}

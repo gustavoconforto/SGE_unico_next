@@ -15,6 +15,7 @@ import {
 import {
   PAYMENT_METHODS,
   ZERO,
+  cardSummary,
   formatDate,
   formatMoney,
   installmentBalance,
@@ -86,6 +87,8 @@ export default async function ReceiptPage({ params, searchParams }: PageProps<"/
         .map((r) => [[r.p.checkBank, r.p.checkBranch, r.p.checkAccount, r.p.checkNumber].join("|"), r.p]),
     ).values(),
   ];
+  // One card payment may pay several installments (batch): list each one once
+  const cards = [...new Set(lines.map((r) => cardSummary(r.p)).filter(Boolean))];
   const byMethod = new Map<string, ReturnType<typeof money>>();
   for (const r of lines) byMethod.set(r.p.method, (byMethod.get(r.p.method) ?? ZERO).plus(money(r.p.amount)));
 
@@ -148,6 +151,18 @@ export default async function ReceiptPage({ params, searchParams }: PageProps<"/
                       nº {c.checkNumber} · banco {c.checkBank} · ag. {c.checkBranch} · conta {c.checkAccount}
                       {c.checkDate && ` · bom para ${formatDate(c.checkDate)}`} · titular {c.checkHolderName} (CPF{" "}
                       {formatDocument(c.checkHolderCpf)})
+                    </span>
+                  ))}
+                </td>
+              </tr>
+            )}
+            {cards.length > 0 && (
+              <tr>
+                <td className="pr-4 align-top">{cards.length > 1 ? "Cartões:" : "Cartão:"}</td>
+                <td>
+                  {cards.map((c) => (
+                    <span key={c} className="block">
+                      {c}
                     </span>
                   ))}
                 </td>

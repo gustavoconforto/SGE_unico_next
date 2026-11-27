@@ -12,7 +12,7 @@ import {
   accountsSupplier as supplier,
   studentsGuardian as guardian,
 } from "@/db/schema/app";
-import { DIRECTIONS, PAYMENT_METHODS, formatDate, formatMoney, label } from "@/lib/finance";
+import { DIRECTIONS, PAYMENT_METHODS, cardSummary, formatDate, formatMoney, label } from "@/lib/finance";
 import { PAGE_SIZE, pageParam, param, searchWhere } from "@/lib/list";
 import { deletePayment } from "./actions";
 
@@ -35,6 +35,7 @@ export default async function PaymentListPage({ searchParams }: PageProps<"/acco
       payment.notes,
       payment.checkNumber,
       payment.checkHolderName,
+      payment.cardReceipt,
     ]),
     ["R", "P"].includes(direction) ? eq(account.direction, direction) : undefined,
     PAYMENT_METHODS.some(([c]) => c === method) ? eq(payment.method, method) : undefined,
@@ -51,6 +52,9 @@ export default async function PaymentListPage({ searchParams }: PageProps<"/acco
         method: payment.method,
         checkNumber: payment.checkNumber,
         checkDate: payment.checkDate,
+        cardBrand: payment.cardBrand,
+        cardReceipt: payment.cardReceipt,
+        cardInstallments: payment.cardInstallments,
         dueDate: installment.dueDate,
         number: installment.number,
         direction: account.direction,
@@ -84,7 +88,7 @@ export default async function PaymentListPage({ searchParams }: PageProps<"/acco
         title="Baixas"
         newHref={`/accounts/payments/new${direction === "P" ? "?direction=P" : ""}`}
         newLabel={direction === "P" ? "Novo pagamento" : "Nova baixa"}
-        searchPlaceholder="Pesquisar por conta, responsável, fornecedor, observação ou cheque..."
+        searchPlaceholder="Pesquisar por conta, responsável, fornecedor, observação, cheque ou comprovante..."
         filters={
           <>
             <FilterSelect name="direction" label="Natureza" options={DIRECTIONS} />
@@ -120,7 +124,7 @@ export default async function PaymentListPage({ searchParams }: PageProps<"/acco
               <Clip key="r" text={p.counterpart ?? p.supplier ?? "—"} className="max-w-36" />,
               p.checkNumber
                 ? `Cheque nº ${p.checkNumber}${p.checkDate ? ` · bom para ${formatDate(p.checkDate)}` : ""}`
-                : label(PAYMENT_METHODS, p.method),
+                : [label(PAYMENT_METHODS, p.method), cardSummary(p)].filter(Boolean).join(" · "),
               <MoneyCell key="a">{formatMoney(p.amount)}</MoneyCell>,
             ]}
             label={`a baixa de ${formatDate(p.paidAt)} (${p.description})`}
