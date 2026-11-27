@@ -207,3 +207,21 @@ export function examRequestText(v: ExamRequest) {
     value: brlAmount(v.value) || "_".repeat(20),
   };
 }
+
+/** What the secretaria fills in on the guardian's declaração de comparecimento. */
+export type GuardianVisit = { name: string; rg: string; issuer: string; cpf: string; date: string; shift: string };
+
+/**
+ * The guardian's declaração de comparecimento blanks as printed (not in Django: copied from the secretaria's paper
+ * model). A field left empty prints as a line to fill by hand.
+ */
+export function guardianVisitText(v: GuardianVisit) {
+  const line = (s: string, n: number) => s.trim() || "_".repeat(n);
+  return {
+    name: line(v.name.toUpperCase(), 40),
+    rg: `${line(v.rg, 12)} ${line(v.issuer, 8)}`,
+    cpf: line(v.cpf, 18),
+    date: ISO_DATE.test(v.date) ? formatDate(v.date) : "____/____/________",
+    shift: SHIFT_PERIODS[v.shift] ?? "_".repeat(16),
+  };
+}

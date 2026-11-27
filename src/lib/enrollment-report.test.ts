@@ -5,6 +5,7 @@ import {
   attendanceFields,
   brlAmount,
   examRequestText,
+  guardianVisitText,
   fullAddress,
   hourLabel,
   longDate,
@@ -170,4 +171,30 @@ test("examRequestText prints the blanks, or lines while they're empty", () => {
   expect(blank.exam).toMatch(/^_+$/);
   expect(blank.time).toMatch(/^_+$/);
   expect(blank.value).toMatch(/^_+$/);
+});
+
+test("guardianVisitText prints the blanks, or lines while they're empty", () => {
+  expect(
+    guardianVisitText({
+      name: "Ana Souza",
+      rg: "3273373",
+      issuer: "SPTC/GO",
+      cpf: "796.515.931-72",
+      date: "2026-11-26",
+      shift: "M",
+    }),
+  ).toEqual({
+    name: "ANA SOUZA",
+    rg: "3273373 SPTC/GO",
+    cpf: "796.515.931-72",
+    date: "26/11/2026",
+    shift: "matutino",
+  });
+  expect(guardianVisitText({ name: " ", rg: "", issuer: "", cpf: "", date: "", shift: "" })).toEqual({
+    name: "_".repeat(40),
+    rg: `${"_".repeat(12)} ${"_".repeat(8)}`,
+    cpf: "_".repeat(18),
+    date: "____/____/________",
+    shift: "_".repeat(16),
+  });
 });

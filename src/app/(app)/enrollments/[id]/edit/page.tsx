@@ -214,6 +214,7 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
               ficha: !hasPayer ? "Requer responsável financeiro" : hasParents ? null : "Requer pai e mãe cadastrados",
               declaracao: row.e.status === "A" ? null : "Requer matrícula ativa",
               comparecimento: row.e.status === "A" ? null : "Requer matrícula ativa",
+              "comparecimento-responsavel": row.e.status === "A" ? null : "Requer matrícula ativa",
               substitutiva: row.e.status === "A" ? null : "Requer matrícula ativa",
               passe: row.e.status !== "A" ? "Requer matrícula ativa" : row.e.schoolClassId ? null : "Requer turma",
               transferencia: ["A", "T"].includes(row.e.status) ? null : "Requer matrícula ativa ou transferida",

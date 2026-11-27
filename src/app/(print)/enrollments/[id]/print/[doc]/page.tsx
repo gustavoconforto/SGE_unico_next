@@ -8,8 +8,10 @@ import { idParam } from "@/lib/list";
 import { PrintToolbar } from "../../../../print-toolbar";
 import { Paragraphs } from "../paragraphs";
 import { ExamRequestForm, ExamRequestProvider } from "./exam-request-form";
+import { GuardianVisitForm, GuardianVisitProvider } from "./guardian-visit-form";
 import { AttendanceBody, AttendanceForm, AttendanceProvider } from "./attendance-form";
 import {
+  ComparecimentoResponsavel,
   Contract,
   Declaracao,
   Ficha,
@@ -30,6 +32,7 @@ const DOCUMENTS: Record<string, string> = {
   substitutiva: "Requerimento de Prova Substitutiva",
   passe: "Declaração de Passe Estudantil",
   transferencia: "Declaração de Transferência",
+  "comparecimento-responsavel": "Declaração de Comparecimento",
 };
 
 export async function generateMetadata({ params }: PageProps<"/enrollments/[id]/print/[doc]">): Promise<Metadata> {
@@ -120,6 +123,18 @@ export default async function EnrollmentPrintPage({ params }: PageProps<"/enroll
         <PrintToolbar />
         <PasseEstudantil r={r} title={DOCUMENTS.passe} />
       </>
+    );
+  }
+
+  if (doc === "comparecimento-responsavel") {
+    if (r.enrollment.status !== "A") notFound();
+    return (
+      <GuardianVisitProvider date={today()}>
+        <PrintToolbar>
+          <GuardianVisitForm />
+        </PrintToolbar>
+        <ComparecimentoResponsavel r={r} title={DOCUMENTS["comparecimento-responsavel"]} />
+      </GuardianVisitProvider>
     );
   }
 

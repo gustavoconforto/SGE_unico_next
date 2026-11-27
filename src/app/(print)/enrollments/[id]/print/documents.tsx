@@ -5,6 +5,7 @@ import { formatDate, formatMoney, label, today } from "@/lib/finance";
 import { formatDocument, formatZipCode } from "@/lib/format";
 import { SEX_CHOICES, formatPhone } from "@/lib/person";
 import { ExamBlank } from "./[doc]/exam-request-form";
+import { GuardianVisitBlank } from "./[doc]/guardian-visit-form";
 import type { EnrollmentReport, Person } from "./report";
 
 // Ported from Django's print_base.html / preview_enrollment.html styles, scoped to .enr
@@ -94,7 +95,7 @@ const DECLARATION_CSS = `
 .enr footer { margin-top: auto; padding-top: 6px; border-top: 2px solid #4b5563; text-align: center; font-size: 9pt; color: #4b5563; }
 .enr footer p { margin: 0; }
 .enr.no-footer footer { display: none; }
-.enr.transfer .signature { margin-top: auto; }
+.enr.foot-signature .signature { margin-top: auto; }
 @media print { .enr.declaration-page { min-height: 267mm; } }
 `;
 
@@ -931,11 +932,26 @@ export function PasseEstudantil({ r, title }: { r: EnrollmentReport; title: stri
 /** The declaração de transferência (not in Django: copied from the secretaria's paper model). */
 export function Transferencia({ r, title }: { r: EnrollmentReport; title: string }) {
   return (
-    <Declaracao title={title} className="transfer no-footer">
+    <Declaracao title={title} className="foot-signature no-footer">
       <p>
         Declaramos para os devidos fins que a transferência do(a) aluno(a) <b>{upper(r.student.name)}</b> foi solicitada
         na data indicada, podendo matricular-se na {r.grade}ª Série. O Histórico Escolar será emitido no prazo máximo de
         30 dias, a contar desta data.
+      </p>
+    </Declaracao>
+  );
+}
+
+/** The guardian's declaração de comparecimento; the guardian's data and the visit come from the toolbar form. */
+export function ComparecimentoResponsavel({ r, title }: { r: EnrollmentReport; title: string }) {
+  return (
+    <Declaracao title={title} className="foot-signature no-footer">
+      <p>
+        Declaramos para os devidos fins que <GuardianVisitBlank name="name" />, portador(a) do RG:{" "}
+        <GuardianVisitBlank name="rg" />, inscrito(a) no CPF: <GuardianVisitBlank name="cpf" />, responsável pelo(a)
+        aluno(a): <b>{upper(r.student.name)}</b> de matrícula nº {r.student.registration}, esteve presente no ÚNICO
+        EDUCACIONAL ASA SUL (MATRIZ) no dia <GuardianVisitBlank name="date" /> no período{" "}
+        <GuardianVisitBlank name="shift" />, para tratar de assuntos pedagógicos.
       </p>
     </Declaracao>
   );

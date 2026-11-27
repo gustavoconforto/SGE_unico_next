@@ -8,6 +8,7 @@ const DOCUMENTS = [
   ["ficha", "Ficha de matrícula"],
   ["declaracao", "Declaração de escolaridade"],
   ["comparecimento", "Declaração de comparecimento"],
+  ["comparecimento-responsavel", "Declaração de comparecimento do responsável"],
   ["substitutiva", "Requerimento de prova substitutiva"],
   ["passe", "Declaração de passe estudantil"],
   ["transferencia", "Declaração de transferência"],
