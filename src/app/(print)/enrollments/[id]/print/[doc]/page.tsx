@@ -9,7 +9,15 @@ import { PrintToolbar } from "../../../../print-toolbar";
 import { Paragraphs } from "../paragraphs";
 import { ExamRequestForm, ExamRequestProvider } from "./exam-request-form";
 import { AttendanceBody, AttendanceForm, AttendanceProvider } from "./attendance-form";
-import { Contract, Declaracao, Ficha, PasseEstudantil, ProvaSubstitutiva, Requerimento } from "../documents";
+import {
+  Contract,
+  Declaracao,
+  Ficha,
+  PasseEstudantil,
+  ProvaSubstitutiva,
+  Requerimento,
+  Transferencia,
+} from "../documents";
 import { declarationParagraphs, examSubjects, loadEnrollmentReport, studentFacts } from "../report";
 
 // slug in the URL -> title (Django's PRINT_DOCUMENTS)
@@ -21,6 +29,7 @@ const DOCUMENTS: Record<string, string> = {
   comparecimento: "Declaração de Comparecimento",
   substitutiva: "Requerimento de Prova Substitutiva",
   passe: "Declaração de Passe Estudantil",
+  transferencia: "Declaração de Transferência",
 };
 
 export async function generateMetadata({ params }: PageProps<"/enrollments/[id]/print/[doc]">): Promise<Metadata> {
@@ -110,6 +119,16 @@ export default async function EnrollmentPrintPage({ params }: PageProps<"/enroll
       <>
         <PrintToolbar />
         <PasseEstudantil r={r} title={DOCUMENTS.passe} />
+      </>
+    );
+  }
+
+  if (doc === "transferencia") {
+    if (!["A", "T"].includes(r.enrollment.status)) notFound();
+    return (
+      <>
+        <PrintToolbar />
+        <Transferencia r={r} title={DOCUMENTS.transferencia} />
       </>
     );
   }

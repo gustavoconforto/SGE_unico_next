@@ -93,6 +93,8 @@ const DECLARATION_CSS = `
 .enr .signature { width: 60%; margin: 88px auto 0; padding-top: 4px; border-top: 1px solid #111827; text-align: center; }
 .enr footer { margin-top: auto; padding-top: 6px; border-top: 2px solid #4b5563; text-align: center; font-size: 9pt; color: #4b5563; }
 .enr footer p { margin: 0; }
+.enr.no-footer footer { display: none; }
+.enr.transfer .signature { margin-top: auto; }
 @media print { .enr.declaration-page { min-height: 267mm; } }
 `;
 
@@ -873,7 +875,6 @@ export function Declaracao({
 
 const STUDENT_PASS_CSS = `
 .enr.pass h1 { margin: 32px 0; }
-.enr.pass footer { display: none; }
 .enr .pass-data { margin: 0 0 20px; line-height: 1.5; }
 .enr .pass-data .gap { margin-top: 14px; }
 .enr .calendar { width: 70%; margin: 24px auto 28px; padding: 8px 16px; border: 2px solid #4b5563; font-size: 10.5pt; }
@@ -887,7 +888,7 @@ export function PasseEstudantil({ r, title }: { r: EnrollmentReport; title: stri
   const shift = upper(SHIFT_PERIODS[r.schoolClass?.shift ?? ""]);
   const parents = [r.father, r.mother].flatMap((p) => (p ? [upper(p.name)] : [])).join(" e ");
   return (
-    <Declaracao title={title} className="pass">
+    <Declaracao title={title} className="pass no-footer">
       <style>{STUDENT_PASS_CSS}</style>
       <div className="pass-data">
         <div>Estudante: {upper(s.name)}</div>
@@ -923,6 +924,19 @@ export function PasseEstudantil({ r, title }: { r: EnrollmentReport; title: stri
         {r.schoolClass?.shift === "M" && ", e com um retorno semanal obrigatório no turno vespertino, das 14h às 18h"}.
       </p>
       <p>Informamos ainda que serão ministradas provas aos sábados das 9h às 13h.</p>
+    </Declaracao>
+  );
+}
+
+/** The declaração de transferência (not in Django: copied from the secretaria's paper model). */
+export function Transferencia({ r, title }: { r: EnrollmentReport; title: string }) {
+  return (
+    <Declaracao title={title} className="transfer no-footer">
+      <p>
+        Declaramos para os devidos fins que a transferência do(a) aluno(a) <b>{upper(r.student.name)}</b> foi solicitada
+        na data indicada, podendo matricular-se na {r.grade}ª Série. O Histórico Escolar será emitido no prazo máximo de
+        30 dias, a contar desta data.
+      </p>
     </Declaracao>
   );
 }

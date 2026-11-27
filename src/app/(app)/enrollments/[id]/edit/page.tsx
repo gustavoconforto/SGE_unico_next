@@ -216,6 +216,7 @@ export default async function EditEnrollmentPage({ params }: PageProps<"/enrollm
               comparecimento: row.e.status === "A" ? null : "Requer matrícula ativa",
               substitutiva: row.e.status === "A" ? null : "Requer matrícula ativa",
               passe: row.e.status !== "A" ? "Requer matrícula ativa" : row.e.schoolClassId ? null : "Requer turma",
+              transferencia: ["A", "T"].includes(row.e.status) ? null : "Requer matrícula ativa ou transferida",
             }}
           />
           <LinkButton href={`/grades/report-card/${id}`} color="alternative">
