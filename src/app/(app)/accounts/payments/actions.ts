@@ -13,6 +13,8 @@ import {
   studentsGuardian as guardian,
 } from "@/db/schema/app";
 import {
+  CARD_BRANDS,
+  MAX_CARD_INSTALLMENTS,
   PAYMENT_METHODS,
   PENDING_STATUSES,
   formatMoney,
@@ -30,6 +32,7 @@ import {
   decimalField,
   foreignKey,
   formIds,
+  intField,
   optionalDate,
   parseForm,
   requiredDate,
@@ -80,6 +83,47 @@ const NO_CHECK = {
   checkHolderName: "",
   checkHolderCpf: "",
 };
+
+/** Card details (not in Django), asked only when the method is CRE or DEB. */
+const cardSchema = z.object({
+  cardBrand: z.enum(CARD_BRANDS.map(([c]) => c) as [string, ...string[]], { error: REQUIRED }),
+  cardReceipt: requiredText(20),
+  cardInstallments: intField(1, MAX_CARD_INSTALLMENTS),
+});
+// A debit card is charged at once: no installments to ask
+const debitSchema = cardSchema.extend({ cardInstallments: z.unknown().transform(() => 1) });
+const NO_CARD: { cardBrand: string; cardReceipt: string; cardInstallments: number | null } = {
+  cardBrand: "",
+  cardReceipt: "",
+  cardInstallments: null,
+};
+type MethodDetails = z.infer<typeof checkSchema> & typeof NO_CARD;
+const NO_DETAILS: MethodDetails = { ...NO_CHECK, ...NO_CARD };
+
+/**
+ * The payer's cheque or card details, receivables only; another method (or a payable) clears them. A payment saved
+ * before this screen asked for them (or from Django) stays editable while they stay blank.
+ */
+function methodDetails(
+  direction: "R" | "P",
+  formData: FormData,
+  stored?: { method: string; checkNumber: string; cardBrand: string },
+): { data: MethodDetails } | { errors: FormErrors } {
+  const method = String(formData.get("method") ?? "");
+  const unasked = (saved: string | undefined, none: object) =>
+    stored?.method === method && !saved && Object.keys(none).every((k) => !String(formData.get(k) ?? "").trim());
+  const schema =
+    direction !== "R"
+      ? null
+      : method === "CHQ"
+        ? !unasked(stored?.checkNumber, NO_CHECK) && checkSchema
+        : method === "CRE" || method === "DEB"
+          ? !unasked(stored?.cardBrand, NO_CARD) && (method === "DEB" ? debitSchema : cardSchema)
+          : null;
+  if (!schema) return { data: NO_DETAILS };
+  const { data, state } = parseForm(schema, formData);
+  return data ? { data: { ...NO_DETAILS, ...data } } : { errors: state?.errors ?? {} };
+}
 
 /** The installment search box: pending installments of one direction (ReceivableInstallmentLookupView). */
 export async function searchInstallments(direction: "R" | "P", q: string): Promise<InstallmentChoice[]> {
@@ -140,25 +184,18 @@ export async function savePayment(
   if (id && !book) redirect("/forbidden");
   const [stored] = id
     ? await db
-        .select({ checkNumber: payment.checkNumber, method: payment.method })
+        .select({ checkNumber: payment.checkNumber, cardBrand: payment.cardBrand, method: payment.method })
         .from(payment)
         .where(eq(payment.id, id))
     : [];
   if (id && !stored) redirect("/accounts/payments");
   const { data, values, state } = parseForm(paymentSchema, formData);
-  // Cheque details are the payer's cheque, so receivables only; another method clears them.
-  // A cheque payment saved before this screen asked for them (or from Django) stays editable while they stay blank.
-  const blankCheck = Object.keys(NO_CHECK).every((k) => !String(formData.get(k) ?? "").trim());
-  const askCheck =
-    direction === "R" &&
-    formData.get("method") === "CHQ" &&
-    !(stored?.method === "CHQ" && !stored.checkNumber && blankCheck);
-  const check = askCheck ? parseForm(checkSchema, formData) : { data: NO_CHECK };
-  if (!data || !check.data)
-    return { errors: { ...state?.errors, ...("state" in check ? check.state?.errors : {}) }, values };
+  const details = methodDetails(direction, formData, stored);
+  if (!data || "errors" in details)
+    return { errors: { ...state?.errors, ...("errors" in details ? details.errors : {}) }, values };
   const fields = {
     ...data,
-    ...check.data,
+    ...details.data,
     discount: data.discount ?? "0.00",
     penalty: data.penalty ?? "0.00",
     interest: data.interest ?? "0.00",
@@ -229,7 +266,7 @@ export async function savePayment(
 }
 
 type PaymentFields = z.infer<typeof paymentSchema> &
-  z.infer<typeof checkSchema> & {
+  MethodDetails & {
     penalty: string;
     interest: string;
     monetaryAdjust: string;
@@ -253,8 +290,8 @@ function splitParts(formData: FormData, fields: PaymentFields) {
   });
   if (Object.keys(errors).length) return { errors };
   const zero = { penalty: "0.00", interest: "0.00", monetaryAdjust: "0.00", discount: "0.00" };
-  // shortcut: the cheque details belong to the first method only; a cheque in another split method has none
-  return { rows: [fields, ...parts.map((p) => ({ ...fields, ...zero, ...NO_CHECK, ...p }))] };
+  // shortcut: the cheque or card details belong to the first method only; another split method has none
+  return { rows: [fields, ...parts.map((p) => ({ ...fields, ...zero, ...NO_DETAILS, ...p }))] };
 }
 
 const batchSchema = paymentSchema.pick({ paidAt: true, method: true, notes: true });
@@ -270,12 +307,12 @@ export async function saveBatchPayment(_prev: FormState, formData: FormData): Pr
   await requirePermission("payments", "edit");
   const book = await hasPermission("payments", "view");
   const { data, values, state } = parseForm(batchSchema, formData);
-  // Batches are receivables: one cheque can pay them all, and each payment row keeps its details
-  const check = formData.get("method") === "CHQ" ? parseForm(checkSchema, formData) : { data: NO_CHECK };
+  // Batches are receivables: one cheque or card can pay them all, and each payment row keeps its details
+  const details = methodDetails("R", formData);
   // Ascending, so two batches over the same installments lock them in the same order and can't deadlock
   const ids = formIds(formData, "installment").sort((a, b) => a - b);
   if (!ids.length) return { formError: "Selecione ao menos uma parcela.", values };
-  const errors: FormErrors = { ...state?.errors, ...("state" in check ? check.state?.errors : {}) };
+  const errors: FormErrors = { ...state?.errors, ...("errors" in details ? details.errors : {}) };
   const rows = ids.map((id) => {
     const row = { id, shown: values[`balance_${id}`] ?? "", penalty: "0.00", interest: "0.00", discount: "0.00" };
     for (const k of ROW_FIELDS) {
@@ -285,7 +322,7 @@ export async function saveBatchPayment(_prev: FormState, formData: FormData): Pr
     }
     return row;
   });
-  if (!data || !check.data || Object.keys(errors).length) return { errors, values };
+  if (!data || "errors" in details || Object.keys(errors).length) return { errors, values };
 
   const result = await db.transaction(async (tx) => {
     // Check every installment before inserting anything: an early return commits what was already written
@@ -328,7 +365,7 @@ export async function saveBatchPayment(_prev: FormState, formData: FormData): Pr
         paidAt: data.paidAt,
         method: data.method,
         notes: data.notes,
-        ...check.data,
+        ...details.data,
         amount: row.amount,
         penalty: row.penalty,
         interest: row.interest,

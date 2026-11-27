@@ -7,9 +7,10 @@ import { maskCpf } from "@/lib/format";
 
 /**
  * The payer's cheque (not in Django): the whole CMC-7 line typed or scanned into Número do cheque fills número,
- * banco, agência and conta. Parsed by `checkSchema` in actions.ts.
+ * banco, agência and conta. Parsed by `checkSchema` in actions.ts. `optional`: a cheque payment saved before this
+ * screen asked for them may stay blank.
  */
-export function CheckFields({ defaults = {} }: { defaults?: Record<string, unknown> }) {
+export function CheckFields({ defaults = {}, optional }: { defaults?: Record<string, unknown>; optional?: boolean }) {
   const [check, setCheck] = useState(() => ({
     checkNumber: String(defaults.checkNumber ?? ""),
     checkBank: String(defaults.checkBank ?? ""),
@@ -30,6 +31,7 @@ export function CheckFields({ defaults = {} }: { defaults?: Record<string, unkno
     <Fieldset legend="Dados do cheque">
       <TextField
         name="checkNumber"
+        optional={optional}
         label="Número do cheque"
         inputMode="numeric"
         autoComplete="off"
@@ -51,6 +53,7 @@ export function CheckFields({ defaults = {} }: { defaults?: Record<string, unkno
       />
       <TextField
         name="checkBank"
+        optional={optional}
         label="Banco"
         maxLength={3}
         inputMode="numeric"
@@ -60,6 +63,7 @@ export function CheckFields({ defaults = {} }: { defaults?: Record<string, unkno
       />
       <TextField
         name="checkBranch"
+        optional={optional}
         label="Agência"
         maxLength={10}
         inputMode="numeric"
@@ -68,14 +72,16 @@ export function CheckFields({ defaults = {} }: { defaults?: Record<string, unkno
       />
       <TextField
         name="checkAccount"
+        optional={optional}
         label="Conta"
         maxLength={20}
         value={check.checkAccount}
         onChange={set("checkAccount")}
       />
-      <TextField name="checkHolderName" label="Nome do titular" maxLength={200} />
+      <TextField name="checkHolderName" label="Nome do titular" maxLength={200} optional={optional} />
       <TextField
         name="checkHolderCpf"
+        optional={optional}
         label="CPF do titular"
         mask={maskCpf}
         inputMode="numeric"

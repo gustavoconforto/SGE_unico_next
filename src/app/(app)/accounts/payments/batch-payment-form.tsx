@@ -5,6 +5,7 @@ import { Fieldset, FormButtons, FormFields, SelectField, TextField } from "@/com
 import { type Money, PAYMENT_METHODS, formatDate, formatMoney, money, today } from "@/lib/finance";
 import { parseMoney as parse } from "@/lib/form";
 import { saveBatchPayment } from "./actions";
+import { CardFields } from "./card-fields";
 import { CheckFields } from "./check-fields";
 import { rememberMethod, useLastMethod } from "./payment-form";
 
@@ -21,7 +22,7 @@ export function BatchPaymentForm({ rows, cancelHref }: { rows: Row[]; cancelHref
   // The charge fields drive the totals, so they live in state
   const [values, setValues] = useState<Record<string, string>>({});
   const set = (name: string) => (v: string) => setValues((all) => ({ ...all, [name]: v }));
-  // One cheque may pay every installment below: its details show for CHQ
+  // One cheque or card may pay every installment below: its details show for CHQ, CRE or DEB
   const [method, setMethod] = useState("");
   useLastMethod(true, setMethod);
 
@@ -56,6 +57,7 @@ export function BatchPaymentForm({ rows, cancelHref }: { rows: Row[]; cancelHref
           <TextField name="notes" label="Observações" maxLength={200} optional className="sm:col-span-2" />
         </Fieldset>
         {method === "CHQ" && <CheckFields />}
+        {(method === "CRE" || method === "DEB") && <CardFields method={method} />}
         {rows.map((r, i) => (
           <fieldset
             key={r.id}

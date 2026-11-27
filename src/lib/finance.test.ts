@@ -1,6 +1,7 @@
 // Ported from enrollments/tests.py (EnrollmentAccountTests, EnrollmentDiscountTests) and accounts/tests.py.
 import { describe, expect, it } from "vitest";
 import {
+  cardSummary,
   accountInstallments,
   accountSituation,
   addMonths,
@@ -156,4 +157,16 @@ describe("payments and status (Payment.principal, Installment.refresh_status)", 
 it("today() is the São Paulo date, not UTC", () => {
   // 01:30 UTC on Nov 17 is still 22:30 on Nov 16 in São Paulo
   expect(today(new Date("2026-11-17T01:30:00Z"))).toBe("2026-11-16");
+});
+
+describe("cardSummary", () => {
+  const card = { cardBrand: "VIS", cardReceipt: "123456", cardInstallments: 3 };
+  it("shows brand, credit installments and receipt", () => {
+    expect(cardSummary({ method: "CRE", ...card })).toBe("Visa · 3x · comprovante 123456");
+    expect(cardSummary({ method: "CRE", ...card, cardInstallments: 1 })).toBe("Visa · à vista · comprovante 123456");
+    expect(cardSummary({ method: "DEB", ...card, cardInstallments: 1 })).toBe("Visa · comprovante 123456");
+  });
+  it("is blank without card details", () => {
+    expect(cardSummary({ method: "CRE", cardBrand: "", cardReceipt: "", cardInstallments: null })).toBe("");
+  });
 });
