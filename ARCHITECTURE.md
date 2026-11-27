@@ -361,6 +361,10 @@ the calendar (`isSchoolDay`). Called students: the class's active enrollments en
 already called that day. Saving upserts the whole day in one transaction and drops rows of periods no longer
 taught. Permission area `attendance`.
 
+`/lessons/excused-absences?enrollment=<pk>&date=<iso>` ("Abono de faltas") shows the same grid for one student and
+saves only that student's row and note. It refuses a day with no roll call for the student, or one whose saved
+periods differ from the day's lessons (`excuseError`); those are fixed on the class roll call.
+
 ### Financial models (`accounts/models.py`)
 
 Money is always `DecimalField(max_digits=10, decimal_places=2)` (the `MONEY`

@@ -10,7 +10,7 @@ import { formatDate } from "@/lib/finance";
 import { param } from "@/lib/list";
 import { activeEnrollmentOptions } from "../../enrollments/data";
 import { EnrollmentPicker } from "../../grades/student/enrollment-picker";
-import { rollCall, rollCallDateError } from "../attendance/data";
+import { excuseError, rollCall, rollCallDateError } from "../attendance/data";
 import { RollCallSheet } from "../attendance/roll-call-sheet";
 import { seriesClass } from "../data";
 
@@ -30,6 +30,7 @@ export default async function ExcusedAbsencesPage({ searchParams }: PageProps<"/
   const day = c && date && !dateError ? await rollCall(c, date) : null;
   const student = day?.students.find((s) => s.id === id);
   const saved = day?.saved.filter((a) => a.enrollmentId === id) ?? [];
+  const excuse = day && id ? excuseError(day, id) : null;
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">Abono de faltas</h1>
@@ -40,8 +41,8 @@ export default async function ExcusedAbsencesPage({ searchParams }: PageProps<"/
         <Alert color="warning">O aluno não está numa turma com aulas.</Alert>
       ) : dateError ? (
         <Alert color="failure">{dateError}</Alert>
-      ) : !student || !saved.length || !day?.columns.length ? (
-        <Alert color="warning">Não há chamada registrada para o aluno nesta data.</Alert>
+      ) : excuse || !student || !day ? (
+        <Alert color="warning">{excuse ?? "Não há chamada registrada para o aluno nesta data."}</Alert>
       ) : (
         <>
           <p className="text-sm text-gray-600">

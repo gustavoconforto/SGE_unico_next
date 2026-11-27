@@ -9,10 +9,9 @@ import { requirePermission } from "@/lib/authorization";
 import type { FormState } from "@/lib/form";
 import { formValues, requiredDate } from "@/lib/form";
 import { seriesClass } from "../data";
-import { rollCall, rollCallDateError } from "./data";
+import { excuseError, rollCall, rollCallDateError } from "./data";
 
 const CHANGED = "Os alunos ou as aulas do dia mudaram desde que a página abriu. Recarregue e confira a chamada.";
-const NOT_TAKEN = "Não há chamada registrada para o aluno nesta data.";
 
 /**
  * Saves the class's roll call of `date` (RollCallSheet): `status_<enrollment>_<period>` for each student and lesson,
@@ -35,7 +34,8 @@ export async function saveRollCall(
   const day = await rollCall(c, date);
   const { columns } = day;
   const students = enrollmentId ? day.students.filter((s) => s.id === enrollmentId) : day.students;
-  if (enrollmentId && !day.saved.some((a) => a.enrollmentId === enrollmentId)) return { formError: NOT_TAKEN, values };
+  const excuse = enrollmentId ? excuseError(day, enrollmentId) : null;
+  if (excuse) return { formError: excuse, values };
   if (!columns.length || !students.length) return { formError: CHANGED, values };
   const rows = students.flatMap((s) =>
     columns.map((l) => ({

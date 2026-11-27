@@ -200,6 +200,18 @@ describe.skipIf(!local)("saveRollCall", async () => {
     expect((await notes()).map((n) => n.enrollmentId).sort()).toEqual([...others].sort());
   });
 
+  it.skipIf(!ready)("refuses one student's day saved under other lessons", async () => {
+    const first = ids[0];
+    await db
+      .insert(attendance)
+      .values({ enrollmentId: first, date, period: 3, subjectId: levelSubjectId!, status: "F" });
+    expect(
+      (await saveRollCall(classId, date, first, {}, form({ [`status_${first}_1`]: "P", [`status_${first}_2`]: "P" })))
+        .formError,
+    ).toMatch(/aulas do dia mudaram/);
+    expect((await saved()).filter((r) => r.enrollmentId === first).map((r) => r.status)).toEqual(["F", "J", "F"]);
+  });
+
   it.skipIf(!ready)("refuses one student's day with no roll call saved", async () => {
     await db.delete(attendance).where(and(inArray(attendance.enrollmentId, ids), eq(attendance.date, date)));
     expect(
