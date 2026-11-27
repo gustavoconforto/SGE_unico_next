@@ -66,13 +66,15 @@ never the reset, and the seed only via `db:wipe -- --seed` while in beta; the mi
 - Action color is navy: use `primary-*` classes (the `--primary-*` scale in `globals.css`), never `blue-*`.
   Icons stay gray; secondary buttons darken on hover (DESIGN.md, "The One Navy Rule").
 - Client components that read the URL (`usePathname`, `useSearchParams`) must sit inside `<Suspense>`.
-- Add each migrated page to `NAV` in `src/components/app-sidebar.tsx` with the `[resource, action]` its page requires.
+- Add each migrated page to `NAV` in `src/components/app-sidebar.tsx` with the `[resource, action]` its page requires,
+  and its row to `PERMISSIONS.md`.
 
 ### Permissions (not in Django)
 
 - Better Auth Admin plugin roles (`statement` / `roles` in `src/lib/permissions.ts`); `user.role` holds one or more,
   assigned by admins on `/employees`. `admin` holds all; plain `user` holds none. The proxy checks only the session;
-  every page and action calls `requirePermission()` (`src/lib/authorization.ts`). See docs/permissions.md.
+  every page and action calls `requirePermission()` (`src/lib/authorization.ts`). See docs/permissions.md;
+  [PERMISSIONS.md](PERMISSIONS.md) maps each sidebar item to its permission and roles.
 - Portal for guardians and students (`src/app/portal/`, ARCHITECTURE.md "Portal for guardians and students"): portal
   logins (`user.guardianId`, role `responsavel`; `user.studentId`, role `aluno`) hold no permission. Portal pages and
   actions call `requirePortalUser()` instead of `requirePermission()` and scope every query to the viewer's students
