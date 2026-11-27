@@ -4,14 +4,14 @@ import { Dropdown, DropdownItem } from "flowbite-react";
 
 const DOCUMENTS = [
   ["contrato", "Contrato"],
-  ["requerimento", "Requerimento de matrícula"],
-  ["ficha", "Ficha de matrícula"],
-  ["declaracao", "Declaração de escolaridade"],
   ["comparecimento", "Declaração de comparecimento"],
   ["comparecimento-responsavel", "Declaração de comparecimento do responsável"],
-  ["substitutiva", "Requerimento de prova substitutiva"],
+  ["declaracao", "Declaração de escolaridade"],
   ["passe", "Declaração de passe estudantil"],
   ["transferencia", "Declaração de transferência"],
+  ["ficha", "Ficha de matrícula"],
+  ["requerimento", "Requerimento de matrícula"],
+  ["substitutiva", "Requerimento de prova substitutiva"],
 ] as const;
 
 type Doc = (typeof DOCUMENTS)[number][0];
