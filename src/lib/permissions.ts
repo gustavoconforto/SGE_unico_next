@@ -28,6 +28,7 @@ export const statement = {
   programs: VIEW_EDIT,
   qAndA: VIEW_EDIT,
   alerts: VIEW_EDIT, // notices sent to guardians on the portal
+  documents: VIEW_EDIT, // documents received from students and their types
 } as const;
 
 export const ac = createAccessControl(statement);
@@ -54,6 +55,7 @@ export const roles = {
     releases: VIEW_EDIT,
     programs: VIEW_EDIT,
     alerts: VIEW_EDIT,
+    documents: VIEW_EDIT,
   }),
   financeiro: ac.newRole({
     students: VIEW,

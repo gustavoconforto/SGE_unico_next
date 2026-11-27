@@ -41,6 +41,12 @@ describe("roles", () => {
     expect(roles.professor.authorize({ attendance: ["view"] }).success).toBe(false);
   });
 
+  it("lets only the secretaria record received documents", () => {
+    expect(roles.secretaria.authorize({ documents: ["view", "edit"] }).success).toBe(true);
+    expect(roles.coordenacao.authorize({ documents: ["view"] }).success).toBe(false);
+    expect(roles.professor.authorize({ documents: ["view"] }).success).toBe(false);
+  });
+
   it("never lets a department role manage users or roles", () => {
     for (const role of [roles.secretaria, roles.financeiro, roles.coordenacao, roles.professor])
       expect(role.authorize({ user: ["set-role"] }).success).toBe(false);

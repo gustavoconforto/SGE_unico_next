@@ -9,17 +9,19 @@ import { requirePermission } from "@/lib/authorization";
 import type { FormState } from "@/lib/form";
 import { formValues, requiredDate } from "@/lib/form";
 import { seriesClass } from "../data";
-import { rollCall, rollCallDateError } from "./data";
+import { excuseError, rollCall, rollCallDateError } from "./data";
 
 const CHANGED = "Os alunos ou as aulas do dia mudaram desde que a página abriu. Recarregue e confira a chamada.";
 
 /**
  * Saves the class's roll call of `date` (RollCallSheet): `status_<enrollment>_<period>` for each student and lesson,
  * `note_<enrollment>` per student. Lessons and students come from the day, not the form; last write wins.
+ * With `enrollmentId` (excused absences) only that student's saved day is rewritten; other lessons are kept.
  */
 export async function saveRollCall(
   classId: number,
   date: string,
+  enrollmentId: number | null,
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
@@ -29,7 +31,11 @@ export async function saveRollCall(
   const values = formValues(formData);
   const dateError = await rollCallDateError(c, date);
   if (dateError) return { formError: dateError, values };
-  const { columns, students } = await rollCall(c, date);
+  const day = await rollCall(c, date);
+  const { columns } = day;
+  const students = enrollmentId ? day.students.filter((s) => s.id === enrollmentId) : day.students;
+  const excuse = enrollmentId ? excuseError(day, enrollmentId) : null;
+  if (excuse) return { formError: excuse, values };
   if (!columns.length || !students.length) return { formError: CHANGED, values };
   const rows = students.flatMap((s) =>
     columns.map((l) => ({
@@ -49,16 +55,17 @@ export async function saveRollCall(
   const ids = students.map((s) => s.id);
   const now = new Date().toISOString();
   await db.transaction(async (tx) => {
-    await tx.delete(attendance).where(
-      and(
-        inArray(attendance.enrollmentId, ids),
-        eq(attendance.date, date),
-        notInArray(
-          attendance.period,
-          columns.map((l) => l.period),
+    if (!enrollmentId)
+      await tx.delete(attendance).where(
+        and(
+          inArray(attendance.enrollmentId, ids),
+          eq(attendance.date, date),
+          notInArray(
+            attendance.period,
+            columns.map((l) => l.period),
+          ),
         ),
-      ),
-    );
+      );
     await tx
       .insert(attendance)
       .values(rows)
@@ -81,5 +88,9 @@ export async function saveRollCall(
           set: { note: sql`excluded.note`, updatedAt: now },
         });
   });
-  redirect(`/lessons/attendance?school_class=${classId}&date=${date}&msg=updated`);
+  redirect(
+    enrollmentId
+      ? `/lessons/excused-absences?enrollment=${enrollmentId}&date=${date}&msg=updated`
+      : `/lessons/attendance?school_class=${classId}&date=${date}&msg=updated`,
+  );
 }

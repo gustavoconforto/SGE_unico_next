@@ -189,6 +189,19 @@ it points at an **enrollment**, and its forms list only active enrollments.
 (name filter, check several) and saves one exit each; one already recorded is skipped (`onConflictDoNothing`).
 Permission area `releases`.
 
+### Received documents (`documents_*`, not in Django)
+
+Documents staff receive from a student during the year (Recebimento de documentos, `src/app/(app)/documents/`), such
+as a medical certificate. Points at an **enrollment**; its form lists only active enrollments. Not the enrollment
+checklist (`enrollments_neededdocumenttype`).
+
+| Table                        | Key fields and rules                                   |
+| ---------------------------- | ------------------------------------------------------ |
+| `documents_documenttype`     | `type` unique, edited on `/documents/types`            |
+| `documents_receiveddocument` | enrollment, document type (protected), `received_date` |
+
+Permission area `documents`.
+
 ### Portal for guardians and students (`/portal`, `portal_*`, not in Django)
 
 Guardians sign in at `/portal/login` with their CPF, students with their matrícula. Staff create the login on the
@@ -347,6 +360,10 @@ must pass `attendanceDateError`: Monday to Saturday inside the school year, not 
 the calendar (`isSchoolDay`). Called students: the class's active enrollments enrolled by that date, plus anyone
 already called that day. Saving upserts the whole day in one transaction and drops rows of periods no longer
 taught. Permission area `attendance`.
+
+`/lessons/excused-absences?enrollment=<pk>&date=<iso>` ("Abono de faltas") shows the same grid for one student and
+saves only that student's row and note. It refuses a day with no roll call for the student, or one whose saved
+periods differ from the day's lessons (`excuseError`); those are fixed on the class roll call.
 
 ### Financial models (`accounts/models.py`)
 

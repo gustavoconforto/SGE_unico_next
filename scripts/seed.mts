@@ -284,6 +284,14 @@ export async function seed() {
       ].map(([type, penalty]) => ({ type, penalty })),
     )
     .returning();
+  const documentTypes = await db
+    .insert(t.documentsDocumenttype)
+    .values(
+      ["Atestado médico", "Comparecimento em torneio esportivo", "Declaração de transferência"].map((type) => ({
+        type,
+      })),
+    )
+    .returning();
   const [teacherRole, coordinationRole, secretaryRole, financeRole] = await db
     .insert(t.employeesEmployeeroletype)
     .values([{ role: "Professor" }, { role: "Coordenação" }, { role: "Secretaria" }, { role: "Financeiro" }])
@@ -594,6 +602,16 @@ export async function seed() {
         .filter((_, i) => i % 4 === 0)
         .map((e) => ({ enrollmentId: e.id, incidentTypeId: pick(incidentTypes).id, incidentDate: recent(20) })),
     );
+  // Medical certificates come only from the justified absences of the roll calls below
+  const certificate = documentTypes.find((d) => d.type === "Atestado médico")!;
+  const otherDocumentTypes = documentTypes.filter((d) => d !== certificate);
+  await db
+    .insert(t.documentsReceiveddocument)
+    .values(
+      underWay
+        .filter((_, i) => i % 6 === 0)
+        .map((e) => ({ enrollmentId: e.id, documentTypeId: pick(otherDocumentTypes).id, receivedDate: recent(30) })),
+    );
   await db
     .insert(t.incidentsStudentdelay)
     .values(
@@ -645,11 +663,15 @@ export async function seed() {
   if (lectures.length) await db.insert(t.lessonsLecture).values(lectures);
   const attendance: (typeof t.lessonsAttendance.$inferInsert)[] = [];
   const notes: (typeof t.lessonsAttendancenote.$inferInsert)[] = [];
+  const certificates: (typeof t.documentsReceiveddocument.$inferInsert)[] = [];
   for (const date of days.slice(0, -1))
     for (const e of underWay) {
       const day = rand();
       const status = day < 0.04 ? "F" : day < 0.07 ? "J" : null;
-      if (day >= 0.04 && day < 0.07) notes.push({ enrollmentId: e.id, date, note: "Atestado médico" });
+      if (status === "J") {
+        notes.push({ enrollmentId: e.id, date, note: "Atestado médico" });
+        certificates.push({ enrollmentId: e.id, documentTypeId: certificate.id, receivedDate: date });
+      }
       const lessons = lectures.filter((l) => l.date === date && l.schoolClassId === e.classId);
       const leftAt = !status && rand() < 0.05 ? 4 : null;
       if (leftAt) notes.push({ enrollmentId: e.id, date, note: "Saiu mais cedo com o responsável" });
@@ -665,6 +687,7 @@ export async function seed() {
   for (let i = 0; i < attendance.length; i += 500)
     await db.insert(t.lessonsAttendance).values(attendance.slice(i, i + 500));
   if (notes.length) await db.insert(t.lessonsAttendancenote).values(notes);
+  if (certificates.length) await db.insert(t.documentsReceiveddocument).values(certificates);
 
   // --- pathways: two offerings with members, weekly sessions, attendance and bimester grades ---
   const pathways = await db

@@ -71,3 +71,13 @@ export async function rollCall(c: SeriesClass, date: string) {
   return { columns, students, saved, notes };
 }
 export type RollCall = Awaited<ReturnType<typeof rollCall>>;
+
+/** Why one student's saved day can't be excused (no roll call, or its lessons differ from the day's), or null. */
+export function excuseError(day: RollCall, enrollmentId: number) {
+  const periods = day.saved.filter((a) => a.enrollmentId === enrollmentId).map((a) => a.period);
+  if (!periods.length) return "Não há chamada registrada para o aluno nesta data.";
+  const lessons = day.columns.map((l) => l.period);
+  if (periods.length !== lessons.length || !periods.every((p) => lessons.includes(p)))
+    return "As aulas do dia mudaram desde a chamada. Corrija pela chamada da turma.";
+  return null;
+}
