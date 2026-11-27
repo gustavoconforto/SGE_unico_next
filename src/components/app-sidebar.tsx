@@ -31,6 +31,13 @@ export const NAV: NavGroup[] = [
       { href: "/classes/detail", label: "Alunos da turma", icon: "groups", permission: ["academicSetup", "view"] },
       { href: "/calendar", label: "Calendário", icon: "calendar_month", permission: ["academicSetup", "view"] },
       { href: "/alerts", label: "Avisos aos responsáveis", icon: "campaign", permission: ["alerts", "view"] },
+      {
+        href: "/documents",
+        label: "Recebimento de documentos",
+        icon: "inbox",
+        permission: ["documents", "view"],
+      },
+      { href: "/documents/types", label: "Tipos de documento", icon: "folder_open", permission: ["documents", "view"] },
     ],
   },
   {

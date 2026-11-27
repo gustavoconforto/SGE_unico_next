@@ -284,6 +284,14 @@ export async function seed() {
       ].map(([type, penalty]) => ({ type, penalty })),
     )
     .returning();
+  const documentTypes = await db
+    .insert(t.documentsDocumenttype)
+    .values(
+      ["Atestado médico", "Comparecimento em torneio esportivo", "Declaração de transferência"].map((type) => ({
+        type,
+      })),
+    )
+    .returning();
   const [teacherRole, coordinationRole, secretaryRole, financeRole] = await db
     .insert(t.employeesEmployeeroletype)
     .values([{ role: "Professor" }, { role: "Coordenação" }, { role: "Secretaria" }, { role: "Financeiro" }])
@@ -593,6 +601,13 @@ export async function seed() {
       underWay
         .filter((_, i) => i % 4 === 0)
         .map((e) => ({ enrollmentId: e.id, incidentTypeId: pick(incidentTypes).id, incidentDate: recent(20) })),
+    );
+  await db
+    .insert(t.documentsReceiveddocument)
+    .values(
+      underWay
+        .filter((_, i) => i % 6 === 0)
+        .map((e) => ({ enrollmentId: e.id, documentTypeId: pick(documentTypes).id, receivedDate: recent(30) })),
     );
   await db
     .insert(t.incidentsStudentdelay)

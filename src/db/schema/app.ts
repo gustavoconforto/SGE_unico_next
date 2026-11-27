@@ -1214,6 +1214,36 @@ export const releasesEarlyexit = pgTable("releases_earlyexit", {
 	unique("releases_earlyexit_enrollment_date_reason_key").on(table.enrollmentId, table.exitDate, table.reasonId),
 ]);
 
+// Not in Django: documents staff receive from a student (Recebimento de documentos), a type picked from a list the staff edit
+export const documentsDocumenttype = pgTable("documents_documenttype", {
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
+	type: varchar({ length: 100 }).notNull(),
+}, (table) => [
+	unique("documents_documenttype_type_key").on(table.type),
+]);
+
+export const documentsReceiveddocument = pgTable("documents_receiveddocument", {
+	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).notNull().$defaultFn(() => new Date().toISOString()),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).notNull().$defaultFn(() => new Date().toISOString()).$onUpdate(() => new Date().toISOString()),
+	receivedDate: date("received_date").notNull(),
+	enrollmentId: bigint("enrollment_id", { mode: "number" }).notNull(),
+	documentTypeId: bigint("document_type_id", { mode: "number" }).notNull(),
+}, (table) => [
+	index("documents_receiveddocument_enrollment_id_idx").using("btree", table.enrollmentId.asc().nullsLast().op("int8_ops")),
+	index("documents_receiveddocument_document_type_id_idx").using("btree", table.documentTypeId.asc().nullsLast().op("int8_ops")),
+	foreignKey({
+			columns: [table.enrollmentId],
+			foreignColumns: [enrollmentsEnrollment.id],
+			name: "documents_receiveddocument_enrollment_id_fk"
+		}),
+	foreignKey({
+			columns: [table.documentTypeId],
+			foreignColumns: [documentsDocumenttype.id],
+			name: "documents_receiveddocument_document_type_id_fk"
+		}),
+]);
+
 // Not in Django: a notice staff send to guardians (src/app/(app)/alerts), listed on the portal home; no class = every guardian.
 export const portalAlert = pgTable("portal_alert", {
 	id: bigint({ mode: "number" }).primaryKey().generatedByDefaultAsIdentity(),

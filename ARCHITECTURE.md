@@ -189,6 +189,19 @@ it points at an **enrollment**, and its forms list only active enrollments.
 (name filter, check several) and saves one exit each; one already recorded is skipped (`onConflictDoNothing`).
 Permission area `releases`.
 
+### Received documents (`documents_*`, not in Django)
+
+Documents staff receive from a student during the year (Recebimento de documentos, `src/app/(app)/documents/`), such
+as a medical certificate. Points at an **enrollment**; its form lists only active enrollments. Not the enrollment
+checklist (`enrollments_neededdocumenttype`).
+
+| Table                        | Key fields and rules                                   |
+| ---------------------------- | ------------------------------------------------------ |
+| `documents_documenttype`     | `type` unique, edited on `/documents/types`            |
+| `documents_receiveddocument` | enrollment, document type (protected), `received_date` |
+
+Permission area `documents`.
+
 ### Portal for guardians and students (`/portal`, `portal_*`, not in Django)
 
 Guardians sign in at `/portal/login` with their CPF, students with their matrícula. Staff create the login on the

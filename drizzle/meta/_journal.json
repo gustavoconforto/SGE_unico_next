@@ -134,6 +134,13 @@
       "when": 1795778518686,
       "tag": "0018_card_payment",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1795781554130,
+      "tag": "0019_received_documents",
+      "breakpoints": true
     }
   ]
 }
