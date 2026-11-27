@@ -353,8 +353,12 @@ export function PaymentForm({ id, direction, returnTo, defaults = {}, selected, 
           </details>
           <TextField name="notes" label="Observações" maxLength={200} optional className="sm:col-span-2" />
         </Fieldset>
-        {method === "CHQ" && direction === "R" && <CheckFields defaults={defaults} />}
-        {(method === "CRE" || method === "DEB") && direction === "R" && <CardFields method={method} />}
+        {method === "CHQ" && direction === "R" && (
+          <CheckFields defaults={defaults} optional={!!id && defaults.method === method && !defaults.checkNumber} />
+        )}
+        {(method === "CRE" || method === "DEB") && direction === "R" && (
+          <CardFields method={method} optional={!!id && defaults.method === method && !defaults.cardBrand} />
+        )}
       </FormFields>
       <FormButtons
         pending={pending}

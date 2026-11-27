@@ -51,7 +51,6 @@ export const PAYMENT_METHODS = [
   ["CHQ", "Cheque"],
 ] as const;
 
-export const CARD_METHODS = ["CRE", "DEB"];
 export const CARD_BRANDS = [
   ["VIS", "Visa"],
   ["MAS", "Mastercard"],
