@@ -8,8 +8,18 @@ import { idParam } from "@/lib/list";
 import { PrintToolbar } from "../../../../print-toolbar";
 import { Paragraphs } from "../paragraphs";
 import { ExamRequestForm, ExamRequestProvider } from "./exam-request-form";
+import { GuardianVisitForm, GuardianVisitProvider } from "./guardian-visit-form";
 import { AttendanceBody, AttendanceForm, AttendanceProvider } from "./attendance-form";
-import { Contract, Declaracao, Ficha, ProvaSubstitutiva, Requerimento } from "../documents";
+import {
+  ComparecimentoResponsavel,
+  Contract,
+  Declaracao,
+  Ficha,
+  PasseEstudantil,
+  ProvaSubstitutiva,
+  Requerimento,
+  Transferencia,
+} from "../documents";
 import { declarationParagraphs, examSubjects, loadEnrollmentReport, studentFacts } from "../report";
 
 // slug in the URL -> title (Django's PRINT_DOCUMENTS)
@@ -20,6 +30,9 @@ const DOCUMENTS: Record<string, string> = {
   declaracao: "Declaração de Escolaridade",
   comparecimento: "Declaração de Comparecimento",
   substitutiva: "Requerimento de Prova Substitutiva",
+  passe: "Declaração de Passe Estudantil",
+  transferencia: "Declaração de Transferência",
+  "comparecimento-responsavel": "Declaração de Comparecimento",
 };
 
 export async function generateMetadata({ params }: PageProps<"/enrollments/[id]/print/[doc]">): Promise<Metadata> {
@@ -100,6 +113,38 @@ export default async function EnrollmentPrintPage({ params }: PageProps<"/enroll
         </PrintToolbar>
         <ProvaSubstitutiva r={r} />
       </ExamRequestProvider>
+    );
+  }
+
+  if (doc === "passe") {
+    if (r.enrollment.status !== "A" || !r.schoolClass) notFound();
+    return (
+      <>
+        <PrintToolbar />
+        <PasseEstudantil r={r} title={DOCUMENTS.passe} />
+      </>
+    );
+  }
+
+  if (doc === "comparecimento-responsavel") {
+    if (r.enrollment.status !== "A") notFound();
+    return (
+      <GuardianVisitProvider date={today()}>
+        <PrintToolbar>
+          <GuardianVisitForm />
+        </PrintToolbar>
+        <ComparecimentoResponsavel r={r} title={DOCUMENTS["comparecimento-responsavel"]} />
+      </GuardianVisitProvider>
+    );
+  }
+
+  if (doc === "transferencia") {
+    if (!["A", "T"].includes(r.enrollment.status)) notFound();
+    return (
+      <>
+        <PrintToolbar />
+        <Transferencia r={r} title={DOCUMENTS.transferencia} />
+      </>
     );
   }
 

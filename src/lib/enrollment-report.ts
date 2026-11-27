@@ -1,4 +1,5 @@
 // Pure pieces of Django's enrollment printouts (enrollments/views.py build_report_context).
+import { addDays } from "./dates";
 import { formatDate, formatMoney } from "./finance";
 import { formatZipCode } from "./format";
 
@@ -44,6 +45,11 @@ export function fullAddress(p: Address): string {
   if (p.state) out += ` - ${p.state}`;
   if (p.zipCode) out += ` CEP: ${formatZipCode(p.zipCode)}`;
   return out;
+}
+
+/** The mid-year recess between the 2nd and 3rd bimesters (the school year has no recess field); null when either date is unset. */
+export function midYearRecess(bi2Ends: string | null, bi3Begins: string | null) {
+  return bi2Ends && bi3Begins ? { from: addDays(bi2Ends, 1), to: addDays(bi3Begins, -1) } : null;
 }
 
 /** A stretch of a printout's paragraph; the page and the .docx render the same runs. */
@@ -199,5 +205,23 @@ export function examRequestText(v: ExamRequest) {
     date: date(v.date),
     time: TIME.test(v.time) ? hourLabel(v.time) : "__________",
     value: brlAmount(v.value) || "_".repeat(20),
+  };
+}
+
+/** What the secretaria fills in on the guardian's declaração de comparecimento. */
+export type GuardianVisit = { name: string; rg: string; issuer: string; cpf: string; date: string; shift: string };
+
+/**
+ * The guardian's declaração de comparecimento blanks as printed (not in Django: copied from the secretaria's paper
+ * model). A field left empty prints as a line to fill by hand.
+ */
+export function guardianVisitText(v: GuardianVisit) {
+  const line = (s: string, n: number) => s.trim() || "_".repeat(n);
+  return {
+    name: line(v.name.toUpperCase(), 40),
+    rg: `${line(v.rg, 12)} ${line(v.issuer, 8)}`,
+    cpf: line(v.cpf, 18),
+    date: ISO_DATE.test(v.date) ? formatDate(v.date) : "____/____/________",
+    shift: SHIFT_PERIODS[v.shift] ?? "_".repeat(16),
   };
 }

@@ -5,6 +5,7 @@ import { formatDate, formatMoney, label, today } from "@/lib/finance";
 import { formatDocument, formatZipCode } from "@/lib/format";
 import { SEX_CHOICES, formatPhone } from "@/lib/person";
 import { ExamBlank } from "./[doc]/exam-request-form";
+import { GuardianVisitBlank } from "./[doc]/guardian-visit-form";
 import type { EnrollmentReport, Person } from "./report";
 
 // Ported from Django's print_base.html / preview_enrollment.html styles, scoped to .enr
@@ -93,6 +94,8 @@ const DECLARATION_CSS = `
 .enr .signature { width: 60%; margin: 88px auto 0; padding-top: 4px; border-top: 1px solid #111827; text-align: center; }
 .enr footer { margin-top: auto; padding-top: 6px; border-top: 2px solid #4b5563; text-align: center; font-size: 9pt; color: #4b5563; }
 .enr footer p { margin: 0; }
+.enr.no-footer footer { display: none; }
+.enr.foot-signature .signature { margin-top: auto; }
 @media print { .enr.declaration-page { min-height: 267mm; } }
 `;
 
@@ -839,9 +842,17 @@ export function Contract({ r, payer }: { r: EnrollmentReport; payer: Person }) {
 }
 
 /** A declaração on the letterhead (escolaridade, comparecimento): title, body, date and the secretária's signature. */
-export function Declaracao({ title, children }: { title: string; children: React.ReactNode }) {
+export function Declaracao({
+  title,
+  className = "",
+  children,
+}: {
+  title: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <main className="enr declaration-page">
+    <main className={`enr declaration-page ${className}`}>
       <style>{BASE_CSS + DECLARATION_CSS}</style>
       <div className="heading">
         <img className="logo" src={LOGO} alt="Único Educacional" />
@@ -860,6 +871,89 @@ export function Declaracao({ title, children }: { title: string; children: React
         <p>{DECLARATION_FOOTER[1]}</p>
       </footer>
     </main>
+  );
+}
+
+const STUDENT_PASS_CSS = `
+.enr.pass h1 { margin: 32px 0; }
+.enr .pass-data { margin: 0 0 20px; line-height: 1.5; }
+.enr .pass-data .gap { margin-top: 14px; }
+.enr .calendar { width: 70%; margin: 24px auto 28px; padding: 8px 16px; border: 2px solid #4b5563; font-size: 10.5pt; }
+.enr .calendar h2 { margin: 0; font-size: 11pt; font-weight: bold; text-align: center; }
+.enr .body .calendar p { text-indent: 0; line-height: 1.8; }
+`;
+
+/** The declaração de passe estudantil (not in Django: copied from the secretaria's paper model). */
+export function PasseEstudantil({ r, title }: { r: EnrollmentReport; title: string }) {
+  const s = r.student;
+  const shift = upper(SHIFT_PERIODS[r.schoolClass?.shift ?? ""]);
+  const parents = [r.father, r.mother].flatMap((p) => (p ? [upper(p.name)] : [])).join(" e ");
+  return (
+    <Declaracao title={title} className="pass no-footer">
+      <style>{STUDENT_PASS_CSS}</style>
+      <div className="pass-data">
+        <div>Estudante: {upper(s.name)}</div>
+        <div>Matrícula: {s.registration}</div>
+        <div>Data de nascimento: {formatDate(s.birthDate)}</div>
+        <div>CPF: {formatDocument(s.cpf)}</div>
+        <div>Filiação: {parents}</div>
+        <div>Naturalidade: {s.placeOfBirth}</div>
+        <div>Endereço: {upper(fullAddress(s))}</div>
+        <div className="gap">Telefones:</div>
+        {r.father && <div>Pai: {formatPhone(r.father.mobile)}</div>}
+        {r.mother && <div>Mãe: {formatPhone(r.mother.mobile)}</div>}
+        <div>Celular do(a) aluno(a): {formatPhone(s.mobile)}</div>
+        <div className="gap">{upper(r.program)}</div>
+        <div>
+          Série: {r.grade}ª Série &emsp; Turma: {upper(r.schoolClass?.name)} &emsp; Turno: {shift}
+        </div>
+      </div>
+      <div className="calendar">
+        <h2>Calendário Escolar</h2>
+        <p>Início do ano letivo: {formatDate(r.yearBegins)}.</p>
+        <p>Término do ano letivo: {formatDate(r.yearEnds)}.</p>
+        {r.recess && (
+          <p>
+            Recesso escolar: {formatDate(r.recess.from)} a {formatDate(r.recess.to)}.
+          </p>
+        )}
+        <p>Horário Matutino: 07:10 às 13h. Vespertino: 14h às 19h.</p>
+      </div>
+      <p>
+        Declaramos que o(a) aluno(a) supracitado(a) está regularmente matriculado(a) nesta Instituição Educacional, no
+        turno <b>{shift}</b>, de segunda a sexta-feira, conforme Calendário Escolar
+        {r.schoolClass?.shift === "M" && ", e com um retorno semanal obrigatório no turno vespertino, das 14h às 18h"}.
+      </p>
+      <p>Informamos ainda que serão ministradas provas aos sábados das 9h às 13h.</p>
+    </Declaracao>
+  );
+}
+
+/** The declaração de transferência (not in Django: copied from the secretaria's paper model). */
+export function Transferencia({ r, title }: { r: EnrollmentReport; title: string }) {
+  return (
+    <Declaracao title={title} className="foot-signature no-footer">
+      <p>
+        Declaramos para os devidos fins que a transferência do(a) aluno(a) <b>{upper(r.student.name)}</b> foi solicitada
+        na data indicada, podendo matricular-se na {r.grade}ª Série. O Histórico Escolar será emitido no prazo máximo de
+        30 dias, a contar desta data.
+      </p>
+    </Declaracao>
+  );
+}
+
+/** The guardian's declaração de comparecimento; the guardian's data and the visit come from the toolbar form. */
+export function ComparecimentoResponsavel({ r, title }: { r: EnrollmentReport; title: string }) {
+  return (
+    <Declaracao title={title} className="foot-signature no-footer">
+      <p>
+        Declaramos para os devidos fins que <GuardianVisitBlank name="name" />, portador(a) do RG:{" "}
+        <GuardianVisitBlank name="rg" />, inscrito(a) no CPF: <GuardianVisitBlank name="cpf" />, responsável pelo(a)
+        aluno(a): <b>{upper(r.student.name)}</b> de matrícula nº {r.student.registration}, esteve presente no ÚNICO
+        EDUCACIONAL ASA SUL (MATRIZ) no dia <GuardianVisitBlank name="date" /> no período{" "}
+        <GuardianVisitBlank name="shift" />, para tratar de assuntos pedagógicos.
+      </p>
+    </Declaracao>
   );
 }
 

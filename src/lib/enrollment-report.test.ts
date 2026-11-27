@@ -5,12 +5,19 @@ import {
   attendanceFields,
   brlAmount,
   examRequestText,
+  guardianVisitText,
   fullAddress,
   hourLabel,
   longDate,
+  midYearRecess,
   reportGrade,
   schoolingDeclaration,
 } from "./enrollment-report";
+
+test("midYearRecess spans the days between the 2nd and 3rd bimesters", () => {
+  expect(midYearRecess("2026-06-25", "2026-07-27")).toEqual({ from: "2026-06-26", to: "2026-07-26" });
+  expect(midYearRecess(null, "2026-07-27")).toBeNull();
+});
 
 test("longDate writes the day without padding and the month in lower case", () => {
   expect(longDate("2026-11-07")).toBe("7 de novembro de 2026");
@@ -164,4 +171,30 @@ test("examRequestText prints the blanks, or lines while they're empty", () => {
   expect(blank.exam).toMatch(/^_+$/);
   expect(blank.time).toMatch(/^_+$/);
   expect(blank.value).toMatch(/^_+$/);
+});
+
+test("guardianVisitText prints the blanks, or lines while they're empty", () => {
+  expect(
+    guardianVisitText({
+      name: "Ana Souza",
+      rg: "3273373",
+      issuer: "SPTC/GO",
+      cpf: "796.515.931-72",
+      date: "2026-11-26",
+      shift: "M",
+    }),
+  ).toEqual({
+    name: "ANA SOUZA",
+    rg: "3273373 SPTC/GO",
+    cpf: "796.515.931-72",
+    date: "26/11/2026",
+    shift: "matutino",
+  });
+  expect(guardianVisitText({ name: " ", rg: "", issuer: "", cpf: "", date: "", shift: "" })).toEqual({
+    name: "_".repeat(40),
+    rg: `${"_".repeat(12)} ${"_".repeat(8)}`,
+    cpf: "_".repeat(18),
+    date: "____/____/________",
+    shift: "_".repeat(16),
+  });
 });
