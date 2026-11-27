@@ -44,7 +44,7 @@ export const roles = {
     finance: VIEW_EDIT,
     payments: VIEW_EDIT,
     grades: VIEW,
-    lessons: VIEW,
+    lessons: VIEW_EDIT,
     timetable: VIEW_EDIT,
     attendance: VIEW_EDIT,
     pathways: VIEW,

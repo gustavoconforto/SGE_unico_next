@@ -29,9 +29,9 @@ describe("roles", () => {
     expect(roles.secretaria.authorize({ payables: ["view"] }).success).toBe(false);
   });
 
-  it("lets the secretaria edit the timetable but not the class diary", () => {
+  it("lets the secretaria edit the timetable and the class diary", () => {
     expect(roles.secretaria.authorize({ timetable: ["view", "edit"] }).success).toBe(true);
-    expect(roles.secretaria.authorize({ lessons: ["edit"] }).success).toBe(false);
+    expect(roles.secretaria.authorize({ lessons: ["view", "edit"] }).success).toBe(true);
     expect(roles.coordenacao.authorize({ timetable: ["edit"], lessons: ["edit"] }).success).toBe(true);
   });
 
