@@ -1,4 +1,5 @@
 // Pure pieces of Django's enrollment printouts (enrollments/views.py build_report_context).
+import { addDays } from "./dates";
 import { formatDate, formatMoney } from "./finance";
 import { formatZipCode } from "./format";
 
@@ -44,6 +45,11 @@ export function fullAddress(p: Address): string {
   if (p.state) out += ` - ${p.state}`;
   if (p.zipCode) out += ` CEP: ${formatZipCode(p.zipCode)}`;
   return out;
+}
+
+/** The mid-year recess between the 2nd and 3rd bimesters (the school year has no recess field); null when either date is unset. */
+export function midYearRecess(bi2Ends: string | null, bi3Begins: string | null) {
+  return bi2Ends && bi3Begins ? { from: addDays(bi2Ends, 1), to: addDays(bi3Begins, -1) } : null;
 }
 
 /** A stretch of a printout's paragraph; the page and the .docx render the same runs. */

@@ -8,9 +8,15 @@ import {
   fullAddress,
   hourLabel,
   longDate,
+  midYearRecess,
   reportGrade,
   schoolingDeclaration,
 } from "./enrollment-report";
+
+test("midYearRecess spans the days between the 2nd and 3rd bimesters", () => {
+  expect(midYearRecess("2026-06-25", "2026-07-27")).toEqual({ from: "2026-06-26", to: "2026-07-26" });
+  expect(midYearRecess(null, "2026-07-27")).toBeNull();
+});
 
 test("longDate writes the day without padding and the month in lower case", () => {
   expect(longDate("2026-11-07")).toBe("7 de novembro de 2026");

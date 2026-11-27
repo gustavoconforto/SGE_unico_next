@@ -839,9 +839,17 @@ export function Contract({ r, payer }: { r: EnrollmentReport; payer: Person }) {
 }
 
 /** A declaração on the letterhead (escolaridade, comparecimento): title, body, date and the secretária's signature. */
-export function Declaracao({ title, children }: { title: string; children: React.ReactNode }) {
+export function Declaracao({
+  title,
+  className = "",
+  children,
+}: {
+  title: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <main className="enr declaration-page">
+    <main className={`enr declaration-page ${className}`}>
       <style>{BASE_CSS + DECLARATION_CSS}</style>
       <div className="heading">
         <img className="logo" src={LOGO} alt="Único Educacional" />
@@ -860,6 +868,62 @@ export function Declaracao({ title, children }: { title: string; children: React
         <p>{DECLARATION_FOOTER[1]}</p>
       </footer>
     </main>
+  );
+}
+
+const STUDENT_PASS_CSS = `
+.enr.pass h1 { margin: 32px 0; }
+.enr.pass footer { display: none; }
+.enr .pass-data { margin: 0 0 20px; line-height: 1.5; }
+.enr .pass-data .gap { margin-top: 14px; }
+.enr .calendar { width: 70%; margin: 24px auto 28px; padding: 8px 16px; border: 2px solid #4b5563; font-size: 10.5pt; }
+.enr .calendar h2 { margin: 0; font-size: 11pt; font-weight: bold; text-align: center; }
+.enr .body .calendar p { text-indent: 0; line-height: 1.8; }
+`;
+
+/** The declaração de passe estudantil (not in Django: copied from the secretaria's paper model). */
+export function PasseEstudantil({ r, title }: { r: EnrollmentReport; title: string }) {
+  const s = r.student;
+  const shift = upper(SHIFT_PERIODS[r.schoolClass?.shift ?? ""]);
+  const parents = [r.father, r.mother].flatMap((p) => (p ? [upper(p.name)] : [])).join(" e ");
+  return (
+    <Declaracao title={title} className="pass">
+      <style>{STUDENT_PASS_CSS}</style>
+      <div className="pass-data">
+        <div>Estudante: {upper(s.name)}</div>
+        <div>Matrícula: {s.registration}</div>
+        <div>Data de nascimento: {formatDate(s.birthDate)}</div>
+        <div>CPF: {formatDocument(s.cpf)}</div>
+        <div>Filiação: {parents}</div>
+        <div>Naturalidade: {s.placeOfBirth}</div>
+        <div>Endereço: {upper(fullAddress(s))}</div>
+        <div className="gap">Telefones:</div>
+        {r.father && <div>Pai: {formatPhone(r.father.mobile)}</div>}
+        {r.mother && <div>Mãe: {formatPhone(r.mother.mobile)}</div>}
+        <div>Celular do(a) aluno(a): {formatPhone(s.mobile)}</div>
+        <div className="gap">{upper(r.program)}</div>
+        <div>
+          Série: {r.grade}ª Série &emsp; Turma: {upper(r.schoolClass?.name)} &emsp; Turno: {shift}
+        </div>
+      </div>
+      <div className="calendar">
+        <h2>Calendário Escolar</h2>
+        <p>Início do ano letivo: {formatDate(r.yearBegins)}.</p>
+        <p>Término do ano letivo: {formatDate(r.yearEnds)}.</p>
+        {r.recess && (
+          <p>
+            Recesso escolar: {formatDate(r.recess.from)} a {formatDate(r.recess.to)}.
+          </p>
+        )}
+        <p>Horário Matutino: 07:10 às 13h. Vespertino: 14h às 19h.</p>
+      </div>
+      <p>
+        Declaramos que o(a) aluno(a) supracitado(a) está regularmente matriculado(a) nesta Instituição Educacional, no
+        turno <b>{shift}</b>, de segunda a sexta-feira, conforme Calendário Escolar
+        {r.schoolClass?.shift === "M" && ", e com um retorno semanal obrigatório no turno vespertino, das 14h às 18h"}.
+      </p>
+      <p>Informamos ainda que serão ministradas provas aos sábados das 9h às 13h.</p>
+    </Declaracao>
   );
 }
 

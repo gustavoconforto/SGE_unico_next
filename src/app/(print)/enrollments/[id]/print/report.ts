@@ -19,6 +19,7 @@ import {
   type StudentFacts,
   SHIFT_PERIODS,
   fullAddress,
+  midYearRecess,
   reportGrade,
   schoolingDeclaration,
 } from "@/lib/enrollment-report";
@@ -63,7 +64,15 @@ export async function loadEnrollmentReport(id: number) {
       .innerJoin(account, eq(installment.accountId, account.id))
       .where(eq(account.enrollmentId, id))
       .orderBy(asc(installment.number)),
-    db.select({ ends: schoolYear.ends }).from(schoolYear).where(eq(schoolYear.id, row.schoolYearId)),
+    db
+      .select({
+        begins: schoolYear.begins,
+        ends: schoolYear.ends,
+        bi2Ends: schoolYear.bi2Ends,
+        bi3Begins: schoolYear.bi3Begins,
+      })
+      .from(schoolYear)
+      .where(eq(schoolYear.id, row.schoolYearId)),
   ]);
 
   // Django's Student.financial_payer: the student, or the first financial guardian
@@ -88,7 +97,9 @@ export async function loadEnrollmentReport(id: number) {
     schoolClass: cls ?? null,
     startDate: type.startDate,
     endDate: type.endDate,
+    yearBegins: year.begins,
     yearEnds: year.ends,
+    recess: midYearRecess(year.bi2Ends, year.bi3Begins),
     payer,
     father: parent("PAI"),
     mother: parent("MAE"),
