@@ -93,8 +93,10 @@ export default async function PaymentListPage({ searchParams }: PageProps<"/acco
           <>
             <FilterSelect name="direction" label="Natureza" options={DIRECTIONS} />
             <FilterSelect name="method" label="Forma de pagamento" options={PAYMENT_METHODS} />
-            <FilterDate name="paid_from" label="Pago a partir de" />
-            <FilterDate name="paid_to" label="Pago até" />
+            <div className="flex gap-3">
+              <FilterDate name="paid_from" label="Pago a partir de" />
+              <FilterDate name="paid_to" label="Pago até" />
+            </div>
           </>
         }
         headers={[
