@@ -31,7 +31,7 @@ export default async function EditPaymentPage({ params }: PageProps<"/accounts/p
   const kind = direction === "R" ? "receivable" : "payable";
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex max-w-3xl flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">{direction === "R" ? "Editar baixa" : "Editar pagamento"}</h1>
         {(await hasPermission(KINDS[kind].resource, "view")) && (
           <LinkButton
