@@ -12,6 +12,7 @@ import * as t from "../src/db/schema/app";
 import { user } from "../src/db/schema/auth";
 import { addDays } from "../src/lib/dates";
 import {
+  CARD_BRANDS,
   LEVELS,
   accountInstallments,
   contractValues,
@@ -124,6 +125,25 @@ function rand() {
   return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
 }
 const pick = <T,>(list: readonly T[]) => list[Math.floor(rand() * list.length)];
+/** The payer's card or cheque, as the payment form asks for them; derived from `i`, so the random sequence stays put. */
+function methodDetails(method: string, i: number, payer: { name: string; cpf: string } | null) {
+  if (method === "CRE" || method === "DEB")
+    return {
+      cardBrand: CARD_BRANDS[i % 5][0],
+      cardReceipt: String(100000 + i * 37),
+      cardInstallments: method === "CRE" ? 1 + (i % 3) : 1,
+    };
+  if (method === "CHQ" && payer)
+    return {
+      checkNumber: String(850000 + i),
+      checkBank: ["001", "104", "237", "341"][i % 4],
+      checkBranch: String(1000 + (i % 900)),
+      checkAccount: `${20000 + i}-${i % 10}`,
+      checkHolderName: payer.name,
+      checkHolderCpf: payer.cpf,
+    };
+  return {};
+}
 const half = (max: number) => (Math.round(rand() * max * 2) / 2).toFixed(2);
 
 /** A CPF with valid check digits, distinct per `n`. */
@@ -458,9 +478,11 @@ export async function seed() {
       amount: t.accountsInstallment.amount,
       dueDate: t.accountsInstallment.dueDate,
       enrollmentId: t.accountsAccount.enrollmentId,
+      payer: { name: t.studentsGuardian.name, cpf: t.studentsGuardian.cpf },
     })
     .from(t.accountsInstallment)
     .innerJoin(t.accountsAccount, eq(t.accountsInstallment.accountId, t.accountsAccount.id))
+    .leftJoin(t.studentsGuardian, eq(t.accountsAccount.guardianId, t.studentsGuardian.id))
     .orderBy(t.accountsInstallment.dueDate);
   const debtors = new Set(enrollments.filter((_, i) => i % 7 === 3).map((e) => e.id));
   for (const [i, inst] of due.entries()) {
@@ -468,6 +490,8 @@ export async function seed() {
     const debtor = debtors.has(inst.enrollmentId!) && inst.dueDate >= addDays(on, -70);
     if (debtor) continue;
     const amount = i % 23 === 0 ? money(inst.amount).div(2).toFixed(2) : inst.amount;
+    const drawn = pick(["PIX", "BOL", "CRE", "DIN"]);
+    const method = drawn === "CRE" && i % 3 === 0 ? "DEB" : drawn === "DIN" && i % 4 === 0 ? "CHQ" : drawn;
     await db.transaction(async (tx) => {
       await tx.insert(t.accountsPayment).values({
         installmentId: inst.id,
@@ -477,8 +501,9 @@ export async function seed() {
         interest: "0.00",
         monetaryAdjust: "0.00",
         discount: "0.00",
-        method: pick(["PIX", "BOL", "CRE", "DIN"]),
+        method,
         notes: "",
+        ...methodDetails(method, i, inst.payer),
       });
       await refreshInstallmentStatus(tx, inst.id);
     });
