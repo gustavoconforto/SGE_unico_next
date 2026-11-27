@@ -18,14 +18,16 @@ export function RollCallSheet({
   lessons,
   students,
   cancelHref,
+  enrollmentId = null,
 }: {
   classId: number;
   date: string;
+  enrollmentId?: number | null;
   lessons: Lesson[];
   students: Student[];
   cancelHref: string;
 }) {
-  const [state, action, pending] = useActionState(saveRollCall.bind(null, classId, date), {});
+  const [state, action, pending] = useActionState(saveRollCall.bind(null, classId, date, enrollmentId), {});
   const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>(() =>
     Object.fromEntries(students.flatMap((s) => lessons.map((l) => [key(s.id, l.period), s.statuses[l.period] ?? "P"]))),
   );

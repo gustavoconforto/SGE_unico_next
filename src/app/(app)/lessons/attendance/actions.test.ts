@@ -71,6 +71,7 @@ describe.skipIf(!local)("saveRollCall", async () => {
         .select({ id: enrollment.id })
         .from(enrollment)
         .where(and(eq(enrollment.schoolClassId, classId), eq(enrollment.status, "A")))
+        .orderBy(asc(enrollment.id))
     : [];
   const ids = students.map((s) => s.id);
   const monday = and(eq(slot.schoolClassId, classId), eq(slot.weekday, 1));
@@ -126,6 +127,7 @@ describe.skipIf(!local)("saveRollCall", async () => {
       saveRollCall(
         classId,
         date,
+        null,
         {},
         grid((id, p) => (id === first && p === 2 ? "F" : "P"), { [first]: " saiu às 10h " }),
       ),
@@ -144,6 +146,7 @@ describe.skipIf(!local)("saveRollCall", async () => {
       saveRollCall(
         classId,
         date,
+        null,
         {},
         grid(() => "J"),
       ),
@@ -155,18 +158,62 @@ describe.skipIf(!local)("saveRollCall", async () => {
   it.skipIf(!ready)("refuses a grid missing a student's lesson or with an unknown status", async () => {
     const missing = grid(() => "P");
     missing.delete(`status_${ids[0]}_2`);
-    expect((await saveRollCall(classId, date, {}, missing)).formError).toMatch(/mudaram/);
+    expect((await saveRollCall(classId, date, null, {}, missing)).formError).toMatch(/mudaram/);
     expect(
       (
         await saveRollCall(
           classId,
           date,
+          null,
           {},
           grid(() => "X"),
         )
       ).formError,
     ).toMatch(/mudaram/);
     expect((await saved()).every((r) => r.status === "J")).toBe(true);
+  });
+
+  it.skipIf(!ready)("saves one student's day and leaves classmates untouched", async () => {
+    const [first, ...others] = ids;
+    await saveRollCall(
+      classId,
+      date,
+      null,
+      {},
+      grid(() => "P", Object.fromEntries(ids.map((id) => [id, "nota"]))),
+    ).catch(() => {});
+    await expect(
+      saveRollCall(
+        classId,
+        date,
+        first,
+        {},
+        form({ [`status_${first}_1`]: "F", [`status_${first}_2`]: "J", [`note_${first}`]: "" }),
+      ),
+    ).rejects.toThrow(`REDIRECT /lessons/excused-absences?enrollment=${first}&date=${date}&msg=updated`);
+    expect(await saved()).toEqual(
+      ids.flatMap((id) => [
+        { enrollmentId: id, period: 1, status: id === first ? "F" : "P" },
+        { enrollmentId: id, period: 2, status: id === first ? "J" : "P" },
+      ]),
+    );
+    expect((await notes()).map((n) => n.enrollmentId).sort()).toEqual([...others].sort());
+  });
+
+  it.skipIf(!ready)("refuses one student's day with no roll call saved", async () => {
+    await db.delete(attendance).where(and(inArray(attendance.enrollmentId, ids), eq(attendance.date, date)));
+    expect(
+      (
+        await saveRollCall(
+          classId,
+          date,
+          ids[0],
+          {},
+          form({ [`status_${ids[0]}_1`]: "F", [`status_${ids[0]}_2`]: "F" }),
+        )
+      ).formError,
+    ).toBe("Não há chamada registrada para o aluno nesta data.");
+    expect(await saved()).toEqual([]);
   });
 
   it.skipIf(!ready)("refuses a day after today", async () => {
@@ -177,6 +224,7 @@ describe.skipIf(!local)("saveRollCall", async () => {
           await saveRollCall(
             classId,
             date,
+            null,
             {},
             grid(() => "P"),
           )

@@ -77,6 +77,12 @@ export const NAV: NavGroup[] = [
         icon: "how_to_reg",
         permission: ["attendance", "edit"],
       },
+      {
+        href: "/lessons/excused-absences",
+        label: "Abono de faltas",
+        icon: "event_available",
+        permission: ["attendance", "edit"],
+      },
       { href: "/q-and-a", label: "Plantões", icon: "support_agent", permission: ["qAndA", "view"] },
     ],
     groups: [
