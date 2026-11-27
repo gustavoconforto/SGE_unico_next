@@ -55,5 +55,6 @@ The proxy checks only the session; each page and action checks its own permissio
 2. If no resource fits, add one to `statement` and grant it in `roles`.
 3. Start the page with `requirePermission(resource, "view" | "edit")` and every action with
    `requirePermission(resource, "edit")`.
+4. Add its row to [PERMISSIONS.md](../PERMISSIONS.md), the sidebar item × role map.
 
 Tests: `src/lib/permissions.test.ts` checks what each role grants.
