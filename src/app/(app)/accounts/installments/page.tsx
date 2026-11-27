@@ -161,8 +161,10 @@ export default async function InstallmentListPage({ searchParams }: PageProps<"/
         <>
           <FilterSelect name="direction" label="Natureza" options={DIRECTIONS} />
           <FilterSelect name="status" label="Situação" options={STATUS_CHOICES} fallback="pending" />
-          <FilterDate name="due_from" label="Vencimento a partir de" />
-          <FilterDate name="due_to" label="Vencimento até" />
+          <div className="flex gap-3">
+            <FilterDate name="due_from" label="Vencimento a partir de" />
+            <FilterDate name="due_to" label="Vencimento até" />
+          </div>
         </>
       }
       summary={
